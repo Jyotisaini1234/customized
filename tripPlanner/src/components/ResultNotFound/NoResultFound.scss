@@ -1,0 +1,41 @@
+.layer-not-found {
+    position: relative;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 0 !important;
+    padding:16px;
+
+    #notFoundSvg {
+        width: 737px;
+        height: 562px;
+    }
+
+    .noDataFoundContent {
+        padding: 16px;
+        margin-top: 8%;
+    }
+
+    .sorry-text {
+        font-family: Rubik;
+        font-size: 36px;
+        font-weight: 300;
+        letter-spacing: -0.53px;
+        color: #333;
+    }
+
+    .page-not-text {
+        font-size: 44px;
+        letter-spacing: -0.88px;
+        color: #f34f4f;
+    }
+
+    .sub-text-404 {
+        font-family: Rubik;
+        font-size: 18px;
+        line-height: 1.67;
+        letter-spacing: -0.45px;
+        color: #999;
+    }
+}

@@ -1,0 +1,495 @@
+@import '../../../../styles/variables';
+
+.customize-search-page{
+  width: 100%;
+  
+  .MuiContainer-root {
+    position: relative;
+    margin-top: 0.5rem;
+    max-width: 75rem;
+    padding: 0;
+  }
+  
+  .MuiInputBase-root {
+    height: 2rem;
+  }
+
+  .MuiPaper-root {
+    box-shadow: none;
+  }
+
+  // Form container styles
+  .form-container {
+    gap: 1rem;
+    padding: 0rem;
+    background: white;
+    
+    .select-form {
+      box-shadow: none;
+      .MuiGrid-item {
+        padding-left: none;
+      }
+    }
+    
+    // Destination and city select styles
+    .destination-select {
+      width: 100%;
+      .select-destination {
+        width: 100%;
+        
+        .MuiInputBase-root {
+          width: 100%;
+        }
+      }
+    }
+    
+    .city-select {
+      width: 100%;
+     
+      .MuiInputBase-root {
+        width: 100%;
+      }
+    }
+    
+    .select-option-2 {
+      padding-left: 1.5rem;
+    }
+
+    // Person count styles
+    .person-count {
+      font-size: 0.8rem;
+      .MuiInputBase-root {
+        width: 3.5rem;
+      }
+      
+      .person-div {
+        display: flex;
+        .MuiGrid-root{
+          flex-wrap: inherit;
+        }
+      }
+      
+      .room {
+        display: flex;
+        width: 5rem;
+        align-items: end;
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    // Side image styles
+    .side-image {
+      width: 38rem;
+      height: 24rem;
+      padding: 0.5rem;
+      
+      .side-box {
+        width: 35rem;
+        height: 100%;
+        
+        img {
+          width: 34.5rem;
+          height: 22rem;
+          display: block;
+        }
+      }
+    }
+  }
+  
+  // Button styles
+  .entry-btn {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+  }
+  
+  .btn-container {
+    
+    .add-another-btn {
+      padding: 0.3rem;
+      font-size: 0.8rem;
+      &:hover{
+        background-color: #5a6268;
+      }
+    }
+    
+    .search-btn {
+      padding: 0.3rem;
+    }
+  }
+  
+  // Responsive styles - Large screens
+  @media (max-width: 64rem) {
+    .MuiGrid-item {
+      padding-left: 0;
+    }
+    
+    .destination-select {
+      .select-destination {
+        .MuiInputBase-root {
+          width: 14rem;
+        }
+      }
+    }
+    
+    .city-select {
+      .MuiInputBase-root {
+        width: 14rem;
+      }
+    }
+    
+    .select-option-2 {
+      padding-left: 1rem;
+    }
+    
+    .form-container {
+      padding: 0;
+      
+      .side-image {
+        width: 100%;
+        height: auto;
+        
+        .side-box {
+          width: 30rem;
+          margin-bottom: 2rem;
+          
+          img {
+            width: 27rem;
+            height: auto;
+            margin-left: 2rem;
+            max-height: 20rem;
+            object-fit: cover;
+          }
+        }
+      }
+    }
+  }
+  
+  // Responsive styles - Medium screens
+  @media (max-width: 48rem) {
+    .MuiContainer-root {
+      padding: 0;
+    }
+    
+    .MuiGrid-item {
+      padding-left: 0;
+    }
+    
+    .form-container {
+      padding: 0;
+      gap: 0.5rem;
+      
+      .person-count {
+        display: flex;
+        
+        .person-div {
+          flex-direction: row;
+          width: 40rem;
+        }
+      }
+      
+      .side-image {
+        height: auto;
+        
+        .side-box {
+          width: 100%;
+          height: auto;
+          margin-bottom: 2rem;
+          
+          img {
+            width: 27rem;
+            height: auto;
+            max-height: 37rem;
+            object-fit: cover;
+          }
+        }
+      }
+    }
+    
+    .destination-select {
+      width: 26rem;
+      
+      .select-destination {
+        width: 26rem;
+        height: 2.5rem;
+        
+        .MuiInputBase-root {
+          width: 26rem;
+          height: 2.5rem;
+        }
+      }
+    }
+    
+    .select-option-2 {
+      width: 25rem;
+      height: 2.5rem;
+      
+      .city-select {
+        width: 25rem;
+        height: 2.5rem;
+        
+        .MuiInputBase-root {
+          height: 2.5rem;
+          width: 25rem;
+        }
+      }
+    }
+    
+    .select-option-1,
+    .select-option-2 {
+      .MuiInputBase-root {
+        width: 100% !important;
+      }
+    }
+  }
+  
+  // Responsive styles - Small screens
+  @media (max-width: 30rem) {
+    .MuiGrid-item {
+      padding-left: 0;
+    }
+    
+    .form-container {
+      padding: 0;
+      
+      .MuiInputBase-root {
+        height: 3rem;
+      }
+      
+      .destination-select {
+        width: 100%;
+        height: 2.5rem;
+        
+        .select-destination {
+          width: 100%;
+          height: 2.5rem;
+          
+          .MuiInputBase-root {
+            width: 100%;
+            height: 3rem;
+          }
+        }
+      }
+      
+      .select-option-2 {
+        width: 100%;
+        height: 3rem;
+        padding-left: 0;
+        
+        .city-select {
+          width: 100%;
+          height: 3.3rem;
+          
+          .MuiInputBase-root {
+            height: 3rem;
+            width: 25.5rem;
+          }
+        }
+      }
+      
+      .person-count {
+        height: 10rem;
+        display: flex;
+        flex-direction: row;
+        
+        .MuiGrid-item {
+          padding-left: 0;
+        }
+        
+        .MuiGrid-root {
+          -webkit-flex-wrap: inherit;
+          flex-wrap: inherit;
+        }
+        
+        .MuiInputBase-root {
+          width: 4rem;
+        }
+        
+        .person-div {
+          padding: 0;
+          flex-direction: row;
+        }
+        
+        .room {
+          width: 10rem;
+          align-items: end;
+        }
+      }
+      
+      .side-image {
+        width: 100%;
+        height: auto;
+        
+        .side-box {
+          width: 35rem;
+          margin-bottom: 2rem;
+          
+          img {
+            width: 35rem;
+            height: auto;
+            max-height: 26rem;
+            object-fit: cover;
+          }
+        }
+      }
+    }
+  }
+  
+  // Responsive styles - Extra small screens
+  @media (max-width: 26rem) {
+    .MuiContainer-root {
+      padding: 0;
+    }
+    
+    .MuiGrid-item {
+      padding-left: 0;
+      gap: 0.2rem;
+    }
+    
+    .form-container {
+      padding: 0;
+      
+      .side-image {
+        .side-box {
+          width: 21rem;
+          margin-bottom: 2rem;
+          
+          img {
+            width: 21rem;
+            object-fit: cover;
+            max-height: 25rem;
+          }
+        }
+      }
+    }
+    
+    .person-count {
+      display: flex;
+      
+      .room {
+        display: flex;
+        width: 5rem;
+        align-items: end;
+        margin-bottom: 0.5rem;
+      }
+    }
+  }
+  
+  // Responsive styles - Mobile screens
+  @media (max-width: 23.4375rem) {
+    .MuiGrid-item {
+      padding-left: 0;
+      gap: 0.2rem;
+    }
+    
+    h4 {
+      font-size: 1.8rem;
+    }
+    
+    .entry-btn {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .btn-container {
+      gap: 1.2rem;
+      width: 27rem;
+      
+      .add-another-btn {
+        padding: 0;
+        font-size: 0.9rem;
+        width: 12rem;
+      }
+      
+      .search-btn {
+        padding: 0.1rem;
+      }
+    }
+    
+    .person-count {
+      display: flex;
+      
+      .room {
+        display: flex;
+        width: 4rem;
+        align-items: end;
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    .side-image {
+      width: 30rem;
+      height: auto;
+      padding: 0;
+      
+      .side-box {
+        margin-bottom: 2rem;
+        width: 21rem;
+        
+        img {
+          width: 21rem;
+          object-fit: cover;
+          max-height: 25rem;
+        }
+      }
+    }
+  }
+  
+  // Responsive styles - Smallest screens
+  @media (max-width: 20rem) {
+    .MuiGrid-item {
+      padding-left: 0;
+      gap: 0.2rem;
+    }
+    
+    h4 {
+      font-size: 1.8rem;
+    }
+    
+    .entry-btn {
+      padding: 0.5rem;
+      font-size: 0.8rem;
+    }
+    
+    .btn-container {
+      gap: 1rem;
+      width: 23rem;
+      
+      .add-another-btn {
+        padding: 0.1rem;
+        font-size: 0.9rem;
+        width: 12rem;
+      }
+      
+      .search-btn {
+        padding: 0.1rem;
+      }
+    }
+    
+    .person-count {
+      display: flex;
+      
+      .room {
+        display: flex;
+        width: 4rem;
+        align-items: end;
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    .side-image {
+      width: 100%;
+      height: auto;
+      
+      .side-box {
+        width: 24rem;
+        margin-bottom: 2rem;
+        
+        img {
+          width: 24rem;
+          object-fit: cover;
+          max-height: 25rem;
+        }
+      }
+    }
+  }
+}

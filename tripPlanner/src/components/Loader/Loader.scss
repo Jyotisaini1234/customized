@@ -1,0 +1,29 @@
+.o-block .o-bg {
+    background-color: rgba(0, 0, 0, 0.7);
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    right: 0;
+    text-align: center;
+    top: 0;
+    width: 100%;
+    z-index: 1199 !important;
+  }
+  
+  .o-block .o-content {
+    background-color: #fff;
+    display: table-cell;
+    left: 50%;
+    margin: 1rem auto;
+    min-width: 30%;
+    max-height: 30%;
+    max-width: 90%;
+    padding: 1rem;
+    position: absolute;
+    top: 40%;
+    transform: translate(-50%, -40%);
+    vertical-align: middle !important;
+    z-index: 1200 !important;
+    border-radius: 3px;
+  }
+  

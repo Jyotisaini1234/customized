@@ -1,0 +1,226 @@
+@import '../../../../styles/variables';
+
+
+.trip-planner-page {
+    padding: 0rem;
+    
+    .heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0rem;
+      
+      .modify-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #000;
+        text-transform: none;
+        font-weight: 500;
+      }
+    }
+    
+    .tab-item {
+      cursor: pointer;
+      
+      &.active {
+        .tab-paper {
+          background-color: #a3a9ad;
+          color:$white
+        //   border-bottom: 3px solid #ff0000;
+        }
+      }
+      
+      .tab-paper {
+        padding: 0.2rem;
+        border-radius: 0;
+        margin-right: 0.2rem;
+      }
+    }
+    
+    .planner-table-container {
+      padding: 1.5rem;
+      .planner-table {
+        width: 100%;
+        border: 1px solid #ddd;
+        
+        .table-header {
+          display: flex;
+          background-color: #a3a9ad;
+          color: white;
+          font-weight: bold;
+          
+          .header-cell {
+            flex: 1;
+            padding: 0.5rem;
+            text-align: center;
+            border-right: 1px solid #ddd;
+            
+            &.date-cell {
+              flex: 0.5;
+              min-width: 100px;
+            }
+            
+            &:last-child {
+              border-right: none;
+            }
+          }
+        }
+        
+        .table-row {
+          display: flex;
+          border-bottom: 1px solid #ddd;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          .cell {
+            flex: 1;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-right: 1px solid #ddd;
+            
+            &.date-cell {
+              flex: 0.5;
+              min-width: 100px;
+            }
+            
+            &:last-child {
+              border-right: none;
+            }
+            
+            .add-button {
+              color: #4a90e2;
+              
+              &:hover {
+                color: #1565c0;
+                background-color: rgba(74, 144, 226, 0.1);
+              }
+            }
+          }
+        }
+      }
+      
+      .total-section {
+        margin-top: 0.5rem;
+        padding: 0.4rem 0;
+        
+        .total-amount {
+          color: #ff0000;
+          font-weight: bold;
+        }
+      }
+      
+      .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.4rem;
+        margin-top: 1.2rem;
+        
+        .proceed-button {
+          background-color: #ff0000;
+          
+          &:hover {
+            background-color: #d32f2f;
+          }
+        }
+        
+        .cancel-button {
+          background-color: #6c757d;
+          
+          &:hover {
+            background-color: #5a6268;
+          }
+        }
+      }
+    }
+  }
+  
+.search-info{
+    display: flex;
+    padding: 0rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between; 
+    .modify-search {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background-color: transparent;
+        color: black;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        font-weight: 550;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+}
+.heading h1{
+    color: black;
+    flex: 1 1;
+    text-align: center;
+    font-size: 1rem;
+    justify-content: center;
+    font-weight: 550;}
+.modify-search-container{
+    padding: 0rem;}
+
+.item-container{
+      gap: 0.9rem;
+      margin-left: 1.5rem;
+      .booking-details {
+        display: flex;
+        // flex-wrap: wrap;
+        gap: 3rem;
+    
+        @media (max-width: 48rem) {
+          gap: 1.5rem;
+          flex-direction: row;
+        }
+    
+        @media (max-width: 30rem) {
+          flex-direction: row;
+        }
+    
+        .booking-column {
+          padding: 0rem !important;
+          display: flex;
+          width: 100%;
+          flex-direction: column;
+          gap: 0.9rem;
+          margin-bottom: 1rem;
+          @media (max-width: 48rem) {
+            margin-left: 1rem;
+          }
+          @media (max-width: 30rem) {
+            margin-left: 1rem;
+          }
+          @media (max-width: 26.5625rem) {
+            margin-left: 1rem;
+          } 
+          @media (max-width: 23.4375rem) {
+            margin-left: 1rem;
+          }
+        }
+    
+        .details-label {
+          width: 13rem;
+          color: #232323;
+          letter-spacing: 0.0625rem;
+          font-size: 0.78rem;
+          line-height: 1.5;
+          font-family: Arial, Book Antiqua;
+    
+          @media (max-width: 37.5rem) {
+            width: 100%;
+          }
+        }
+      }
+    }
+    .hotel-details{
+      margin-right: 0rem;
+    }

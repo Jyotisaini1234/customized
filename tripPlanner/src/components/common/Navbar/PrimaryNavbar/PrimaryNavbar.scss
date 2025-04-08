@@ -1,0 +1,451 @@
+@import '../../../../styles/variables';
+.nav-holder {
+  position: relative;
+  width: 100%;
+  .primary-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: $background-color;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 4rem;
+    
+    .logo {
+      width: 6rem;
+      height: 6rem;
+      padding: 0rem;
+      
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      
+      @include responsive(laptop) {
+        width: 5rem;
+        height: 3.5rem;
+      }
+      
+      @include responsive(tablet) {
+        width: 5rem;
+        height: 3rem;
+      }
+      
+      @include responsive(mobile) {
+        width: 4.5rem;
+        height: 2.7rem;
+      }
+      
+      @include responsive(min-mobile) {
+        width: 7rem;
+        height: 4rem;
+      }
+      
+      @include responsive(min) {
+        width: 7rem;
+        height: 4rem;
+      }
+    }
+
+    .nav-items {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: white;
+      background-color: red;
+      padding: 0.5rem;
+      border-radius: 0.3rem;
+      margin-left: 1rem;
+      
+      @include responsive(laptop) {
+        gap: 0.7rem;
+        padding: 0.4rem;
+        margin-left: 0.7rem;
+      }
+      
+      @include responsive(mobile) {
+        gap: 0.5rem;
+        padding: 0.3rem;
+        margin-left: 0.5rem;
+      }
+      
+      @include responsive(min-mobile) {
+        width: 100%;
+        justify-content: center;
+        margin-left: 1rem;
+        padding: 0.25rem;
+        font-size: 0.9rem;
+      }
+      
+      .trip_details {
+        letter-spacing: 0.125rem;
+        font-size: 0.9rem;
+        
+        @include responsive(laptop) {
+          font-size: 1rem;
+          letter-spacing: 0.1rem;
+        }
+        
+        @include responsive(tablet) {
+          font-size: 0.9rem;
+          letter-spacing: 0.08rem;
+        }
+        
+        @include responsive(mobile) {
+          font-size: 0.9rem;
+          letter-spacing: 0.05rem;
+        }
+        
+        @include responsive(min-mobile) {
+          font-size: 0.9rem;
+          letter-spacing: 0.03rem;
+        }
+        
+        @include responsive(min) {
+          font-size: 0.8rem;
+          letter-spacing: 0.02rem;
+          
+          span {
+            display: none;
+            font-size: 0.9rem;
+            color: $white;
+          }
+        }
+        
+        a {
+          color: inherit;
+          text-decoration: none;
+          white-space: nowrap;
+          
+          @include responsive(min-mobile) {
+            padding: 0 0.2rem;
+          }
+        }
+      }
+    }
+    
+    @include responsive(tablet) {
+      flex-wrap: inherit;
+      margin-left: 0rem;
+    }
+    
+    @include responsive(min-mobile) {
+      flex-direction: row;
+      flex-wrap: inherit;
+      margin-left: 0rem;
+    }
+  
+  
+  
+  }
+
+  .secondary-navbar {
+    border-radius: 0.3rem;
+    background-color: $primary-color;
+    padding: 0.5rem 0.5rem 0rem 0rem;
+    position: relative; 
+      
+    .menu-toggle {
+      display: none; /* Hide by default (for laptop and larger) */
+      position: absolute;
+      right: 1rem; 
+      top: 50%;
+      background-color: transparent;
+      background-image: url('../../../../assets/images/menu.png');
+      border: none;
+      cursor: pointer;
+      float: right;
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+      background-size: cover;
+      background-repeat: no-repeat;
+      transform: translateY(-50%);
+      z-index: 1000; 
+      
+      @include responsive(tablet) {
+        display: block; /* Show on tablet and smaller */
+      }
+      
+      @include responsive(mobile) {
+        right: 0.75rem;
+      }
+      
+      @include responsive(min-mobile) {
+        right: 0.5rem;
+      }
+    }
+  
+    @include responsive(tablet) {
+      padding: 1.5rem;
+      position: relative;
+      width: 100%;
+      margin-left:0rem;
+    }
+    
+    @include responsive(mobile) {
+
+      padding: 1.5rem;
+    }
+    .iteam-container {
+      margin-left: auto;
+      margin-right: auto;
+      border: 0;
+      list-style: none;
+      line-height: 1;
+      position: relative;
+      box-sizing: border-box;
+      display: flex;
+      padding: 0.125rem;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      
+      @include responsive(tablet) {
+        position: absolute;
+        flex-direction: column;
+        background-color: $primary-color;
+        top: 100%;
+        left: 50%;
+        width: 50%;
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out;
+        z-index: 999;
+        
+        &.open {
+          max-height: 18.75rem; // 300px, adjust as needed
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+      }
+      
+      .iteam-list {
+        text-align: center;
+        box-sizing: border-box;
+        display: inline-flex;
+        justify-content: center;
+        padding-bottom: 0.3rem;
+        &:hover{
+          border-bottom: 0.25rem solid red;
+        }
+        @include responsive(tablet) {
+          width: 100%;
+          padding: 0.75rem 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          &.active {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+        }
+        
+        &.active {
+          border-bottom: 0.25rem solid red;
+          
+          @include responsive(tablet) {
+            border-bottom-width: 0.2rem;
+            border-bottom-color: transparent;
+            position: relative;
+            
+            &::after {
+              content: '';
+              position: absolute;
+              left: 0;
+              width: 0.25rem;
+              height: 100%;
+              background-color: red;
+              top: 0;
+            }
+          }
+          
+          @include responsive(mobile) {
+            border-bottom-width: 0.2rem;
+          }
+          
+          @include responsive(min) {
+            border-bottom-width: 0.15rem;
+          }
+        }
+        
+        a {
+          padding: 0 2.5rem;
+          font-size: 0.9375rem;
+          letter-spacing: 0.0625rem;
+          text-decoration: none;
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          
+          @include responsive(laptop) {
+            padding: 0 2rem;
+            font-size: 0.875rem;
+          }
+          
+          @include responsive(tablet) {
+            padding: 0 1.5rem;
+            font-size: 0.8125rem;
+            letter-spacing: 0.05rem;
+            flex-direction: row;
+            justify-content: center;
+          }
+          
+          @include responsive(mobile) {
+            padding: 0 1rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.03rem;
+          }
+          
+          @include responsive(min-mobile) {
+            padding: 0 0.75rem;
+            font-size: 0.7rem;
+          }
+          
+          @include responsive(min) {
+            padding: 0 0.5rem;
+            font-size: 0.65rem;
+            letter-spacing: 0.02rem;
+          }
+          
+          &:hover {
+            color: darken($white, 10%);
+          }
+        }
+        
+        .icon {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 0.25rem;
+          
+          @include responsive(tablet) {
+            margin-bottom: 0;
+            margin-right: 0.75rem;
+          }
+          
+          @include responsive(mobile) {
+            margin-bottom: 0;
+            margin-right: 0.6rem;
+          }
+          
+          @include responsive(min-mobile) {
+            margin-right: 0.5rem;
+          }
+          
+          img {
+            display: block;
+            width: 1.5rem;
+            height: 1.5rem;
+            padding: 0.03rem;
+            
+            @include responsive(laptop) {
+              width: 1.4rem;
+              height: 1.4rem;
+            }
+            
+            @include responsive(tablet) {
+              width: 1.3rem;
+              height: 1.3rem;
+            }
+            
+            @include responsive(mobile) {
+              width: 1.2rem;
+              height: 1.2rem;
+            }
+            
+            @include responsive(min-mobile) {
+              width: 1rem;
+              height: 1rem;
+            }
+            
+            @include responsive(min) {
+              width: 0.9rem;
+              height: 0.9rem;
+            }
+          }
+        }
+      }
+
+      // Add this to your PrimaryNavbar.scss file
+.iteam-list {
+  position: relative;
+  font-size: 1rem;
+  transition: border-bottom 0.3s ease;
+ 
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+
+    margin-top: 0.2rem;
+    background-color: $primary-color;
+    min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: none;
+    
+    &.show {
+      display: block;
+    }
+    
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.7rem;
+      border-bottom: 0.1rem solid white;
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-bottom: 0.25rem solid red;
+      }
+      
+     
+    }
+  }
+  
+  &:hover .dropdown-menu {
+    @media (min-width: 48rem) {
+      display: block;
+    }
+  }
+}
+
+// For mobile dropdown menus
+@include responsive(tablet) {
+  .dropdown-menu {
+    position: static !important;
+    width: 100%;
+    box-shadow: none;
+    padding-left: 1rem;
+    
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+    }
+  }
+}
+
+// For responsive menu behavior
+@include responsive(tablet) {
+  .dropdown-menu {
+    display: none;
+  }
+  
+  .iteam-list:hover .dropdown-menu,
+  .iteam-list:focus-within .dropdown-menu,
+  .dropdown-menu.show {
+    display: block;
+  }
+}
+    }
+  }
+  
+
+}
