@@ -1,6 +1,4 @@
-// In types.ts
 
-// Common interface for hotel summary parameters
 export interface HotelSummaryParams {
   country: string;
   city: string;
@@ -63,16 +61,24 @@ export interface PlannerItem {
   meals: any | null;
 }
 
-  export interface RoomState {
+export interface RoomState {
     id: number;
     adults: number;
     cwb: number;
     cnb: number;
     infants: number;
-  }
+}
 
 
 export interface AreaOption {
   value: string;
   label: string;
 }
+export interface Area {
+  value: string;
+  label: string;
+}
+
+export const Areas: Area[] = [
+  { value: 'kuta', label: 'Kuta' },
+];

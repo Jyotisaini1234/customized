@@ -2,7 +2,7 @@
   import { useLocation, useNavigate } from 'react-router-dom';
   import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
   import './TripPlannerArea.scss';
-  import { AreaOption } from '../../../../types/types';
+  import { AreaOption, Areas } from '../../../../types/types.ts';
 
   const TripPlannerArea: React.FC = () => {
     const location = useLocation();
@@ -46,14 +46,7 @@
         setLoading(true);
         console.log(`Loading areas for city: ${city}`);
         setTimeout(() => {
-          const mockAreas = [
-            { value: 'kuta', label: 'Kuta' },
-            { value: 'seminyak', label: 'Seminyak' },
-            { value: 'ubud', label: 'Ubud' },
-            { value: 'nusa-dua', label: 'Nusa Dua' },
-            { value: 'jimbaran', label: 'Jimbaran' }
-          ];
-          setAreas(mockAreas);
+          setAreas(Areas);
           setLoading(false);
         }, 500);
       } else if (searchParams.city) {
@@ -62,7 +55,6 @@
         console.error('No city provided in search parameters');
       }
     }, [city, searchParams]);
-    
     const handleAreaChange = (event: SelectChangeEvent<string>) => {
       setSelectedArea(event.target.value);
     };

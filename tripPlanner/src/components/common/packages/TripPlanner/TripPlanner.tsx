@@ -7,11 +7,10 @@ import Customize from '../Customize/Customize.tsx';
 import { AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 import { PlannerItem, TripPlannerProps } from '../../../../types/types.ts';
 
-// Update the props interface to include packageType
 const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutDate, onCancel, onProceed}) => {
-  const location = useLocation(); 
-  const navigate = useNavigate();
-  const getSearchParams = () => {
+const location = useLocation(); 
+const navigate = useNavigate();
+const getSearchParams = () => {
     if (location.state && Object.keys(location.state).length > 0) {
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(location.state));
       return location.state;
@@ -27,27 +26,24 @@ const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutD
       city: 'Baku',
       packageType: 'hotel-land' // Default to hotel-land package
     };
-  };
-  const searchParams = getSearchParams();
-  const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
-  const [hotels, setHotels] = useState<any[]>([]);
-  const [showModifySearch, setShowModifySearch] = useState(false);
-  const [activeTab, setActiveTab] = useState<'planner' | 'hotel'>('planner');
-  const [grandTotal, setGrandTotal] = useState(0);
-  const [selectedHotel, setSelectedHotel] = useState<any>(null); // For hotel details tab
-  
-  // Extract packageType from searchParams
-  const packageType = currentSearchParams.packageType || 'hotel-land';
-  
-  const calculateNights = (startDate: Date | null, endDate: Date | null) => {
+};
+const searchParams = getSearchParams();
+const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
+const [hotels, setHotels] = useState<any[]>([]);
+const [showModifySearch, setShowModifySearch] = useState(false);
+const [activeTab, setActiveTab] = useState<'planner' | 'hotel'>('planner');
+const [grandTotal, setGrandTotal] = useState(0);
+const [selectedHotel, setSelectedHotel] = useState<any>(null);
+const packageType = currentSearchParams.packageType || 'hotel-land';
+const calculateNights = (startDate: Date | null, endDate: Date | null) => {
     if (startDate && endDate) {
       const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays;
     }
     return 0;
-  };
-  const generateInitialPlannerItems = () => {
+};
+const generateInitialPlannerItems = () => {
     let startDate, endDate;
     if (searchParams?.checkInDate && searchParams?.checkOutDate) {
       startDate = new Date(searchParams.checkInDate);
@@ -88,20 +84,8 @@ const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutD
       currentDate.setDate(currentDate.getDate() + 1);
     }
     return items;
-  };
-  
+};
 const [plannerItems, setPlannerItems] = useState<PlannerItem[]>(generateInitialPlannerItems());
-useEffect(() => {
-    const savedHotels = sessionStorage.getItem('tripPlannerHotels');
-    if (savedHotels) {
-      try {
-        const parsedHotels = JSON.parse(savedHotels);
-        setHotels(parsedHotels);
-      } catch (e) {
-        console.error('Error parsing saved hotels', e);
-      }
-    }
-  }, []);
 
 useEffect(() => {
     const searchParams = location.state || {};
@@ -111,48 +95,122 @@ useEffect(() => {
     }
   }, [location.state]);
 
-  useEffect(() => {
-    setPlannerItems(generateInitialPlannerItems());
-  }, [checkInDate, checkOutDate, location.state]);
+/////save hotels
+useEffect(() => {
+  const savedHotels = sessionStorage.getItem('tripPlannerHotels');
+  if (savedHotels) {
+    try {
+      const parsedHotels = JSON.parse(savedHotels);
+      if (Array.isArray(parsedHotels) && parsedHotels.length > 0) {
+        console.log("Loaded hotels from session storage:", parsedHotels);
+        setHotels(parsedHotels);
+      }
+    } catch (e) {
+      console.error('Error parsing saved hotels', e);
+    }
+  }
+}, []);
+
+const handleHotelSelection = (itemId) => {
+  const plannerItem = plannerItems.find(item => item.id === itemId);
+  if (!plannerItem) return;
+  const itemDate = new Date(plannerItem.dateObj);
+  const dayHasHotel = plannerItems.find(item =>
+    item.id === itemId && item.hotel !== null
+  );
+  if (dayHasHotel) {
+    console.log("This day already has a hotel assigned");
+    return;
+  }
+  const checkInDate = new Date(itemDate);
+  const checkOutDate = new Date(itemDate);
+  checkOutDate.setDate(checkOutDate.getDate() + 2);
+  const tripCheckOutDate = new Date(currentSearchParams.checkOutDate);
+  const isLastNight = checkOutDate.toDateString() === tripCheckOutDate.toDateString();
+  const hotelSearchParams = {
+    ...currentSearchParams,
+    checkInDate: checkInDate.toISOString(),
+    checkOutDate: checkOutDate.toISOString(),
+    nights: 1,
+    specificDayId: itemId,
+    applyToAllDays: false,
+    isHotelSpecific: true,
+    isLastDay: isLastNight,
+    originalCheckInDate: currentSearchParams.checkInDate,
+    originalCheckOutDate: currentSearchParams.checkOutDate,
+  };
+  if (isLastNight) {
+    const extraDay = new Date(checkOutDate);
+    const additionalSearchParams = {
+      ...hotelSearchParams,
+      checkInDate: extraDay.toISOString(),
+      checkOutDate: new Date(extraDay.setDate(extraDay.getDate() + 1)).toISOString()
+    };
+    sessionStorage.setItem('lastNightHotelParams', JSON.stringify(additionalSearchParams));
+  }
+  sessionStorage.setItem('tripPlannerParams', JSON.stringify(currentSearchParams));
+  sessionStorage.setItem('hotelSearchParams', JSON.stringify(hotelSearchParams));
+  navigate('/trip-planner-area', {
+    state: hotelSearchParams
+  });
+};
 
 useEffect(() => {
   if (hotels.length > 0) {
-    let newTotal = 0;
+    console.log("Processing hotels for calendar:", hotels);
     setPlannerItems(prevItems => {
       const updatedItems = [...prevItems];
+      
+      // Create a copy of all items with nullified hotels
       updatedItems.forEach(item => {
         item.hotel = null;
       });
-      const uniqueHotels = new Set();
-      let total = 0;
-    
+      
+      // Process each hotel and assign it to the appropriate days
       hotels.forEach(hotel => {
-        const hotelIdentifier = hotel.hotel?.hotelId || hotel.hotel?.hotelName;
-        if (hotelIdentifier && !uniqueHotels.has(hotelIdentifier)) {
-          uniqueHotels.add(hotelIdentifier);
-          if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
-            total += hotel.booking.totalPrice;
-          }
-        }
-        let hotelCheckIn, hotelCheckOut;
-        
         if (hotel.specificDayId) {
+          // Handle specific day hotel assignments
           const specificDay = updatedItems.find(item => item.id === hotel.specificDayId);
           if (specificDay) {
-            hotelCheckIn = new Date(specificDay.dateObj);
-            const hotelNights = hotel.booking?.nights || currentSearchParams.nights || 1;
-            hotelCheckOut = new Date(hotelCheckIn);
-            hotelCheckOut.setDate(hotelCheckOut.getDate() + parseInt(hotelNights));
+            const dayIndex = updatedItems.indexOf(specificDay);
+            const hotelCheckIn = new Date(specificDay.dateObj);
+            const hotelCheckOut = new Date(hotelCheckIn);
+            hotelCheckOut.setDate(hotelCheckOut.getDate() + 1); // Just for one night
+            
+            // Assign hotel to this specific day
+            updatedItems[dayIndex].hotel = {
+              name: hotel.hotel?.hotelName || "Unknown Hotel",
+              details: hotel
+            };
           }
-        } else {
-          hotelCheckIn = new Date(hotel.booking?.checkInDate);
-          hotelCheckOut = new Date(hotel.booking?.checkOutDate);
-        }
-        if (hotelCheckIn && hotelCheckOut && !isNaN(hotelCheckIn.getTime()) && !isNaN(hotelCheckOut.getTime())) {
-          updatedItems.forEach(item => {
+        } else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
+          // Handle regular hotel assignments based on date ranges
+          const hotelCheckIn = new Date(hotel.booking.checkInDate);
+          const hotelCheckOut = new Date(hotel.booking.checkOutDate);
+          
+          updatedItems.forEach((item, index) => {
             const itemDate = new Date(item.dateObj);
-            if (itemDate >= hotelCheckIn && itemDate < hotelCheckOut) {
-              item.hotel = {
+            itemDate.setHours(0, 0, 0, 0);
+            
+            const inDate = new Date(hotelCheckIn);
+            const outDate = new Date(hotelCheckOut);
+            inDate.setHours(0, 0, 0, 0);
+            outDate.setHours(0, 0, 0, 0);
+            
+            // If item date is within hotel check-in and check-out range
+            if (itemDate >= inDate && itemDate < outDate) {
+              updatedItems[index].hotel = {
+                name: hotel.hotel?.hotelName || "Unknown Hotel",
+                details: hotel
+              };
+            }
+            
+            // Special case for the last day of the trip
+            if (
+              itemDate.getTime() === outDate.getTime() &&
+              index === updatedItems.length - 1
+            ) {
+              updatedItems[index].hotel = {
                 name: hotel.hotel?.hotelName || "Unknown Hotel",
                 details: hotel
               };
@@ -160,182 +218,162 @@ useEffect(() => {
           });
         }
       });
-      setGrandTotal(total);
+      
       return updatedItems;
     });
-    if (hotels.length > 0 && !selectedHotel) {
+    
+    if (!selectedHotel && hotels.length > 0) {
       setSelectedHotel(hotels[0]);
     }
+    
+    // Calculate total price from all hotels
+    const total = hotels.reduce((sum, hotel) => {
+      if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
+        return sum + hotel.booking.totalPrice;
+      }
+      return sum;
+    }, 0);
+    
+    setGrandTotal(total);
+    sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
   } else {
     setGrandTotal(0);
     setSelectedHotel(null);
+    setPlannerItems(prevItems => {
+      return prevItems.map(item => ({
+        ...item,
+        hotel: null
+      }));
+    });
   }
 }, [hotels, currentSearchParams.nights]);
 
-const handleHotelSelection = (itemId) => {
-  const plannerItem = plannerItems.find(item => item.id === itemId);
-  if (!plannerItem) return;
-  const itemDate = new Date(plannerItem.dateObj);
-  let latestCheckout = null;
-  hotels.forEach(hotel => {
-    let hotelCheckOut;
-    
-    if (hotel.specificDayId) {
-      const hotelItem = plannerItems.find(item => item.id === hotel.specificDayId);
-      if (hotelItem) {
-        const checkInDate = new Date(hotelItem.dateObj);
-        const nights = parseInt(hotel.booking?.nights || currentSearchParams.nights || 1);
-        hotelCheckOut = new Date(checkInDate);
-        hotelCheckOut.setDate(hotelCheckOut.getDate() + nights);
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hotelData = urlParams.get('hotelData');
+  if (hotelData) {
+    try {
+      const hotelDetails = JSON.parse(decodeURIComponent(hotelData));
+      if (hotelDetails.booking?.checkInDate) {
+        hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString();
       }
-    } else if (hotel.booking?.checkOutDate) {
-      hotelCheckOut = new Date(hotel.booking.checkOutDate);
-    }
-    
-    if (hotelCheckOut && (!latestCheckout || hotelCheckOut > latestCheckout)) {
-      latestCheckout = hotelCheckOut;
-    }
-  });
-  const newCheckInDate = latestCheckout || itemDate;
-  const selectedNights = parseInt(currentSearchParams.nights) || 1;
-  const newCheckOutDate = new Date(newCheckInDate);
-  newCheckOutDate.setDate(newCheckOutDate.getDate() + selectedNights);
-  const tripEndDate = new Date(currentSearchParams.checkOutDate);
-  const adjustedCheckOutDate = newCheckOutDate > tripEndDate ? tripEndDate : newCheckOutDate;
-  const hotelSearchParams = {
-    ...currentSearchParams,
-    checkInDate: newCheckInDate.toISOString(),
-    checkOutDate: adjustedCheckOutDate.toISOString(),
-    nights: selectedNights,
-    specificDayId: itemId,
-    applyToAllDays: true
-  };
-  
-  sessionStorage.setItem('tripPlannerParams', JSON.stringify(hotelSearchParams));
-  
-  navigate('/trip-planner-area', {
-    state: hotelSearchParams
-  });
-};
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const hotelData = urlParams.get('hotelData');
-    if (hotelData) {
-      try {
-        const hotelDetails = JSON.parse(decodeURIComponent(hotelData));
+      if (hotelDetails.booking?.checkOutDate) {
+        hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
+      }
+      
+      // Important: Add a unique ID if not present to ensure we can identify this hotel
+      if (!hotelDetails.uniqueId) {
+        hotelDetails.uniqueId = `hotel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      }
+      
+      // Always add the new hotel to the existing hotels array - never replace
+      setHotels(prevHotels => {
+        // Create a copy of the existing hotels
+        const existingHotels = [...prevHotels];
         
-        // Ensure booking dates are properly formatted
-        if (hotelDetails.booking?.checkInDate) {
-          hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString();
-        }
-        if (hotelDetails.booking?.checkOutDate) {
-          hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
-        }
-        
-        setHotels(prevHotels => {
-          // Start with existing hotels
-          const newHotels = [...prevHotels];
-          
-          // Remove hotels that would overlap with this new one
-          const filteredHotels = newHotels.filter(existingHotel => {
-            // Handle hotel with specificDayId
-            if (hotelDetails.specificDayId) {
-              const specificDayItem = plannerItems.find(item => item.id === hotelDetails.specificDayId);
-              if (!specificDayItem) return true; // Keep if no matching day found
-              
-              const newCheckIn = new Date(specificDayItem.dateObj);
-              const newNights = parseInt(hotelDetails.booking?.nights || currentSearchParams.nights || 1);
-              const newCheckOut = new Date(newCheckIn);
-              newCheckOut.setDate(newCheckOut.getDate() + newNights);
-              
-              // Check if this existing hotel overlaps with new hotel dates
-              if (existingHotel.specificDayId) {
-                const existingDayItem = plannerItems.find(item => item.id === existingHotel.specificDayId);
-                if (!existingDayItem) return true;
-                
-                const existingDate = new Date(existingDayItem.dateObj);
-                const existingNights = parseInt(existingHotel.booking?.nights || currentSearchParams.nights || 1);
-                const existingEndDate = new Date(existingDate);
-                existingEndDate.setDate(existingEndDate.getDate() + existingNights);
-                return !(existingDate < newCheckOut && existingEndDate > newCheckIn);
-              } else if (existingHotel.booking?.checkInDate && existingHotel.booking?.checkOutDate) {
-                const existingCheckIn = new Date(existingHotel.booking.checkInDate);
-                const existingCheckOut = new Date(existingHotel.booking.checkOutDate);
-                return !(existingCheckIn < newCheckOut && existingCheckOut > newCheckIn);
-              }
-            } else {
-              const newCheckIn = new Date(hotelDetails.booking?.checkInDate);
-              const newCheckOut = new Date(hotelDetails.booking?.checkOutDate);
-              
-              if (existingHotel.specificDayId) {
-                const existingDayItem = plannerItems.find(item => item.id === existingHotel.specificDayId);
-                if (!existingDayItem) return true;
-                
-                const existingDate = new Date(existingDayItem.dateObj);
-                const existingNights = parseInt(existingHotel.booking?.nights || currentSearchParams.nights || 1);
-                const existingEndDate = new Date(existingDate);
-                existingEndDate.setDate(existingEndDate.getDate() + existingNights);
-                return !(existingDate < newCheckOut && existingEndDate > newCheckIn);
-              } else if (existingHotel.booking?.checkInDate && existingHotel.booking?.checkOutDate) {
-                const existingCheckIn = new Date(existingHotel.booking.checkInDate);
-                const existingCheckOut = new Date(existingHotel.booking.checkOutDate);
-                return !(existingCheckIn < newCheckOut && existingCheckOut > newCheckIn);
-              }
-            }
+        // If it's for a specific day, handle specially
+        if (hotelDetails.specificDayId) {
+          const specificDayItem = plannerItems.find(item => item.id === hotelDetails.specificDayId);
+          if (specificDayItem) {
+            hotelDetails.booking.checkInDate = new Date(specificDayItem.dateObj).toISOString();
+            const checkInDate = new Date(specificDayItem.dateObj);
+            const checkOutDate = new Date(checkInDate);
+            checkOutDate.setDate(checkOutDate.getDate() + 1); // Just one night
+            hotelDetails.booking.checkOutDate = checkOutDate.toISOString();
+            hotelDetails.booking.nights = 1;
             
-            return true; 
-          });
-          return [...filteredHotels, hotelDetails];
-        });
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-      } catch (e) {
-        console.error('Error parsing hotel data from URL', e);
-      }
-    }
-  }, [plannerItems, currentSearchParams.nights]);
-
-  useEffect(() => {
-    const uniqueHotels = new Set();
-    let total = 0;
-  
-    hotels.forEach(hotel => {
-      const hotelIdentifier = hotel.hotel?.hotelId || hotel.hotel?.hotelName;
-      if (hotelIdentifier && !uniqueHotels.has(hotelIdentifier)) {
-        uniqueHotels.add(hotelIdentifier);
-        if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
-          total += hotel.booking.totalPrice;
+            // Check if this specific day already has a hotel
+            const existingHotelForDay = existingHotels.findIndex(existingHotel => 
+              existingHotel.specificDayId === hotelDetails.specificDayId
+            );
+            
+            // If there's already a hotel for this day, replace it
+            if (existingHotelForDay !== -1) {
+              existingHotels[existingHotelForDay] = hotelDetails;
+            } else {
+              // Otherwise add the new hotel
+              existingHotels.push(hotelDetails);
+            }
+          } else {
+            // If we can't find the specific day, just add the hotel
+            existingHotels.push(hotelDetails);
+          }
+        } else {
+          // For regular hotels (not specific day), just add them
+          existingHotels.push(hotelDetails);
         }
-      }
-    }, 0);
-    setGrandTotal(total);
-  }, [plannerItems]);
+        
+        // Save to session storage and return the updated array
+        sessionStorage.setItem('tripPlannerHotels', JSON.stringify(existingHotels));
+        return existingHotels;
+      });
+      
+      // Clear URL params after processing
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    } catch (e) {
+      console.error('Error parsing hotel data from URL', e);
+    }
+  }
+}, [plannerItems, currentSearchParams.nights]);
 
-  const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' | 'meals') => {
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tourData = urlParams.get('tourData');
+  if (tourData) {
+    try {
+      const tourDetails = JSON.parse(decodeURIComponent(tourData));
+      setPlannerItems(prevItems => {
+        const updatedItems = [...prevItems];
+        const specificDayItem = updatedItems.find(item => item.id === tourDetails.specificDayId);
+        if (specificDayItem) {
+          const index = updatedItems.indexOf(specificDayItem);
+          if (updatedItems[index].tours) {
+            console.log("This day already has a tour scheduled");
+          } else {
+            updatedItems[index] = {
+              ...updatedItems[index],
+              tours: {
+                name: tourDetails.tour.tourName,
+                details: tourDetails
+              }
+            };
+          }
+        }
+        sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
+        return updatedItems;
+      });
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+    } catch (e) {
+      console.error('Error parsing tour data from URL', e);
+    }
+  }
+}, []);
+
+const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' | 'meals') => {
   const plannerItem = plannerItems.find(item => item.id === itemId);
   if (!plannerItem) {
     console.error(`Could not find planner item with id ${itemId}`);
     return;
   }
-  const itemDate = plannerItem.dateObj;
-  const selectedNights = currentSearchParams.nights || 1;
-  const checkoutDate = new Date(itemDate);
-  checkoutDate.setDate(checkoutDate.getDate() + selectedNights);
-  const tripEndDate = new Date(currentSearchParams.checkOutDate);
-  const adjustedCheckoutDate = checkoutDate > tripEndDate ? tripEndDate : checkoutDate;
+  const itemDate = plannerItem.dateObj instanceof Date 
+  ? plannerItem.dateObj 
+  : new Date(plannerItem.dateObj);
+
+  if (isNaN(itemDate.getTime())) {
+    console.error(`Invalid date object for planner item ${itemId}`);
+    return;
+  }
   sessionStorage.setItem('tripPlannerParams', JSON.stringify(currentSearchParams));
   sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
-  
-  // Save the current planner items to session storage to preserve tours across navigation
   sessionStorage.setItem('tripPlannerItems', JSON.stringify(plannerItems));
   
-  // Get the area from the first hotel if available (for hotel+land package)
-  // For land package, we'll handle this differently
   let selectedArea = '';
   if (packageType === 'hotel-land' && hotels.length > 0 && hotels[0].hotel?.area) {
     selectedArea = hotels[0].hotel.area;
   } else {
-    // Try to get from session storage
     const storedParams = sessionStorage.getItem('selectedHotelArea');
     if (storedParams) {
       selectedArea = storedParams;
@@ -343,27 +381,32 @@ const handleHotelSelection = (itemId) => {
   }
   
   if (itemType === 'hotel') {
-    const actualNights = Math.ceil((adjustedCheckoutDate.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24));
+    // For hotel selections, we want single night selections
+    const checkoutDate = new Date(itemDate);
+    checkoutDate.setDate(checkoutDate.getDate() + 1); // Just one night
+    
+    // Determine if this is the last day in the trip
+    const tripEndDate = new Date(currentSearchParams.checkOutDate);
+    const isLastDay = checkoutDate.getTime() >= tripEndDate.getTime();
+    
     navigate('/trip-planner-area', {
       state: {
         ...currentSearchParams,
         dayId: itemId.split('-')[1],
         fromTripPlanner: true,
         checkInDate: itemDate.toISOString(),
-        checkOutDate: adjustedCheckoutDate.toISOString(),
-        nights: actualNights,
+        checkOutDate: checkoutDate.toISOString(),
+        nights: 1, // Always set to 1 night
         specificDay: false,
         specificDayId: itemId,
-        applyToAllDays: true
+        applyToAllDays: false,
+        isLastDay: isLastDay // Flag for the view
       }
     });
   } else if (itemType === 'tours') {
-    // For tours, redirect to home-page with required parameters
     const params = new URLSearchParams();
     params.append('city', currentSearchParams.city || 'Baku');
     params.append('country', currentSearchParams.country || 'Azerbaijan');
-    
-    // Add the selected area if available
     params.append('state', selectedArea || currentSearchParams.area || '');
     params.append('occupancy', String(currentSearchParams.rooms?.[0]?.adults || 2));
     params.append('adult', String(currentSearchParams.rooms?.[0]?.adults || 2));
@@ -371,11 +414,7 @@ const handleHotelSelection = (itemId) => {
     params.append('dayId', itemId.split('-')[1]);
     params.append('checkInDate', itemDate.toISOString());
     params.append('specificDayId', itemId);
-    
-    // Add package type parameter to inform HomePage which mode to operate in
     params.append('packageType', packageType);
-    
-    // Redirect to the home page with tour selection
     window.location.href = `http://localhost:3002/home-page?${params.toString()}`;
   } else {
     navigate(`/${itemType}-summary`, {
@@ -391,37 +430,35 @@ const handleHotelSelection = (itemId) => {
 
 useEffect(() => {
   if (hotels.length > 0) {
-    let newTotal = 0;
     setPlannerItems(prevItems => {
-      const updatedItems = [...prevItems];
-      updatedItems.forEach(item => {
-        item.hotel = null;
-      });
+      const updatedItems = JSON.parse(JSON.stringify(prevItems));
       hotels.forEach(hotel => {
-        if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
-          newTotal += hotel.booking.totalPrice;
-        }
+        let hotelCheckIn, hotelCheckOut;
         if (hotel.specificDayId) {
           const specificDay = updatedItems.find(item => item.id === hotel.specificDayId);
           if (specificDay) {
-            const hotelCheckIn = new Date(hotel.booking?.checkInDate);
-            const hotelCheckOut = new Date(hotel.booking?.checkOutDate);
-            updatedItems.forEach(item => {
-              const itemDate = item.dateObj;
-              if (itemDate >= hotelCheckIn && itemDate <= hotelCheckOut) {
-                item.hotel = {
-                  name: hotel.hotel?.hotelName || "Unknown Hotel",
-                  details: hotel
-                };
-              }
-            });
+            hotelCheckIn = new Date(specificDay.dateObj);
+            hotelCheckOut = new Date(hotelCheckIn);
+            hotelCheckOut.setDate(hotelCheckOut.getDate() + 1);
           }
-        } else {
-          const hotelCheckIn = new Date(hotel.booking?.checkInDate);
-          const hotelCheckOut = new Date(hotel.booking?.checkOutDate);
+        } else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
+          hotelCheckIn = new Date(hotel.booking.checkInDate);
+          hotelCheckOut = new Date(hotel.booking.checkOutDate);
+        }
+        if (hotelCheckIn && hotelCheckOut) {
           updatedItems.forEach(item => {
-            const itemDate = item.dateObj;
-            if (itemDate >= hotelCheckIn && itemDate <= hotelCheckOut) {
+            const itemDate = new Date(item.dateObj);
+            itemDate.setHours(0, 0, 0, 0);
+            hotelCheckIn.setHours(0, 0, 0, 0);
+            hotelCheckOut.setHours(0, 0, 0, 0);
+            if (itemDate >= hotelCheckIn && itemDate < hotelCheckOut) {
+              item.hotel = {
+                name: hotel.hotel?.hotelName || "Unknown Hotel",
+                details: hotel
+              };
+            }
+            const isLastDay = updatedItems.indexOf(item) === updatedItems.length - 1;
+            if (isLastDay && itemDate.getTime() === hotelCheckOut.getTime()) {
               item.hotel = {
                 name: hotel.hotel?.hotelName || "Unknown Hotel",
                 details: hotel
@@ -432,13 +469,25 @@ useEffect(() => {
       });
       return updatedItems;
     });
-    setGrandTotal(newTotal);
-    if (hotels.length > 0 && !selectedHotel) {
+    if (!selectedHotel && hotels.length > 0) {
       setSelectedHotel(hotels[0]);
     }
+    const total = hotels.reduce((sum, hotel) => {
+      if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
+        return sum + hotel.booking.totalPrice;
+      }
+      return sum;
+    }, 0);
+    setGrandTotal(total);
   } else {
     setGrandTotal(0);
     setSelectedHotel(null);
+    setPlannerItems(prevItems => {
+      return prevItems.map(item => ({
+        ...item,
+        hotel: null
+      }));
+    });
   }
 }, [hotels]);
 
@@ -471,44 +520,6 @@ useEffect(() => {
     }
   }
 }, []);
-
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const tourData = urlParams.get('tourData');
-  if (tourData) {
-    try {
-      const tourDetails = JSON.parse(decodeURIComponent(tourData));
-      setPlannerItems(prevItems => {
-        const updatedItems = [...prevItems];
-        const specificDayItem = updatedItems.find(item => item.id === tourDetails.specificDayId);
-        
-        if (specificDayItem) {
-          const index = updatedItems.indexOf(specificDayItem);
-          if (updatedItems[index].tours) {
-            console.log("This day already has a tour scheduled");
-          } else {
-            updatedItems[index] = {
-              ...updatedItems[index],
-              tours: {
-                name: tourDetails.tour.tourName,
-                details: tourDetails
-              }
-            };
-          }
-        }
-        // Save the updated items to session storage to persist tours
-        sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
-        return updatedItems;
-      });
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      
-    } catch (e) {
-      console.error('Error parsing tour data from URL', e);
-    }
-  }
-}, []);
-
 
 useEffect(() => {
   let total = 0;
@@ -561,51 +572,55 @@ const handleRemoveTour = (plannerItem) => {
 };
 
 const handleRemoveHotel = (plannerItem: PlannerItem) => {
-    if (!plannerItem.hotel) return;
-    const hotelToRemove = hotels.find(h => {
-      if (plannerItem.hotel?.details?.specificDayId) {
-        return h.specificDayId === plannerItem.hotel.details.specificDayId;
-      } else {
-        const hCheckIn = new Date(h.booking?.checkInDate);
-        const hCheckOut = new Date(h.booking?.checkOutDate);
-        const itemDate = plannerItem.dateObj;
-        return itemDate >= hCheckIn && itemDate < hCheckOut;
-      }
+  if (!plannerItem.hotel) return;
+  
+  const hotelToRemove = hotels.find(h => {
+    // If it's a specific day hotel
+    if (plannerItem.hotel && plannerItem.hotel.details && plannerItem.hotel.details.specificDayId) {
+      return h.specificDayId === plannerItem.hotel.details.specificDayId;
+    } 
+    // Otherwise check if the item date is within the hotel's date range
+    else if (plannerItem.hotel && plannerItem.hotel.details) {
+      const hCheckIn = new Date(h.booking?.checkInDate);
+      const hCheckOut = new Date(h.booking?.checkOutDate);
+      const itemDate = new Date(plannerItem.dateObj);
+      
+      // Set hours to 0 for accurate date comparison
+      hCheckIn.setHours(0, 0, 0, 0);
+      hCheckOut.setHours(0, 0, 0, 0);
+      itemDate.setHours(0, 0, 0, 0);
+      
+      // Only remove if the exact hotel matches
+      return (itemDate >= hCheckIn && itemDate < hCheckOut) && 
+             h.hotel?.hotelId === plannerItem.hotel.details.hotel?.hotelId;
+    }
+    return false;
+  });
+  
+  if (hotelToRemove) {
+    const updatedHotels = hotels.filter(h => h !== hotelToRemove);
+    setHotels(updatedHotels);
+    sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
+    
+    // Update planner items to reflect the removed hotel
+    setPlannerItems(prevItems => {
+      const updatedItems = [...prevItems];
+      
+      updatedItems.forEach((item, index) => {
+        if (item.hotel?.details === hotelToRemove) {
+          updatedItems[index].hotel = null;
+        }
+      });
+      
+      return updatedItems;
     });
     
-    if (hotelToRemove) {
-      const updatedHotels = hotels.filter(h => h !== hotelToRemove);
-      setHotels(updatedHotels);
-      sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
-      const updatedItems = [...plannerItems];
-      if (hotelToRemove.specificDayId) {
-        const specificDay = plannerItems.find(item => item.id === hotelToRemove.specificDayId);
-        if (specificDay) {
-          const specificDayIndex = plannerItems.findIndex(item => item.id === hotelToRemove.specificDayId);
-          const nights = hotelToRemove.booking?.nights || currentSearchParams.nights || 1;
-          for (let i = 0; i < nights && specificDayIndex + i < updatedItems.length; i++) {
-            if (updatedItems[specificDayIndex + i].hotel?.details === hotelToRemove) {
-              updatedItems[specificDayIndex + i].hotel = null;
-            }
-          }
-        }
-      } else {
-        const hotelCheckIn = new Date(hotelToRemove.booking?.checkInDate);
-        const hotelCheckOut = new Date(hotelToRemove.booking?.checkOutDate);
-        updatedItems.forEach((item, index) => {
-          const itemDate = item.dateObj;
-          if (itemDate >= hotelCheckIn && itemDate < hotelCheckOut && item.hotel?.details === hotelToRemove) {
-            updatedItems[index].hotel = null;
-          }
-        });
-      }
-      setPlannerItems(updatedItems);
-      if (selectedHotel === hotelToRemove) {
-        setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
-      }
+    // Update selected hotel if needed
+    if (selectedHotel === hotelToRemove) {
+      setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
     }
-  };
-
+  }
+};
 const formatDate = (dateString: string) => {
     if (!dateString) return '';
     try {
@@ -622,7 +637,6 @@ const formatDate = (dateString: string) => {
       return dateString;
     }
   };
-  
 const formatYear = (dateString: string) => {
     if (!dateString) return '';
     try {
@@ -677,8 +691,6 @@ const handleSearchComplete = (updatedParams: any) => {
 const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hotel') => {
   setActiveTab(newValue);
 };
-
-// Only show hotel tab if packageType is hotel-land
 const showHotelTab = packageType === 'hotel-land';
 return (
     <Box className="trip-planner-page">
@@ -687,9 +699,7 @@ return (
           <Typography variant="h5" component="h1">
             {displayCity} | {displayNights} NIGHT/S | {displayCheckInDate} - {displayCheckOutDate}
           </Typography>
-          <Button className="modify-search" onClick={() => setShowModifySearch(!showModifySearch)}>
-            Modify search<ArrowDownIcon width="16" height="16" fill="#000" />
-          </Button>
+          <Button className="modify-search" onClick={() => setShowModifySearch(!showModifySearch)}> Modify search<ArrowDownIcon width="16" height="16" fill="#000" /></Button>
         </Box>
         {showModifySearch && (
           <div className="modify-search-container">
@@ -803,64 +813,79 @@ return (
             </Box>
           </Paper>
         )}
-
-      {activeTab === 'hotel' && selectedHotel && showHotelTab && (
-        <Grid className='item-container' item xs={14} md={8} sx={{marginLeft:'0.5rem',maxWidth:'100%',padding:'0.5rem'}}>
-          <Grid container spacing={2} sx={{bgcolor:'white',padding:'0rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1))'}}>
-            <Grid item xs={12} md={4} sx={{'& .MuiGrid-root':{maxWidth:'21%'}}}>
-              {selectedHotel.hotel?.imageUrl ? (
-                <img 
-                  src={selectedHotel.hotel.imageUrl} 
-                  alt={selectedHotel.hotel.hotelName} 
-                  style={{  width: '98%',  height: '10rem',  objectFit: 'cover',  padding:'0.5rem', borderRadius: '8px'  }}
-                />
-              ) : (
-                <Box 
-                  sx={{ bgcolor: 'white', height: '200px', width: '100%', display: 'flex',alignItems: 'center', justifyContent: 'center',borderRadius: '8px' }} >
-                  <Typography>No Image Available</Typography>
-                </Box>
-              )}
-            </Grid>
-            <Grid item xs={12} md={8} className='hotel-details'>
-              <Typography variant="h6" sx={{ color: '#2c3e50',fontWeight: 'bold' }}>
-                {selectedHotel.hotel?.hotelName || "Hotel Name"}
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'start', marginBottom:'1rem' }}>
-                {Array(selectedHotel.hotel?.starRating || 0).fill(0).map((_, i) => (
-                  <span key={i} style={{ color: '#FFD700', fontSize: '20px' }}>★</span>
-                ))}
-              </Box>
-              <Grid container spacing={2} className="booking-details">
-                <Grid item xs={12} sm={8} md={2} className="booking-column">
-                  <Typography className="details-label">Check In: {new Date(selectedHotel.booking?.checkInDate).toLocaleDateString()}</Typography>
-                  <Typography className="details-label">Check Out: {new Date(selectedHotel.booking?.checkOutDate).toLocaleDateString()}</Typography>
-                  <Typography className="details-label">Nights: {selectedHotel.booking?.nights || currentSearchParams.nights || 1}</Typography>
-                </Grid>
-                
-                <Grid item xs={12} sm={8} md={2} className="booking-column">
-                  <Typography className="details-label">Room Type: {selectedHotel.booking?.roomType || "Deluxe Room"}</Typography>
-                  <Typography className="details-label">Meal Plan: {selectedHotel.booking?.mealPlan || "BB"}</Typography>
-                  <Typography className="details-label">Total Room(s): {selectedHotel.booking?.totalRooms || 1}</Typography>
-                </Grid>
-                
-                <Grid item xs={12} sm={8} md={2} className="booking-column">
-                  <Typography className="details-label">Adult(s): {selectedHotel.booking?.adults || 2}</Typography>
-                  <Typography className="details-label">Child With Bed: {selectedHotel.booking?.cwb || 0}</Typography>
-                  <Typography className="details-label">Child Without Bed: {selectedHotel.booking?.cnb || 0}</Typography>
-                </Grid> 
-                
-                <Grid item xs={12} sm={8} md={2} className="booking-column">
-                  <Typography className="details-label">Total Amount: USD {selectedHotel.booking?.totalPrice?.toFixed(2) || "0.00"}</Typography>
-                  <Typography className="details-label">Status: {selectedHotel.booking?.status || 'Available (Payment Needed)'}</Typography>
+        {activeTab === 'hotel' && showHotelTab && (
+        <Paper elevation={3} className="hotel-details-container" sx={{bgcolor:'transparent',boxShadow:'none'}}>
+          {hotels.length > 0 ? (
+            hotels.map((hotel, index) => (
+              <Grid 
+                key={`hotel-${index}`} 
+                className='item-container'
+                item xs={14} md={8} 
+                sx={{marginLeft:'0.5rem', maxWidth:'100%', padding:'0.5rem', marginBottom: '1rem'}}
+              >
+                <Grid container spacing={2} sx={{bgcolor:'white', padding:'0rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>
+                  <Grid item xs={12} md={4} sx={{'& .MuiGrid-root':{maxWidth:'21%'}}}>
+                    {hotel.hotel?.imageUrl ? (
+                      <img 
+                        src={hotel.hotel.imageUrl} 
+                        alt={hotel.hotel.hotelName} 
+                        style={{  width: '98%',  height: '10rem',  objectFit: 'cover',  padding:'0.5rem', borderRadius: '8px'  }}
+                      />
+                    ) : (
+                      <Box 
+                        sx={{ bgcolor: 'white', height: '200px', width: '100%', display: 'flex',alignItems: 'center', justifyContent: 'center',borderRadius: '8px' }} >
+                        <Typography>No Image Available</Typography>
+                      </Box>
+                    )}
+                  </Grid>
+                  <Grid item xs={12} md={8} className='hotel-details'>
+                    <Typography variant="h6" sx={{ color: '#2c3e50',fontWeight: 'bold' }}>
+                      {hotel.hotel?.hotelName || "Hotel Name"}
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'start', marginBottom:'1rem' }}>
+                      {Array(hotel.hotel?.starRating || 0).fill(0).map((_, i) => (
+                        <span key={i} style={{ color: '#FFD700', fontSize: '20px' }}>★</span>
+                      ))}
+                    </Box>
+                    <Grid container spacing={2} className="booking-details">
+                      <Grid item xs={12} sm={8} md={2} className="booking-column">
+                        <Typography className="details-label">Check In: {new Date(hotel.booking?.checkInDate).toLocaleDateString()}</Typography>
+                        <Typography className="details-label">Check Out: {new Date(hotel.booking?.checkOutDate).toLocaleDateString()}</Typography>
+                        <Typography className="details-label">Nights: {hotel.booking?.nights || 1}</Typography>
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={8} md={2} className="booking-column">
+                        <Typography className="details-label">Room Type: {hotel.booking?.roomType || "Deluxe Room"}</Typography>
+                        <Typography className="details-label">Meal Plan: {hotel.booking?.mealPlan || "BB"}</Typography>
+                        <Typography className="details-label">Total Room(s): {hotel.booking?.totalRooms || 1}</Typography>
+                      </Grid>
+                      
+                      <Grid item xs={12} sm={8} md={2} className="booking-column">
+                        <Typography className="details-label">Adult(s): {hotel.booking?.adults || 2}</Typography>
+                        <Typography className="details-label">Child With Bed: {hotel.booking?.cwb || 0}</Typography>
+                        <Typography className="details-label">Child Without Bed: {hotel.booking?.cnb || 0}</Typography>
+                      </Grid> 
+                      
+                      <Grid item xs={12} sm={8} md={2} className="booking-column">
+                        <Typography className="details-label">Total Amount: USD {hotel.booking?.totalPrice?.toFixed(2) || "0.00"}</Typography>
+                        <Typography className="details-label">Status: {hotel.booking?.status || 'Available (Payment Needed)'}</Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
                 </Grid>
               </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-      )}
+            ))
+          ) : (
+            <Typography variant="body1" align="center" sx={{ padding: '2rem' }}>
+              No hotels selected yet. Please select hotels from the Planner tab.
+            </Typography>
+          )}
+        </Paper>
+        )}
       </Container>
     </Box>
   );
 };
 
 export default TripPlanner;
+
