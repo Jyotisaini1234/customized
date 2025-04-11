@@ -151,7 +151,7 @@ const handleHotelSelection = (itemId) => {
   sessionStorage.setItem('tripPlannerParams', JSON.stringify(currentSearchParams));
   sessionStorage.setItem('hotelSearchParams', JSON.stringify(hotelSearchParams));
   navigate('/trip-planner-area', {
-    state: hotelSearchParams
+  state: hotelSearchParams
   });
 };
 
@@ -260,18 +260,11 @@ useEffect(() => {
       if (hotelDetails.booking?.checkOutDate) {
         hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
       }
-      
-      // Important: Add a unique ID if not present to ensure we can identify this hotel
       if (!hotelDetails.uniqueId) {
         hotelDetails.uniqueId = `hotel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       }
-      
-      // Always add the new hotel to the existing hotels array - never replace
       setHotels(prevHotels => {
-        // Create a copy of the existing hotels
         const existingHotels = [...prevHotels];
-        
-        // If it's for a specific day, handle specially
         if (hotelDetails.specificDayId) {
           const specificDayItem = plannerItems.find(item => item.id === hotelDetails.specificDayId);
           if (specificDayItem) {
@@ -281,34 +274,23 @@ useEffect(() => {
             checkOutDate.setDate(checkOutDate.getDate() + 1); // Just one night
             hotelDetails.booking.checkOutDate = checkOutDate.toISOString();
             hotelDetails.booking.nights = 1;
-            
-            // Check if this specific day already has a hotel
             const existingHotelForDay = existingHotels.findIndex(existingHotel => 
               existingHotel.specificDayId === hotelDetails.specificDayId
             );
-            
-            // If there's already a hotel for this day, replace it
             if (existingHotelForDay !== -1) {
               existingHotels[existingHotelForDay] = hotelDetails;
             } else {
-              // Otherwise add the new hotel
               existingHotels.push(hotelDetails);
             }
           } else {
-            // If we can't find the specific day, just add the hotel
             existingHotels.push(hotelDetails);
           }
         } else {
-          // For regular hotels (not specific day), just add them
           existingHotels.push(hotelDetails);
         }
-        
-        // Save to session storage and return the updated array
         sessionStorage.setItem('tripPlannerHotels', JSON.stringify(existingHotels));
         return existingHotels;
       });
-      
-      // Clear URL params after processing
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     } catch (e) {
@@ -415,7 +397,7 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
     params.append('checkInDate', itemDate.toISOString());
     params.append('specificDayId', itemId);
     params.append('packageType', packageType);
-    window.location.href = `http://localhost:3002/home-page?${params.toString()}`;
+    window.location.href = `http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/home-page?${params.toString()}`;
   } else {
     navigate(`/${itemType}-summary`, {
       state: {
@@ -497,7 +479,6 @@ useEffect(() => {
     try {
       const parsedItems = JSON.parse(savedItems);
       if (parsedItems && Array.isArray(parsedItems) && parsedItems.length > 0) {
-        // Only restore tours from saved items
         setPlannerItems(prevItems => {
           const updatedItems = [...prevItems];
           parsedItems.forEach(savedItem => {
@@ -523,11 +504,11 @@ useEffect(() => {
 
 useEffect(() => {
   let total = 0;
-  const uniqueHotels = new Set();
+  const processedHotels = new Map();
   hotels.forEach(hotel => {
-    const hotelIdentifier = hotel.hotel?.hotelId || hotel.hotel?.hotelName;
-    if (hotelIdentifier && !uniqueHotels.has(hotelIdentifier)) {
-      uniqueHotels.add(hotelIdentifier);
+    const hotelKey = hotel.specificDayId ||`${hotel.hotel?.hotelId}-${hotel.booking?.checkInDate}-${hotel.booking?.checkOutDate}`;
+    if (!processedHotels.has(hotelKey)) {
+      processedHotels.set(hotelKey, true);
       if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
         total += hotel.booking.totalPrice;
       }
@@ -546,25 +527,21 @@ useEffect(() => {
 
 const handleRemoveTour = (plannerItem) => {
   if (!plannerItem.tours) return;
-  
   setPlannerItems(prevItems => {
     const updatedItems = [...prevItems];
     const index = updatedItems.findIndex(item => item.id === plannerItem.id);
     
     if (index !== -1) {
-      // Subtract the tour price from grand total
       if (plannerItem.tours.details?.booking?.totalPrice) {
         setGrandTotal(prev => prev - plannerItem.tours.details.booking.totalPrice);
       }
-      
-      // Remove the tour from the planner item
       updatedItems[index] = {
         ...updatedItems[index],
         tours: null
       };
-      
-      // Update session storage with the modified items
       sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
+     
+     
     }
     
     return updatedItems;
@@ -575,24 +552,18 @@ const handleRemoveHotel = (plannerItem: PlannerItem) => {
   if (!plannerItem.hotel) return;
   
   const hotelToRemove = hotels.find(h => {
-    // If it's a specific day hotel
     if (plannerItem.hotel && plannerItem.hotel.details && plannerItem.hotel.details.specificDayId) {
       return h.specificDayId === plannerItem.hotel.details.specificDayId;
     } 
-    // Otherwise check if the item date is within the hotel's date range
     else if (plannerItem.hotel && plannerItem.hotel.details) {
       const hCheckIn = new Date(h.booking?.checkInDate);
       const hCheckOut = new Date(h.booking?.checkOutDate);
       const itemDate = new Date(plannerItem.dateObj);
-      
-      // Set hours to 0 for accurate date comparison
       hCheckIn.setHours(0, 0, 0, 0);
       hCheckOut.setHours(0, 0, 0, 0);
       itemDate.setHours(0, 0, 0, 0);
-      
-      // Only remove if the exact hotel matches
       return (itemDate >= hCheckIn && itemDate < hCheckOut) && 
-             h.hotel?.hotelId === plannerItem.hotel.details.hotel?.hotelId;
+            h.hotel?.hotelId === plannerItem.hotel.details.hotel?.hotelId;
     }
     return false;
   });
@@ -601,8 +572,6 @@ const handleRemoveHotel = (plannerItem: PlannerItem) => {
     const updatedHotels = hotels.filter(h => h !== hotelToRemove);
     setHotels(updatedHotels);
     sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
-    
-    // Update planner items to reflect the removed hotel
     setPlannerItems(prevItems => {
       const updatedItems = [...prevItems];
       
@@ -614,8 +583,6 @@ const handleRemoveHotel = (plannerItem: PlannerItem) => {
       
       return updatedItems;
     });
-    
-    // Update selected hotel if needed
     if (selectedHotel === hotelToRemove) {
       setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
     }
@@ -671,6 +638,7 @@ const handleSearchComplete = (updatedParams: any) => {
     if (updatedParams) { 
       setCurrentSearchParams(updatedParams);
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(updatedParams));
+      sessionStorage.removeItem('tripPlannerItems');
       setPlannerItems(generateInitialPlannerItems());
       if (hotels.length > 0) {
         const newStartDate = new Date(updatedParams.checkInDate);

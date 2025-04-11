@@ -190,6 +190,7 @@ const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initia
   };
 
   const handleSearch = () => {
+    sessionStorage.removeItem('tripPlannerItems');
     if (!country || !city || !checkInDate || !checkOutDate) {
       alert("All fields are required!");
       return;
@@ -223,26 +224,20 @@ const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initia
       packageType,
       filteredHotels
     };
-    
-    // When starting a fresh trip planning session, clear previous data
     if (!isModifying) {
       sessionStorage.removeItem('tripPlannerHotels');
+      sessionStorage.removeItem('tripPlannerItems');
     }
-    
-    // Save the current parameters
     sessionStorage.setItem('tripPlannerParams', JSON.stringify(params));
-    
     if (isModifying && onSearchComplete) {
       onSearchComplete(params);
     } else {
       navigate("/trip-planner", { state: params });
     }
   };
-
   const handlePackageTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPackageType(event.target.value);
   };
-  
   const handleCountrySelect = (newValue: { label: string; value: string } | null) => {
     setCountry(newValue);
     if (newValue) {
@@ -251,11 +246,9 @@ const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initia
       setShowPackageOptions(false);
     }
   };
-  
   const handleCancel = () => {
     navigate('/');
   };
-  
   const handleProceed = () => {
     console.log('Proceeding to next step');
   };

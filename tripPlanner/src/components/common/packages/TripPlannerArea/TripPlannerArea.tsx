@@ -60,7 +60,6 @@
     };
 
     const handleClose = () => {
-      // Load saved hotels from session storage before navigating back
       let savedHotels = [];
       const storedHotels = sessionStorage.getItem('tripPlannerHotels');
       if (storedHotels) {
@@ -70,7 +69,6 @@
           console.error('Error parsing saved hotels', e);
         }
       }
-      
       navigate(-1);
     };
     
@@ -84,7 +82,6 @@
       const checkOutDateObj = new Date(checkInDate);
       checkOutDateObj.setDate(checkOutDateObj.getDate() + nights);
       const checkOutDate = checkOutDateObj.toISOString();
-      
       params.append('city', city);
       params.append('country', searchParams.country || 'Indonesia');
       params.append('area', selectedArea);
@@ -92,8 +89,6 @@
       params.append('checkOutDate', checkOutDate);
       params.append('nights', String(nights)); 
       params.append('fromTripPlanner', 'true');
-      
-      // Pass through specific day parameters if they exist
       if (searchParams.specificDay) {
         params.append('specificDay', 'true');
         if (searchParams.specificDayId) {
@@ -105,8 +100,6 @@
       if (searchParams.allDays) {
         params.append('allDays', JSON.stringify(searchParams.allDays));
       }
-      
-      // Load saved hotels to pass through
       let savedHotels = [];
       const storedHotels = sessionStorage.getItem('tripPlannerHotels');
       if (storedHotels) {
@@ -117,7 +110,6 @@
           console.error('Error parsing saved hotels', e);
         }
       }
-      
       const rooms = [{
         id: 1,
         adults: adultsCount,
@@ -125,16 +117,13 @@
         cnb: cnbCount,
         infants: infantsCount
       }];
-      
       params.append('adults', String(rooms[0].adults));
       params.append('cwb', String(rooms[0].cwb));
       params.append('cnb', String(rooms[0].cnb));
       params.append('infants', String(rooms[0].infants));
       params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
-      
-      window.location.href = `http://localhost:3002/hotel-summary?${params.toString()}`;
+      window.location.href = `http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/hotel-summary?${params.toString()}`;
     };
-
     const formatDate = (dateStr) => {
       try {
         return new Date(dateStr).toLocaleDateString();
@@ -149,13 +138,10 @@
         const checkInObj = new Date(searchParams.checkInDate);
         const checkOutObj = new Date(checkInObj);
         checkOutObj.setDate(checkOutObj.getDate() + nights);
-        
-        // Ensure checkout date doesn't exceed the original trip end date
         const tripEndDate = new Date(searchParams.originalCheckOutDate || searchParams.checkOutDate);
         if (checkOutObj > tripEndDate) {
           return tripEndDate.toLocaleDateString();
         }
-        
         return checkOutObj.toLocaleDateString();
       } catch (e) {
         return formatDate(searchParams.checkOutDate);

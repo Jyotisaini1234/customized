@@ -13,10 +13,10 @@ export const ROUTE_CONSTANTS = {
   
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
-  HOTEL_PAGE: '/hotel-search',
+  HOTEL_PAGE: 'http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/hotel-search',
   HOME_PAGE: '/home-page',
   BALI_PACKAGES: '/bali-packages',
-  TOURS_TRANSFERS: '/transfer-search',
+  TOURS_TRANSFERS: 'http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/transfer-search',
   BOOKINGS: '/bookings',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',

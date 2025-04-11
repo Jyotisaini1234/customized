@@ -1,7 +1,6 @@
 export const countrie = [
 
  { label: 'Azerbaijan', id: 1 },
- { label: 'India', id: 2 }
  ];
 export const state = [
        
@@ -12,18 +11,16 @@ export const state = [
 
 export const city = [
  { label: 'Baku', id: 1},
- { label: 'Gili', id: 2},
- { label:'Faridabad',id:3},
+ { label: 'Gabala', id: 2},
  ];
 
  export const countries = [
    { label: 'Azerbaijan', value: 'Azerbaijan' },
-   { label: 'USA', value: 'usa' }
  ];
  
  export const cities = [
    { label: 'Baku', value: 'bali' },
-   { label: 'Jakarta', value: 'jakarta' }
+   { label: 'Gabala', value: 'gabala' }
  ];
  
 export const services = [
