@@ -397,7 +397,7 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
     params.append('checkInDate', itemDate.toISOString());
     params.append('specificDayId', itemId);
     params.append('packageType', packageType);
-    window.location.href = `http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/home-page?${params.toString()}`;
+    window.location.href = `http://localhost:3002/home-page?${params.toString()}`;
   } else {
     navigate(`/${itemType}-summary`, {
       state: {

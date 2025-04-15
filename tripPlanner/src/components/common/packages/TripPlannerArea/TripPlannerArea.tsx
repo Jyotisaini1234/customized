@@ -122,7 +122,7 @@
       params.append('cnb', String(rooms[0].cnb));
       params.append('infants', String(rooms[0].infants));
       params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
-      window.location.href = `http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/hotel-summary?${params.toString()}`;
+      window.location.href = `http://localhost:3002/hotel-summary?${params.toString()}`;
     };
     const formatDate = (dateStr) => {
       try {
