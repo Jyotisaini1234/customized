@@ -19,7 +19,7 @@ export const city = [
  ];
  
  export const cities = [
-   { label: 'Baku', value: 'bali' },
+   { label: 'Baku', value: 'baku' },
    { label: 'Gabala', value: 'gabala' }
  ];
  

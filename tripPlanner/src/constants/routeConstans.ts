@@ -1,4 +1,3 @@
-// Add this to routeConstants.ts
 export const ROUTE_CONSTANTS = {
   // Public routes
   DEFAULT_PAGE: '/',
@@ -8,15 +7,14 @@ export const ROUTE_CONSTANTS = {
   SUBSCRIBE: '/subscribe',
   LOGIN_HOME_PAGE: '/login',
   LOGIN_HOME_PAGE_2: '/new-user',
-
   NOT_FOUND: '/404',
   
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
-  HOTEL_PAGE: 'http://localhost:3002/hotel-search',
+  HOTEL_PAGE: 'http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/hotel-search',
   HOME_PAGE: '/home-page',
-  BALI_PACKAGES: '/bali-packages',
-  TOURS_TRANSFERS: 'http://localhost:3002/transfer-search',
+  BAKU_PACKAGES: '/baku-packages',
+  TOURS_TRANSFERS: 'http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002/transfer-search',
   BOOKINGS: '/bookings',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',
@@ -24,13 +22,13 @@ export const ROUTE_CONSTANTS = {
   TRIP_PLANNER:'/trip-planner',
   // User related routes
   USER_PROFILE: '/user',
-  LOGOUT: '/logout',
+  LOGOUT: '/',
   FLY_DIVINE_TRAVELS: '/fly-divin-travels',
   UI_TEAMS: '/u_i_teams'
 };
 
 export const PUBLIC_NAV_ITEMS = [
-  { 
+  {
     path: ROUTE_CONSTANTS.DEFAULT_PAGE, 
     label: "Home",
     exact: true
@@ -67,9 +65,9 @@ export const DASHBOARD_NAV_ITEMS = [
   },
   {
     path: ROUTE_CONSTANTS.CUSTOMIZE,
-    label: "Bali Packages",
+    label: "Baku Packages",
     icon: "https://www.uandiholidays.net/image/m3.png",
-    key: 'bali-packages'
+    key: 'baku-packages'
   },
   {
     path: ROUTE_CONSTANTS.TOURS_TRANSFERS,

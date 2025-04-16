@@ -148,7 +148,7 @@
     position: relative; 
       
     .menu-toggle {
-      display: none; /* Hide by default (for laptop and larger) */
+      display: none;
       position: absolute;
       right: 1rem; 
       top: 50%;
@@ -159,7 +159,7 @@
       float: right;
       font-size: 2rem;
       width: 2rem;
-      height: 2rem;
+      height: 4rem;
       background-size: cover;
       background-repeat: no-repeat;
       transform: translateY(-50%);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './PrimaryNavbar.scss';
 import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstans.ts';
+import { Box } from '@mui/material';
 
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
@@ -16,8 +17,8 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   
   // Dropdown menus configuration
   const dropdownMenus = {
-    'bali-packages': [
-      { label: 'Readymade + Customized', path: '/bali-packages/readymade-customized' },
+    'baku-packages': [
+      { label: 'Readymade + Customized', path: '/baku-packages/readymade-customized' },
       { label: 'Customized', path: '/customize-package' }
     ],
     'bookings': [
@@ -60,7 +61,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     
     const navItem = DASHBOARD_NAV_ITEMS.find(navItem => navItem.key === item);
     if (navItem) {
-      if (navItem.key === 'bali-packages' || navItem.key === 'bookings') {
+      if (navItem.key === 'baku-packages' || navItem.key === 'bookings') {
         setOpenDropdown(openDropdown === navItem.key ? null : navItem.key);
       } else {
         navigate(navItem.path);
@@ -97,9 +98,9 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   return (
     <div className="nav-holder">
       <nav className="primary-navbar">
-        <div className="logo">
-          <img src="https://www.uandiholidays.net/image/nelo1.png" alt="U&I Logo" />
-        </div>
+        <Box className="logo">
+        <img src="/fly-divine.png" alt="U&I Logo" />
+        </Box>
         <div className="nav-items">
           <div className="trip_details">
             <span>Welcome :</span>
@@ -136,8 +137,8 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
                 {item.label}
               </Link>
               
-              {/* Dropdown menu for Bali Packages and My Bookings */}
-              {(item.key === 'bali-packages' || item.key === 'bookings') && 
+              {/* Dropdown menu for Baku Packages and My Bookings */}
+              {(item.key === 'baku-packages' || item.key === 'bookings') && 
                 <div className={`dropdown-menu ${openDropdown === item.key ? 'show' : ''}`}>
                   {dropdownMenus[item.key as keyof typeof dropdownMenus].map((dropdownItem, idx) => (
                     <Link 

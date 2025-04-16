@@ -6,6 +6,7 @@ import { ArrowDownIcon } from '../../../../icons/icons.tsx';
 import Customize from '../Customize/Customize.tsx';
 import { AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 import { PlannerItem, TripPlannerProps } from '../../../../types/types.ts';
+import { TRIP_PLANNER } from '../../../../utils/ApiConstants.ts';
 
 const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutDate, onCancel, onProceed}) => {
 const location = useLocation(); 
@@ -160,52 +161,39 @@ useEffect(() => {
     console.log("Processing hotels for calendar:", hotels);
     setPlannerItems(prevItems => {
       const updatedItems = [...prevItems];
-      
-      // Create a copy of all items with nullified hotels
       updatedItems.forEach(item => {
         item.hotel = null;
       });
       
-      // Process each hotel and assign it to the appropriate days
       hotels.forEach(hotel => {
         if (hotel.specificDayId) {
-          // Handle specific day hotel assignments
           const specificDay = updatedItems.find(item => item.id === hotel.specificDayId);
           if (specificDay) {
             const dayIndex = updatedItems.indexOf(specificDay);
             const hotelCheckIn = new Date(specificDay.dateObj);
             const hotelCheckOut = new Date(hotelCheckIn);
             hotelCheckOut.setDate(hotelCheckOut.getDate() + 1); // Just for one night
-            
-            // Assign hotel to this specific day
             updatedItems[dayIndex].hotel = {
               name: hotel.hotel?.hotelName || "Unknown Hotel",
               details: hotel
             };
           }
         } else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
-          // Handle regular hotel assignments based on date ranges
           const hotelCheckIn = new Date(hotel.booking.checkInDate);
           const hotelCheckOut = new Date(hotel.booking.checkOutDate);
-          
           updatedItems.forEach((item, index) => {
             const itemDate = new Date(item.dateObj);
             itemDate.setHours(0, 0, 0, 0);
-            
             const inDate = new Date(hotelCheckIn);
             const outDate = new Date(hotelCheckOut);
             inDate.setHours(0, 0, 0, 0);
             outDate.setHours(0, 0, 0, 0);
-            
-            // If item date is within hotel check-in and check-out range
             if (itemDate >= inDate && itemDate < outDate) {
               updatedItems[index].hotel = {
                 name: hotel.hotel?.hotelName || "Unknown Hotel",
                 details: hotel
               };
             }
-            
-            // Special case for the last day of the trip
             if (
               itemDate.getTime() === outDate.getTime() &&
               index === updatedItems.length - 1
@@ -218,7 +206,6 @@ useEffect(() => {
           });
         }
       });
-      
       return updatedItems;
     });
     
@@ -226,14 +213,12 @@ useEffect(() => {
       setSelectedHotel(hotels[0]);
     }
     
-    // Calculate total price from all hotels
     const total = hotels.reduce((sum, hotel) => {
       if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
         return sum + hotel.booking.totalPrice;
       }
       return sum;
     }, 0);
-    
     setGrandTotal(total);
     sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
   } else {
@@ -363,14 +348,10 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
   }
   
   if (itemType === 'hotel') {
-    // For hotel selections, we want single night selections
     const checkoutDate = new Date(itemDate);
-    checkoutDate.setDate(checkoutDate.getDate() + 1); // Just one night
-    
-    // Determine if this is the last day in the trip
+    checkoutDate.setDate(checkoutDate.getDate() + 1);
     const tripEndDate = new Date(currentSearchParams.checkOutDate);
     const isLastDay = checkoutDate.getTime() >= tripEndDate.getTime();
-    
     navigate('/trip-planner-area', {
       state: {
         ...currentSearchParams,
@@ -378,11 +359,11 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
         fromTripPlanner: true,
         checkInDate: itemDate.toISOString(),
         checkOutDate: checkoutDate.toISOString(),
-        nights: 1, // Always set to 1 night
+        nights: 1,
         specificDay: false,
         specificDayId: itemId,
         applyToAllDays: false,
-        isLastDay: isLastDay // Flag for the view
+        isLastDay: isLastDay
       }
     });
   } else if (itemType === 'tours') {
@@ -397,7 +378,7 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
     params.append('checkInDate', itemDate.toISOString());
     params.append('specificDayId', itemId);
     params.append('packageType', packageType);
-    window.location.href = `http://localhost:3002/home-page?${params.toString()}`;
+    window.location.href = `${TRIP_PLANNER}${params.toString()}`;
   } else {
     navigate(`/${itemType}-summary`, {
       state: {
@@ -525,6 +506,11 @@ useEffect(() => {
   setGrandTotal(total);
 }, [hotels, plannerItems]);
 
+useEffect(() => {
+  if (plannerItems && plannerItems.length > 0) {
+    sessionStorage.setItem('tripPlannerItems', JSON.stringify(plannerItems));
+  }
+}, [plannerItems]);
 const handleRemoveTour = (plannerItem) => {
   if (!plannerItem.tours) return;
   setPlannerItems(prevItems => {
@@ -540,10 +526,7 @@ const handleRemoveTour = (plannerItem) => {
         tours: null
       };
       sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
-     
-     
     }
-    
     return updatedItems;
   });
 };
@@ -638,7 +621,7 @@ const handleSearchComplete = (updatedParams: any) => {
     if (updatedParams) { 
       setCurrentSearchParams(updatedParams);
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(updatedParams));
-      sessionStorage.removeItem('tripPlannerItems');
+      // sessionStorage.removeItem('tripPlannerItems');
       setPlannerItems(generateInitialPlannerItems());
       if (hotels.length > 0) {
         const newStartDate = new Date(updatedParams.checkInDate);
@@ -707,21 +690,18 @@ return (
                     <Box className="cell">
                       {plannerItem.hotel ? (
                         <Box className="selected-hotel">
-                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap', overflow: 'hidden',
-                            textOverflow: 'ellipsis', maxWidth: '120px' }} >
+                          <Typography variant="body2" sx={{fontSize:'0.8rem',textOverflow: 'ellipsis'}} >
                             {plannerItem.hotel.name}
                           </Typography>
                           <IconButton   className="remove-button"  onClick={() => handleRemoveHotel(plannerItem)}aria-label="Remove hotel" size="small" >
-                            <DeleteOutline sx={{ color: '#777777', fontSize: '18px' }} />
+                            <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
                           </IconButton>
                         </Box>
                       ) : (
                         <Box display="flex" justifyContent="flex-end">
-                          <IconButton className="add-button" 
-                          onClick={() =>
-                            handleHotelSelection(plannerItem.id)
-                          }
-                            sx={{ color: '#777777' }}>
+                          <IconButton className="add-button"
+                          onClick={() => handleHotelSelection(plannerItem.id)}
+                          sx={{ color: '#777777', fontSize: '1rem' ,"& .MuiSvgIcon-root":{fill:'grey'} }}>
                             <AddCircleOutline />
                           </IconButton>
                         </Box>
@@ -732,7 +712,7 @@ return (
                   <Box className="cell">
                     <Box display="flex" justifyContent="flex-end">
                       <IconButton
-                        className="add-button" onClick={() => handleAddItem(plannerItem.id, 'transfer')} aria-label="Add transfer"sx={{ color: '#777777' }}> 
+                        className="add-button" onClick={() => handleAddItem(plannerItem.id, 'transfer')} aria-label="Add transfer"sx={{ color: '#777777' ,"& .MuiSvgIcon-root":{fill:'grey'} }}> 
                         <AddCircleOutline />
                       </IconButton>
                     </Box>
@@ -741,20 +721,19 @@ return (
                   <Box className="cell">
                     {plannerItem.tours ? (
                       <Box className="selected-tour">
-                        <Typography variant="body2" sx={{ whiteSpace: 'nowrap', overflow: 'hidden',
-                          textOverflow: 'ellipsis', maxWidth: '120px' }} >
+                        <Typography variant="body2" sx={{ fontSize:'0.8rem', textOverflow: 'ellipsis', }} >
                           {plannerItem.tours.name}
                         </Typography>
                         <IconButton className="remove-button" onClick={() => handleRemoveTour(plannerItem)} 
                           aria-label="Remove tour" size="small" >
-                          <DeleteOutline sx={{ color: '#777777', fontSize: '18px' }} />
+                          <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
                         </IconButton>
                       </Box>
                     ) : (
                       <Box display="flex" justifyContent="flex-end">
                         <IconButton className="add-button" 
                           onClick={() => handleAddItem(plannerItem.id, 'tours')}
-                          aria-label="Add tours" sx={{ color: '#777777' }}>
+                          aria-label="Add tours"  sx={{ color: '#777777', fontSize: '1rem',"& .MuiSvgIcon-root":{fill:'grey'} }}>
                           <AddCircleOutline />
                         </IconButton>
                       </Box>
@@ -762,7 +741,7 @@ return (
                   </Box>
                   <Box className="cell">
                     <Box display="flex" justifyContent="flex-end">
-                      <IconButton className="add-button"onClick={() => handleAddItem(plannerItem.id, 'meals')} aria-label="Add meals" sx={{ color: '#777777' }} >
+                      <IconButton className="add-button"onClick={() => handleAddItem(plannerItem.id, 'meals')} aria-label="Add meals" sx={{ color: '#777777',"& .MuiSvgIcon-root":{fill:'grey'}  }} >
                         <AddCircleOutline />
                       </IconButton>
                     </Box>

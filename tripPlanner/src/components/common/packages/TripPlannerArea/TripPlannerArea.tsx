@@ -3,6 +3,7 @@
   import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
   import './TripPlannerArea.scss';
   import { AreaOption, Areas } from '../../../../types/types.ts';
+import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
 
   const TripPlannerArea: React.FC = () => {
     const location = useLocation();
@@ -122,7 +123,7 @@
       params.append('cnb', String(rooms[0].cnb));
       params.append('infants', String(rooms[0].infants));
       params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
-      window.location.href = `http://localhost:3002/hotel-summary?${params.toString()}`;
+      window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
     };
     const formatDate = (dateStr) => {
       try {
@@ -273,7 +274,7 @@
                 <Box className="image-box">
                   <img 
                     src="https://www.uandiholidays.net/Admin/UploadFiles/Advertising/WhatsAppImage2023-12-02at1.09.55PM_2-12-2023-13438.jpeg" 
-                    alt="Trans Studio Bali" 
+                    alt="Trans Studio baku" 
                     className="attraction-image"
                   />
                 </Box>

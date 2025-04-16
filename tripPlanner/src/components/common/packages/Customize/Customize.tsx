@@ -260,7 +260,7 @@ const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initia
         {!isModifying && (
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }}>Customize Search</Typography>
-        <Button className='entry-btn' variant="contained" sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1,bgcolor:'red' }} > Bali Entry Requirements</Button>
+        <Button className='entry-btn' variant="contained" sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1,bgcolor:'red' }} > baku Entry Requirements</Button>
         </Box>)}
           <Grid container spacing={1} className='form-container'>
             <Grid item xs={12} md={6}>
@@ -381,7 +381,7 @@ const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initia
             </Grid>
             <Grid item xs={12} md={5} className='side-image'>
               <Box sx={{ overflow: 'hidden', height: '100%' }} className='side-box'>
-                <img src="https://www.uandiholidays.net/Admin/UploadFiles/Advertising/WhatsAppImage2023-12-02at1.09.55PM_2-12-2023-13438.jpeg"  alt="Trans Studio Bali" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                <img src="https://www.uandiholidays.net/Admin/UploadFiles/Advertising/WhatsAppImage2023-12-02at1.09.55PM_2-12-2023-13438.jpeg"  alt="Trans Studio baku" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
               </Box>
             </Grid>
           </Grid></>): (<TripPlanner location={city?.label || ""} nights={nights}  checkInDate={checkInDate ? checkInDate.toISOString() : new Date().toISOString()} 
