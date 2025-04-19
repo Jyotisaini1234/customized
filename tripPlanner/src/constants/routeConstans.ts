@@ -3,7 +3,6 @@ export const ROUTE_CONSTANTS = {
   DEFAULT_PAGE: '/',
   ABOUT: '/about',
   CONTACET: '/contact',
-  CAREERS: '/careers',
   SUBSCRIBE: '/subscribe',
   LOGIN_HOME_PAGE: '/login',
   LOGIN_HOME_PAGE_2: '/new-user',

@@ -1,28 +1,18 @@
 export const countrie = [
-
- { label: 'Azerbaijan', id: 1 },
- ];
-export const state = [
-       
- { label: 'Kuta', id: 1},
- { label: 'Sanur', id: 2},
-
+{ label: 'Azerbaijan', id: 1 },
+];
+export const state = [  
+{ label: 'Azerbaijan', id: 1},
+];
+export const city = [
+{ label: 'Baku', id: 1},
+{ label: 'Gabala', id: 2},
+{ label: 'Shahdag', id: 3},
+{ label: 'Sheki', id: 4},
+{ label: 'Shamakhi', id: 5},
 ];
 
-export const city = [
- { label: 'Baku', id: 1},
- { label: 'Gabala', id: 2},
- ];
 
- export const countries = [
-   { label: 'Azerbaijan', value: 'Azerbaijan' },
- ];
- 
- export const cities = [
-   { label: 'Baku', value: 'baku' },
-   { label: 'Gabala', value: 'gabala' }
- ];
- 
 export const services = [
     { name: "Hotel / Resort Reservations", img: "https://www.uandiholidays.net/images/about-services-1.png" },
     { name: "Logistic Support", img: "https://www.uandiholidays.net/images/about-services-2.png" },

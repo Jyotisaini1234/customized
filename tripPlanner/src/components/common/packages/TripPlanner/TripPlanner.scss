@@ -106,14 +106,42 @@
       }
       
       .total-section {
-        margin-top: 0.5rem;
-        padding: 0.4rem 0;
-        
-        .total-amount {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      
+        .total-row {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 1rem;
+        }
+      
+        .label {
+          width: 12rem;
+          text-align: right;
+          font-weight: 550;
+          font-size: 1rem;
+        }
+      
+        .value {
+          min-width: 8rem;
           color: #ff0000;
-          font-weight: bold;
+          font-weight: 500;
+          display: flex;
+          font-size: 1rem;
+          word-spacing: 0.5rem;
+          align-items: center;
+        }
+      
+        .MuiTextField-root {
+          input {
+            padding: 0.5rem;
+            text-align: left;
+          }
         }
       }
+      
       
       .action-buttons {
         display: flex;
@@ -138,6 +166,23 @@
         }
       }
     }
+
+
+.selected-hotel{
+ width: 100%;
+ display: flex;
+ justify-content: center;
+ position: relative;
+ align-items: center;
+}
+.selected-tour{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  align-items: center;
+
+}
   }
   
 .search-info{
@@ -208,7 +253,7 @@
         }
     
         .details-label {
-          width: 13rem;
+          width: 12rem;
           color: #232323;
           letter-spacing: 0.0625rem;
           font-size: 0.78rem;
@@ -221,6 +266,7 @@
         }
       }
     }
-    .hotel-details{
+
+.hotel-details{
       margin-right: 0rem;
-    }
+}

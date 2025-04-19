@@ -80,5 +80,78 @@ export interface Area {
 }
 
 export const Areas: Area[] = [
-  { value: 'kuta', label: 'Kuta' },
+{ value: 'Baku', label: 'Baku'},
+{ value: 'Gabala', label: 'Gabala'},
+{ value: 'Shahdag', label: 'Shahdag'},
+{ value: 'Sheki', label: 'Sheki'},
+{ value: 'Shamakhi', label: 'Shamakhi'},
 ];
+
+
+export interface Hotel {
+  mealPlan: string | undefined;
+  details: any;
+  roomType: any;
+  hotel?: {
+    hotelName: string;
+  };
+  booking?: {
+    roomType: string;
+    mealPlan: string;
+    totalRooms: number;
+  };
+}
+export interface Tour {
+  duration?: string;
+  description?: string;
+  details?: {
+    tour?: {
+      description?: string;
+    };
+  };
+}
+
+
+export interface TourItem {
+  name: string;
+  details?: {
+    tour?: Tour;
+  };
+}
+
+export interface MealItem {
+  name: string;
+  details?: string;
+}
+
+export interface TransferItem {
+  name: string;
+  details?: string;
+}
+
+export interface PackageCosts {
+  finalAmount: number;
+  packageDetails?: {
+    totalPersons: number;
+  };
+}
+
+export interface SearchParams {
+  checkInDate?: string;
+  checkOutDate?: string;
+  nights?: number;
+  rooms?: Array<{
+    adults: number;
+  }>;
+}
+
+export interface TripPlannerData {
+  bookingRef: string;
+  generateDate: string;
+  currentSearchParams: SearchParams;
+  hotels: Hotel[];
+  plannerItems: PlannerItem[];
+  costs: PackageCosts;
+  currency: string;
+}
+
