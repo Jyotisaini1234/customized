@@ -16,7 +16,6 @@
     const [hotelDetails, setHotelDetails] = useState(null);
     const [city, setCity] = useState<string>(searchParams.city || '');
     const [countrie, setCountrie] = useState<string>(searchParams.country || '');
-    const [nights, setNights] = useState<number | string>(1);
     const [adultsCount, setAdultsCount] = useState<number>(searchParams.rooms?.[0]?.adults || 2);
     const [cwbCount, setCwbCount] = useState<number>(searchParams.rooms?.[0]?.cwb || 0);
     const [cnbCount, setCnbCount] = useState<number>(searchParams.rooms?.[0]?.cnb || 0);
@@ -24,121 +23,130 @@
     const [applyToAllDays, setApplyToAllDays] = useState<boolean>(searchParams.applyToAllDays || false);
     const [selectedCity, setSelectedCity] = useState<string>(searchParams.city || '');
     const [searchedCity, setSearchedCity] = useState("");
-
+    const [nights, setNights] = useState<number | string>(searchParams.nights || 1);
     useEffect(() => {
       if (state && (state.hotel || state.tripPlan)) {
           setHotelDetails(state);
           if (state.tripPlan) {
-          console.log('Hotel added from trip planner:', state);}
-      } else {
+          console.log('Hotel added from trip planner:', state);}}
+          else {
           const storedDetails = sessionStorage.getItem('selectedHotelDetails');
           if (storedDetails) {
-              const parsedDetails = JSON.parse(storedDetails);
-              setHotelDetails(parsedDetails);
-              if (parsedDetails.tripPlan) {
-              console.log('Retrieved trip plan hotel from storage:', parsedDetails);
-              }} }
+          const parsedDetails = JSON.parse(storedDetails);
+          setHotelDetails(parsedDetails);
+          if (parsedDetails.tripPlan) {
+          console.log('Retrieved trip plan hotel from storage:', parsedDetails); }} }
     }, [state]);
 
-    useEffect(() => {
-      console.log('Search params received:', searchParams); 
-      console.log('Current city value:', city);
-      if (city) {
-        setLoading(true);
-        console.log(`Loading areas for city: ${city}`);
-        setTimeout(() => {
-          setAreas(Areas);
-          setLoading(false);
-        }, 500); } 
-        else if (searchParams.city) {
-        setCity(searchParams.city);} 
-        else {
-        console.error('No city provided in search parameters'); }
-    }, [city, searchParams]);
+useEffect(() => {
+    console.log('Search params received:', searchParams); 
+    console.log('Current city value:', city);
+    if (city) {setLoading(true);
+    console.log(`Loading areas for city: ${city}`);
+    setTimeout(() => {setAreas(Areas);setLoading(false);}, 500); } 
+    else if (searchParams.city) {setCity(searchParams.city);} 
+    else {console.error('No city provided in search parameters'); }
+}, [city, searchParams]);
 
-    const handleClose = () => {
-      let savedHotels = [];
-      const storedHotels = sessionStorage.getItem('tripPlannerHotels');
-      if (storedHotels) {
-        try {
-          savedHotels = JSON.parse(storedHotels);
-        } catch (e) {
-          console.error('Error parsing saved hotels', e);}}
+const handleClose = () => {
+let savedHotels = [];
+const storedHotels = sessionStorage.getItem('tripPlannerHotels');
+  if (storedHotels) {
+    try {savedHotels = JSON.parse(storedHotels);}
+    catch (e) {console.error('Error parsing saved hotels', e);}}
       navigate(-1);
+};
+    
+
+
+const handleSearch = () => {
+  const params = new URLSearchParams();
+  const checkInDate = searchParams.checkInDate || new Date().toISOString();
+  const currentCity = selectedCity || city;
+  const nightsNumber = parseInt(nights as string, 10) || 0;
+  params.append('checkInDate', checkInDate);
+  const checkOutDateObj = new Date(new Date(checkInDate));
+  checkOutDateObj.setDate(checkOutDateObj.getDate() + (nightsNumber - 1));
+  const checkOutDate = checkOutDateObj.toISOString();
+  params.append('checkOutDate', checkOutDate);
+  params.append('city', currentCity);
+  params.append('country', countrie);
+  params.append('nights', String(nightsNumber));
+  params.append('fromTripPlanner', 'true');
+  if (searchParams.specificDay) {
+    params.append('specificDay', 'true');
+    if (searchParams.specificDayId) {
+      params.append('specificDayId', searchParams.specificDayId);
+    }
+  }
+  params.append('applyToAllDays', searchParams.specificDay ? 'false' : String(applyToAllDays));
+  if (searchParams.allDays) {
+    params.append('allDays', JSON.stringify(searchParams.allDays));
+  }
+  let savedHotels = [];
+  const storedHotels = sessionStorage.getItem('tripPlannerHotels');
+  if (storedHotels) {
+    try {
+      savedHotels = JSON.parse(storedHotels);
+      params.append('savedHotels', encodeURIComponent(JSON.stringify(savedHotels)));
+    } catch (e) {
+      console.error('Error parsing saved hotels', e);
+    }
+  }
+  const rooms = searchParams.rooms || [];
+  const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
+  const totalCWB = rooms.reduce((sum, room) => sum + room.cwb, 0);
+  const totalCNB = rooms.reduce((sum, room) => sum + room.cnb, 0);
+  const totalInfants = rooms.reduce((sum, room) => sum + room.infants, 0);
+  params.append('adults', String(totalAdults));
+  params.append('cwb', String(totalCWB));
+  params.append('cnb', String(totalCNB));
+  params.append('infants', String(totalInfants));
+  params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
+  window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
+};
+
+const formatDate = (dateStr) => {
+  try {return new Date(dateStr).toLocaleDateString();}
+  catch (e) {return dateStr || '';}
     };
     
-    const handleSearch = () => {
-      const params = new URLSearchParams();
-      const checkInDate = searchParams.checkInDate || new Date().toISOString();
-      const checkOutDateObj = new Date(checkInDate);
-      const nightsNumber = parseInt(nights as string, 10) || 0;
-      checkOutDateObj.setDate(checkOutDateObj.getDate() + nightsNumber);
-      const checkOutDate = checkOutDateObj.toISOString();
-      const currentCity = selectedCity || city;
-      params.append('city', currentCity);
-      params.append('country', countrie );
-      params.append('checkInDate', checkInDate);
-      params.append('checkOutDate', checkOutDate);
-      params.append('nights', String(nights)); 
-      params.append('fromTripPlanner', 'true');
-      if (searchParams.specificDay) {
-        params.append('specificDay', 'true');
-        if (searchParams.specificDayId) {
-          params.append('specificDayId', searchParams.specificDayId);}}
-      params.append('applyToAllDays', searchParams.specificDay ? 'false' : String(applyToAllDays));
-      if (searchParams.allDays) {
-        params.append('allDays', JSON.stringify(searchParams.allDays));}
-      let savedHotels = [];
-      const storedHotels = sessionStorage.getItem('tripPlannerHotels');
-      if (storedHotels) {
-        try {
-          savedHotels = JSON.parse(storedHotels);
-          params.append('savedHotels', encodeURIComponent(JSON.stringify(savedHotels)));
-        } catch (e) { console.error('Error parsing saved hotels', e);}
-      }
-      const rooms = [{id: 1,adults: adultsCount,cwb: cwbCount, cnb: cnbCount, infants: infantsCount }];
-      params.append('adults', String(rooms[0].adults));
-      params.append('cwb', String(rooms[0].cwb));
-      params.append('cnb', String(rooms[0].cnb));
-      params.append('infants', String(rooms[0].infants));
-      params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
-      window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`; };
-    const formatDate = (dateStr) => {
+useEffect(() => {
+  if (!countrie) {
+    const storedParams = sessionStorage.getItem('tripPlannerParams');
+    if (storedParams) {
       try {
-        return new Date(dateStr).toLocaleDateString();
+        const params = JSON.parse(storedParams);
+        console.log('Retrieved params from sessionStorage:', params);
+        if (params.country) {setCountrie(params.country);}
+        if (params.city && !city) { setCity(params.city); }
+        if (params.rooms && params.rooms.length > 0) {
+          setAdultsCount(params.rooms[0].adults || 2);
+          setCwbCount(params.rooms[0].cwb || 0);
+          setCnbCount(params.rooms[0].cnb || 0);
+          setInfantsCount(params.rooms[0].infants || 0);}
       } catch (e) {
-        return dateStr || '';
+        console.error('Error parsing stored trip planner params', e);
       }
-    };
+    }
+  }
+}, [countrie, city]);
 
-    useEffect(() => {
-      if (!countrie) {
-        const storedParams = sessionStorage.getItem('tripPlannerParams');
-        if (storedParams) {
-          try {
-            const params = JSON.parse(storedParams);
-            console.log('Retrieved params from sessionStorage:', params);
-            if (params.country) {
-              setCountrie(params.country);
-            }
-            if (params.city && !city) {
-              setCity(params.city);}
-          } catch (e) {
-            console.error('Error parsing stored trip planner params', e);
-          }}}
-    }, [countrie, city]);
-    const getCheckOutDate = () => {
-      try {
-        const checkInObj = new Date(searchParams.checkInDate);
-        const checkOutObj = new Date(checkInObj);
-        const nightsNumber = parseInt(nights as string, 10) || 0;
-        checkOutObj.setDate(checkOutObj.getDate() + nightsNumber);
-        const tripEndDate = new Date(searchParams.originalCheckOutDate || searchParams.checkOutDate);
-        if (checkOutObj > tripEndDate) {
-          return tripEndDate.toLocaleDateString();}
-        return checkOutObj.toLocaleDateString();
-      } catch (e) {
-        return formatDate(searchParams.checkOutDate);}};
+const getCheckOutDate = () => {
+  try {
+    const checkInObj = new Date(searchParams.checkInDate);
+    const checkOutObj = new Date(checkInObj);
+    const nightsNumber = parseInt(nights as string, 10) || 0;
+    checkOutObj.setDate(checkOutObj.getDate() + (nightsNumber - 1));
+    const tripEndDate = new Date(searchParams.originalCheckOutDate || searchParams.checkOutDate);
+    if (checkOutObj > tripEndDate) {
+      return tripEndDate.toLocaleDateString();
+    }
+    return checkOutObj.toLocaleDateString();
+  } catch (e) {
+    return formatDate(searchParams.checkOutDate);
+  }
+};
 
 return (
       <Box className="trip-planner-area-container">

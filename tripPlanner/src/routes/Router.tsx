@@ -5,7 +5,7 @@ import TripPlanner from '../components/common/packages/TripPlanner/TripPlanner.t
 import TripPlannerArea from '../components/common/packages/TripPlannerArea/TripPlannerArea.tsx';
 import MainLayout from '../pages/MainLayout/MainLayout.tsx';
 import { ROUTE_CONSTANTS } from '../constants/routeConstans.ts';
-import TourPackagePDF from '../components/common/TripPlannerPDF/TourPackagePDF.tsx';
+import TourPackagePDF from '../components/common/packages/Customize/TripPlannerPDF/TourPackagePDF.tsx';
 
 const Router: React.FC = () => {
 

@@ -141,6 +141,9 @@ export interface SearchParams {
   checkOutDate?: string;
   nights?: number;
   rooms?: Array<{
+    cnb: number;
+    infants: number;
+    cwb: number;
     adults: number;
   }>;
 }
