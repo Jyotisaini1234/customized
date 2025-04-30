@@ -79,3 +79,18 @@ export const locations = {
   'Lovina': false,
   'Nusa Dua': false,
 };
+
+  // Dropdown menus configuration
+export const dropdownMenus = {
+    'baku-packages': [
+      { label: 'Readymade + Customized', path: '/baku-packages/readymade-customized' },
+      { label: 'Customized', path: '/customize-package' }
+    ],
+    'bookings': [
+      { label: 'Quotation List', path: '/my-leads' },
+      { label: 'On Request Bookings', path: '/bookings/on-request' },
+      { label: 'Confirmed Bookings', path: '/confirmed-booking' },
+      { label: 'Cancel Bookings', path: '/cancel-booking' }
+    ]
+  };
+  

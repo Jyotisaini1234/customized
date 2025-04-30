@@ -1,0 +1,68 @@
+.trip-details-container {
+    padding: 1rem;
+    
+    .hotel-details-card {
+      border-radius: 8px;
+      overflow: hidden;
+      
+      .hotel-accordion {
+        box-shadow: none;
+        
+        &:before {
+          display: none;
+        }
+        
+        .hotel-summary {
+          padding: 0;
+          
+          .hotel-summary-content {
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            
+            .hotel-name {
+              font-weight: 600;
+              font-size: 1.1rem;
+            }
+            
+            .hotel-basic-info {
+              display: flex;
+              gap: 1.5rem;
+              flex-wrap: wrap;
+            }
+            
+            .hotel-price {
+              font-weight: 600;
+              color: #4CAF50;
+              margin-top: 0.5rem;
+            }
+          }
+        }
+        
+        .hotel-details {
+          padding: 0 1rem 1rem;
+          
+          .hotel-info-section {
+            margin-bottom: 1.5rem;
+            
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 2fr;
+              gap: 0.75rem;
+              margin-top: 0.5rem;
+            }
+            
+            .hotel-description {
+              line-height: 1.6;
+              max-height: 200px;
+              overflow-y: auto;
+              padding-right: 0.5rem;
+              white-space: pre-line;
+            }
+          }
+        }
+      }
+    }
+  }

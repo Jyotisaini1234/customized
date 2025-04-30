@@ -158,3 +158,32 @@ export interface TripPlannerData {
   currency: string;
 }
 
+export interface ClientDetailsFormProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (clientData: any) => void;
+  bookingRef: string;
+  destinations:string;
+  nights:string;
+  travelDate:string
+}
+
+export interface Quote {
+  id: string;
+  label: string;
+  price: number;
+}
+
+export interface Lead {
+  id: string;
+  clientName: string;
+  phone: string;
+  creationDate: string;
+  destinations: string;
+  from: string;
+  travelDate: string;
+  nights: number;
+  status: 'Quote Created' | 'Lead Converted';
+  quotes: Quote[];
+  referenceId?: string;
+}

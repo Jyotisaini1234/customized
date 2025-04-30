@@ -8,6 +8,7 @@ import { AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 import { PlannerItem, TripPlannerProps } from '../../../../types/types.ts';
 import { TRIP_PLANNER } from '../../../../utils/ApiConstants.ts';
 import TripDetails from '../TripDetails/TripDetails.tsx';
+import ClientDetailsForm from '../../BookingSection/ClientForm/ClientDetailsForm.tsx';
 
 const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutDate, onCancel, onProceed}) => {
 const location = useLocation(); 
@@ -37,6 +38,11 @@ const [grandTotal, setGrandTotal] = useState(0);
 const [marginTotal, setMarginTotal] = useState('0');
 const [selectedHotel, setSelectedHotel] = useState<any>(null);
 const packageType = currentSearchParams.packageType || 'hotel-land';
+const [clientFormOpen, setClientFormOpen] = useState(false);
+const [bookingRef] = useState(`BK${Math.floor(Math.random() * 90000) + 10000}`);
+const [showThankYou, setShowThankYou] = useState(false);
+const [selectedHotels, setSelectedHotels] = useState<any[]>([]); // if using hotel selection
+
 const calculateNights = (startDate: Date | null, endDate: Date | null) => {
   if (startDate && endDate) {
     if (
@@ -625,6 +631,12 @@ const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hot
 };
 
 const handleDownloadPDF = () => {
+  setClientFormOpen(true);
+};
+const handleClientFormSubmit = (clientData) => {
+  setClientFormOpen(false);
+  setShowThankYou(true);
+
   const calculateTotalPersons = () => {
     if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
       return 2; // Default to 2 persons if no room data
@@ -637,10 +649,12 @@ const handleDownloadPDF = () => {
       return total + adults + cwb + cnb + infants;
     }, 0);
   };
+  
   const totalPersons = calculateTotalPersons();
   const tripPlannerData = {
-    bookingRef: `BK${Math.floor(Math.random() * 90000) + 10000}`,
+    bookingRef: bookingRef,
     generateDate: new Date().toLocaleDateString(),
+    clientDetails: clientData,
     currentSearchParams: {
       checkInDate: currentSearchParams.checkInDate,
       checkOutDate: currentSearchParams.checkOutDate,
@@ -687,39 +701,60 @@ const handleDownloadPDF = () => {
     }),
     costs: {
       finalAmount: grandTotal + (parseFloat(marginTotal) || 0),
-      packageDetails: {totalPersons: totalPersons}},
-    currency: currency || 'USD'};
-  if (tripPlannerData.plannerItems.length > 0) {
-    console.log("Example planner item structure:", 
-    JSON.stringify(tripPlannerData.plannerItems[0], null, 2));}
+      packageDetails: {totalPersons: totalPersons}
+    },
+    currency: currency || 'USD'
+  };
+  const existingBookings = JSON.parse(sessionStorage.getItem('myBookings') || '[]');
+  existingBookings.push({
+    id: bookingRef,
+    clientName: clientData.name,
+    destination: currentSearchParams.city || 'Baku',
+    creationDate: new Date(),
+    travelDate: new Date(currentSearchParams.checkInDate),
+    nights: currentSearchParams.nights || nights,
+    amount: grandTotal + (parseFloat(marginTotal) || 0),
+    currency: currency || 'USD',
+    status: 'Quote Created'
+  });
+  sessionStorage.setItem('myBookings', JSON.stringify(existingBookings));
   sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
-  navigate('/tour-package-pdf');
+  window.open('/tour-package-pdf', '_blank');
+
 };
+
+
 const showHotelTab = packageType === 'hotel-land';
 return (
     <Box className="trip-planner-page">
       <Container sx={{ paddingLeft: '0rem', paddingRight: '0rem', maxWidth: '100%' }}>
-        <Box className="search-info heading">
-          <Typography variant="h5" component="h1">
-            {displayCity} | {displayNights} NIGHT/S | {displayCheckInDate} - {displayCheckOutDate}
-          </Typography>
-          <Button className="modify-search" onClick={() => setShowModifySearch(!showModifySearch)}> Modify search<ArrowDownIcon width="16" height="16" fill="#000" /></Button>
-        </Box>
-        {showModifySearch && (
-          <div className="modify-search-container">
-            <Customize isModifying={true} initialValues={currentSearchParams} onSearchComplete={handleSearchComplete}  />
-          </div>)}
-        <Box sx={{ mb: 0 }}>
-          <Tabs value={activeTab} onChange={handleTabChange} sx={{color:'black'}}>
-            <Tab value="planner" label="Planner" style={{color: activeTab === 'planner' ? 'white' : 'black', }}  sx={{  color: activeTab === 'planner' ? 'black' : 'white', 
-              bgcolor: activeTab === 'planner' ? 'grey' : 'white',marginLeft:'0rem', width:'10rem'}}  />
-            {showHotelTab && (
-              <Tab value="hotel" label="Hotel Details" style={{color: activeTab === 'planner' ? 'black' : 'white', }}  sx={{color: activeTab === 'planner' ? 'black' : 'white', 
-                bgcolor: activeTab === 'planner' ? 'white' : 'grey',marginLeft:'0.5rem', width:'10rem' }}  />
+        {!showThankYou && (
+          <>
+            <Box className="search-info heading">
+              <Typography variant="h5" component="h1">
+                {displayCity} | {displayNights} NIGHT/S | {displayCheckInDate} - {displayCheckOutDate}
+              </Typography>
+              <Button className="modify-search" onClick={() => setShowModifySearch(!showModifySearch)}> Modify search<ArrowDownIcon width="16" height="16" fill="#000" /></Button>
+            </Box>
+            {showModifySearch && (
+              <div className="modify-search-container">
+                <Customize isModifying={true} initialValues={currentSearchParams} onSearchComplete={handleSearchComplete} />
+              </div>
             )}
-          </Tabs>
-        </Box>
-        {activeTab === 'planner' && (
+            <Box sx={{ mb: 0 }}>
+              <Tabs value={activeTab} onChange={handleTabChange} sx={{ color: 'black' }}>
+                <Tab value="planner" label="Planner" style={{ color: activeTab === 'planner' ? 'white' : 'black', }} sx={{ color: activeTab === 'planner' ? 'black' : 'white', 
+                  bgcolor: activeTab === 'planner' ? 'grey' : 'white', marginLeft: '0rem', width: '10rem' }} />
+                {showHotelTab && (
+                  <Tab value="hotel" label="Hotel Details" style={{ color: activeTab === 'planner' ? 'black' : 'white', }} sx={{ color: activeTab === 'planner' ? 'black' : 'white', 
+                    bgcolor: activeTab === 'planner' ? 'white' : 'grey', marginLeft: '0.5rem', width: '10rem' }} />
+                )}
+              </Tabs>
+            </Box>
+          </>
+        )}
+        
+        {activeTab === 'planner' && !showThankYou && (
           <Paper elevation={3} className="planner-table-container">
             <Box className="planner-table">
               <Box className="table-header">
@@ -738,35 +773,34 @@ return (
                   </Box>
                   {/* Show hotel cell only for hotel-land package */}
                   {packageType === 'hotel-land' && (
-                  <Box className="cell">
-                  {plannerItem.hotel ? (
-                    <Box className="selected-hotel">
-                      <Box sx={{}}>
-                        <Typography variant="body2"sx={{ fontSize: '0.8rem',  textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap', overflow: 'hidden',textAlign: 'center', maxWidth: '100%',}}>
-                    {plannerItem.hotel.name}
-                  </Typography>
-                </Box>
-                <Box>
-                  <IconButton sx={{ position: 'absolute', right: 0 }}className="remove-button"
-                    onClick={() => handleRemoveHotel(plannerItem)}  aria-label="Remove hotel"size="small" >
-                    <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
-                  </IconButton>
-                </Box>
-                    </Box>
-                  ) : (
-                    <Box display="flex" justifyContent="flex-end">
-                      <IconButton className="add-button"onClick={() => handleHotelSelection(plannerItem.id)}sx={{ color: '#777777', fontSize: '1rem', '& .MuiSvgIcon-root': { fill: 'grey' },}}>
-                        <AddCircleOutline />
-                      </IconButton>
+                    <Box className="cell">
+                      {plannerItem.hotel ? (
+                        <Box className="selected-hotel">
+                          <Box sx={{}}>
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap', overflow: 'hidden', textAlign: 'center', maxWidth: '100%', }}>
+                              {plannerItem.hotel.name}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <IconButton sx={{ position: 'absolute', right: 0 }} className="remove-button"
+                              onClick={() => handleRemoveHotel(plannerItem)} aria-label="Remove hotel" size="small" >
+                              <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      ) : (
+                        <Box display="flex" justifyContent="flex-end">
+                          <IconButton className="add-button" onClick={() => handleHotelSelection(plannerItem.id)} sx={{ color: '#777777', fontSize: '1rem', '& .MuiSvgIcon-root': { fill: 'grey' }, }}>
+                            <AddCircleOutline />
+                          </IconButton>
+                        </Box>
+                      )}
                     </Box>
                   )}
-                </Box>
-                
-                  )}
                   <Box className="cell">
                     <Box display="flex" justifyContent="flex-end">
-                      <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'transfer')} aria-label="Add transfer"sx={{ color: '#777777' ,"& .MuiSvgIcon-root":{fill:'grey'} }}> 
+                      <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'transfer')} aria-label="Add transfer" sx={{ color: '#777777', "& .MuiSvgIcon-root": { fill: 'grey' } }}>
                         <AddCircleOutline />
                       </IconButton>
                     </Box>
@@ -775,21 +809,21 @@ return (
                     {plannerItem.tours ? (
                       <Box className="selected-tour">
                         <Box>
-                        <Typography variant="body2" sx={{ fontSize:'0.8rem', textOverflow: 'ellipsis', textAlign: 'center',maxWidth: '100%' }} >
-                          {plannerItem.tours.name}
-                        </Typography>
+                          <Typography variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis', textAlign: 'center', maxWidth: '100%' }} >
+                            {plannerItem.tours.name}
+                          </Typography>
                         </Box>
                         <Box>
-                        <IconButton sx={{position: 'absolute', right: 0 }} className="remove-button"  onClick={() => handleRemoveTour(plannerItem)}  aria-label="Remove tour" size="small" >
-                          <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
-                        </IconButton>
+                          <IconButton sx={{ position: 'absolute', right: 0 }} className="remove-button" onClick={() => handleRemoveTour(plannerItem)} aria-label="Remove tour" size="small" >
+                            <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
+                          </IconButton>
                         </Box>
                       </Box>
                     ) : (
                       <Box display="flex" justifyContent="flex-end">
-                        <IconButton className="add-button" 
+                        <IconButton className="add-button"
                           onClick={() => handleAddItem(plannerItem.id, 'tours')}
-                          aria-label="Add tours"  sx={{ color: '#777777', fontSize: '1rem',"& .MuiSvgIcon-root":{fill:'grey'} }}>
+                          aria-label="Add tours" sx={{ color: '#777777', fontSize: '1rem', "& .MuiSvgIcon-root": { fill: 'grey' } }}>
                           <AddCircleOutline />
                         </IconButton>
                       </Box>
@@ -797,7 +831,7 @@ return (
                   </Box>
                   <Box className="cell">
                     <Box display="flex" justifyContent="flex-end">
-                      <IconButton className="add-button"onClick={() => handleAddItem(plannerItem.id, 'meals')} aria-label="Add meals" sx={{ color: '#777777',"& .MuiSvgIcon-root":{fill:'grey'}  }} >
+                      <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'meals')} aria-label="Add meals" sx={{ color: '#777777', "& .MuiSvgIcon-root": { fill: 'grey' } }} >
                         <AddCircleOutline />
                       </IconButton>
                     </Box>
@@ -806,34 +840,51 @@ return (
               ))}
             </Box>
             <Box className="total-section" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-            <Box className="total-row">
-              <Typography className="label">Net Total:</Typography>
-              <Typography className="value">{currency} {grandTotal.toFixed(2)}</Typography>
-            </Box>
-            <Box className="total-row">
-            <Typography className="label">Add Margin:</Typography>
-            <Box className="value" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {currency}
-              <TextField  type="number" value={marginTotal}onChange={handleMarginChange}size="small"sx={{ width: '4rem', height: '2rem' }}/>
-            </Box>
-            </Box>
-            <Box className="total-row">
-              <Typography className="label">Final Amt:</Typography>
-              <Typography className="value">{currency} {(grandTotal + (parseFloat(marginTotal) || 0)).toFixed(2)}</Typography>
-            </Box>
+              <Box className="total-row">
+                <Typography className="label">Net Total:</Typography>
+                <Typography className="value">{currency} {grandTotal.toFixed(2)}</Typography>
+              </Box>
+              <Box className="total-row">
+                <Typography className="label">Add Margin:</Typography>
+                <Box className="value" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {currency}
+                  <TextField type="number" value={marginTotal} onChange={handleMarginChange} size="small" sx={{ width: '4rem', height: '2rem' }} />
+                </Box>
+              </Box>
+              <Box className="total-row">
+                <Typography className="label">Final Amt:</Typography>
+                <Typography className="value">{currency} {(grandTotal + (parseFloat(marginTotal) || 0)).toFixed(2)}</Typography>
+              </Box>
             </Box>
             <Box className="action-buttons">
-              <Button variant="contained" color="error" className="proceed-button"  onClick={handleDownloadPDF} > Download Now </Button>
+              <Button variant="contained" color="error" className="proceed-button" onClick={handleDownloadPDF}> Download Now </Button>
               <Button variant="contained" className="cancel-button" onClick={onCancel}>Cancel </Button>
             </Box>
           </Paper>
         )}
-        {activeTab === 'hotel' && showHotelTab && (
-          <Paper elevation={3} className="hotel-details-container" sx={{bgcolor:'transparent', boxShadow:'none'}}>
+        
+        {activeTab === 'hotel' && showHotelTab && !showThankYou && (
+          <Paper elevation={3} className="hotel-details-container" sx={{ bgcolor: 'transparent', boxShadow: 'none' }}>
             <TripDetails hotels={hotels} />
           </Paper>
         )}
+        
+        {showThankYou && (
+          <Paper elevation={3} className="thank-you-container" sx={{ padding: '2rem', margin: '2rem 0', textAlign: 'center', bgcolor: '#f8f8f8', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
+            <Typography variant="h4" sx={{ color: '#4CAF50', marginBottom: '1rem' }}>
+              Thank You!
+            </Typography>
+            <Typography variant="body1" sx={{ marginBottom: '1rem' ,fontSize:'1.3rem' }}>
+              Your PDF is being generated in a new tab.
+            </Typography>
+          </Paper>
+        )}
       </Container>
+      
+      {clientFormOpen && (
+        <ClientDetailsForm open={clientFormOpen} onClose={() => setClientFormOpen(false)}  onSubmit={handleClientFormSubmit} bookingRef={bookingRef}
+          destinations={currentSearchParams?.city || 'Baku'}  nights={currentSearchParams?.nights?.toString() || displayNights.toString()}  travelDate={currentSearchParams?.checkInDate} />
+      )}
     </Box>
   );
 };

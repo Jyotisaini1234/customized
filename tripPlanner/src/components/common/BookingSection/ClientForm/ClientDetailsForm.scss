@@ -1,0 +1,25 @@
+.client-details-dialog {
+  width: 30rem;
+  margin: auto;
+  .heading{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    background: white;
+  }
+    .MuiDialogTitle-root {
+      background: white;
+    }
+    
+    .MuiDialogContent-root {
+      padding: 1.2rem;
+    }
+    
+    .MuiDialogActions-root {
+      background: white;
+    }
+    .MuiOutlinedInput-input{
+      height: 0.5rem;
+      width: 15rem;
+    }
+  }

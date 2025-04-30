@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './PrimaryNavbar.scss';
 import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstans.ts';
 import { Box } from '@mui/material';
+import { dropdownMenus } from '../../../../model/selectOptions.ts';
 
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
@@ -15,20 +16,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Dropdown menus configuration
-  const dropdownMenus = {
-    'baku-packages': [
-      { label: 'Readymade + Customized', path: '/baku-packages/readymade-customized' },
-      { label: 'Customized', path: '/customize-package' }
-    ],
-    'bookings': [
-      { label: 'Quotation List', path: '/bookings/quotation-list' },
-      { label: 'On Request Bookings', path: '/bookings/on-request' },
-      { label: 'Confirmed Bookings', path: '/bookings/confirmed' },
-      { label: 'Cancel Bookings', path: '/bookings/cancel' }
-    ]
-  };
-  
+
   useEffect(() => {
     const currentPath = location.pathname;
     
