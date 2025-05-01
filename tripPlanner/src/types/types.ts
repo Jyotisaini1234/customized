@@ -55,6 +55,7 @@ export interface PlannerItem {
   hotel: {
     name: string;
     details: any;
+    hotelSpecificDetails: any;
   } | null;
   transfer: any | null;
   tours: any | null;

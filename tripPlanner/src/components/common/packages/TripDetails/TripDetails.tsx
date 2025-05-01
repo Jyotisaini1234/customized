@@ -3,9 +3,10 @@ import { Typography, Grid, Box ,Paper} from '@mui/material';
 
 interface TripDetailsProps {
   hotels: any[];
+  totalPrice: any;
 }
 
-const TripDetails: React.FC<TripDetailsProps> = ({ hotels }) => {
+const TripDetails: React.FC<TripDetailsProps> = ({ hotels, totalPrice}) => {
   
   return (
     <Box className="hotel-details-container" sx={{ bgcolor: 'transparent', boxShadow: 'none' }}>
@@ -66,7 +67,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ hotels }) => {
                 </Grid>
                 <Grid item xs={12} sm={8} md={2} className="booking-column">
                     <Typography component='span' className="details-label">
-                    Total Amount: USD {hotel.booking?.totalPrice?.toFixed(2) || "0.00"}
+                    Total Amount: USD {totalPrice.toFixed(2) || "0.00"}
                     </Typography>
                     <Typography component='span' className="details-label">
                     Status: {hotel.room?.status || hotel.booking?.status || 'Available (Payment Needed)'}
