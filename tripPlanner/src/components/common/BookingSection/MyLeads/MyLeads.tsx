@@ -22,8 +22,10 @@ const MyLeads: React.FC = () => {
     <Box sx={{ padding: 3 }}>
       <Typography variant="h5" gutterBottom>My Leads</Typography>
 
-      {leads.length === 0 ? (
-        <Typography>No leads available.</Typography>
+      {isLoading ? (
+        <Typography>Loading leads...</Typography>
+      ) : isError ? (
+        <Typography>Error loading leads.</Typography>
       ) : (
         <Table sx={{ bgcolor: 'white' }}>
           <TableHead sx={{ bgcolor: 'lightgrey' }}>
@@ -40,7 +42,8 @@ const MyLeads: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {leads.map((lead) => (
+          {leads && leads.length > 0 ? (
+            leads.map((lead) => (
               <TableRow key={lead.id}>
                 <TableCell>
                   <Link href="#" underline="hover">{lead.clientName}</Link>
@@ -67,7 +70,14 @@ const MyLeads: React.FC = () => {
                   ))}
                 </TableCell>
               </TableRow>
-            ))}
+            ))  ) : (
+              <TableRow>
+                <TableCell colSpan={9} align="center">
+                  No leads available.
+                </TableCell>
+              </TableRow>
+            )
+          }
           </TableBody>
         </Table>
       )}
