@@ -507,7 +507,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
     const hotelNights = hotelDetails.booking?.nights || 1;
     const plannerItemId = plannerItem.id;
     // Step 1: Remove the hotel from the planner items
-    const newPlannerItems = plannerItems.map(item => {
+    let newPlannerItems = plannerItems.map(item => {
       if (item.id === plannerItemId) {
         return {
           ...item,
