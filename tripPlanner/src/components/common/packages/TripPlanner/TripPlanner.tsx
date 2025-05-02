@@ -241,6 +241,76 @@ useEffect(() => {
   }
 }, [plannerItems, currentSearchParams.nights]);
 
+
+useEffect(() => {
+  if (hotels.length > 0) {
+    const hotelCurrency = hotels[0]?.booking?.currency || 'USD';
+    setCurrency(hotelCurrency);
+    console.log("Processing hotels for calendar:", hotels);
+    setPlannerItems(prevItems => {
+      const updatedItems = [...prevItems];
+      updatedItems.forEach(item => {
+        item.hotel = null;});
+      hotels.forEach(hotel => {
+        if (hotel.specificDayId) {
+          const specificDay = updatedItems.find(item => item.id === hotel.specificDayId);
+          if (specificDay) {
+            const dayIndex = updatedItems.indexOf(specificDay);
+            const hotelCheckIn = new Date(specificDay.dateObj);
+            const hotelCheckOut = new Date(hotelCheckIn);
+            hotelCheckOut.setDate(hotelCheckOut.getDate() + 1); // Just for one night
+            updatedItems[dayIndex].hotel = {
+              name: hotel.hotel?.hotelName || "Unknown Hotel",
+              details: hotel,
+              hotelSpecificDetails: hotel.hotelSpecificDetails || {} 
+            };}
+        } else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
+          const hotelCheckIn = new Date(hotel.booking.checkInDate);
+          const hotelCheckOut = new Date(hotel.booking.checkOutDate);
+          updatedItems.forEach((item, index) => {
+            const itemDate = new Date(item.dateObj);
+            itemDate.setHours(0, 0, 0, 0);
+            const inDate = new Date(hotelCheckIn);
+            const outDate = new Date(hotelCheckOut);
+            inDate.setHours(0, 0, 0, 0);
+            outDate.setHours(0, 0, 0, 0);
+            if (itemDate >= inDate && itemDate < outDate) {
+              updatedItems[index].hotel = {
+                name: hotel.hotel?.hotelName || "Unknown Hotel",
+                details: hotel,
+                hotelSpecificDetails: hotel.hotelSpecificDetails || {}
+              };}
+            if (
+              itemDate.getTime() === outDate.getTime() &&
+              index === updatedItems.length - 1) {
+              updatedItems[index].hotel = {
+                name: hotel.hotel?.hotelName || "Unknown Hotel",
+                details: hotel,
+                hotelSpecificDetails: hotel.hotelSpecificDetails || {}
+              }; }
+          });}});
+      return updatedItems;
+    });
+    if (!selectedHotel && hotels.length > 0) { setSelectedHotel(hotels[0]);}
+    const total = hotels.reduce((sum, hotel) => {
+      if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
+      return sum + hotel.booking.totalPrice;}
+      return sum; }, 0);
+    setGrandTotal(total);
+    sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
+  } else {
+    setGrandTotal(0);
+    setSelectedHotel(null);
+    setPlannerItems(prevItems => {
+      return prevItems.map(item => ({
+        ...item,
+        hotel: null
+      }));
+    });
+  }
+}, [hotels, currentSearchParams.nights]);
+
+
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const tourData = urlParams.get('tourData');
