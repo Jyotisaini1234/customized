@@ -37,7 +37,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
   const [hotels, setHotels] = useState<any[]>([]);
   const [showModifySearch, setShowModifySearch] = useState(false);
   const [activeTab, setActiveTab] = useState<'planner' | 'hotel'>('planner');
-  // const [grandTotal, setGrandTotal] = useState(0);
+  const [grandTotal, setGrandTotal] = useState(0);
   const [marginTotal, setMarginTotal] = useState('0');
   const [selectedHotel, setSelectedHotel] = useState<any>(null);
   const packageType = currentSearchParams.packageType || 'hotel-land';
@@ -113,7 +113,13 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
     }
     return items;
   };
-
+  useEffect(() => {
+    const savedHotels = sessionStorage.getItem('tripPlannerHotels');
+    if (savedHotels) {
+      setHotels(JSON.parse(savedHotels));
+    }
+  }, []);
+  
   const [plannerItems, setPlannerItems] = useState<PlannerItem[]>(generateInitialPlannerItems());
   const handleMarginChange = (event) => {
     const inputValue = event.target.value;
@@ -351,80 +357,69 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
   };
 
   useEffect(() => {
-    if (hotels.length > 0) {
-      console.log("Processing hotels:", hotels);
-
-      setPlannerItems(prevItems => {
-        const updatedItems = JSON.parse(JSON.stringify(prevItems));
-
-        // Clear existing hotel assignments
-        updatedItems.forEach(item => {
-          item.hotel = null;
-        });
-
-        hotels.forEach(hotel => {
-          console.log("Processing hotel:", hotel.hotel?.hotelName);
-
-          // Handle specifically assigned day hotels (specificDayId)
-          if (hotel.specificDayId) {
-            const dayIndex = updatedItems.findIndex(item => item.id === hotel.specificDayId);
-            if (dayIndex !== -1) {
-              console.log(`✅ Assigning specific-day hotel ${hotel.hotel?.hotelName} to day ${hotel.specificDayId}`);
-              updatedItems[dayIndex].hotel = {
+    console.log("Processing hotels:", hotels);
+    setPlannerItems(prevItems => {
+      const updatedItems = JSON.parse(JSON.stringify(prevItems));
+      const daysToUpdate = new Set();
+      hotels.forEach(hotel => {
+        if (hotel.specificDayId) {
+          daysToUpdate.add(hotel.specificDayId);
+        } else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
+          const checkInDate = new Date(hotel.booking.checkInDate);
+          const checkOutDate = new Date(hotel.booking.checkOutDate);
+          checkInDate.setHours(0, 0, 0, 0);
+          checkOutDate.setHours(0, 0, 0, 0);
+          
+          updatedItems.forEach(item => {
+            const itemDate = new Date(item.dateObj);
+            itemDate.setHours(0, 0, 0, 0);
+            
+            if (itemDate.getTime() >= checkInDate.getTime() && 
+                itemDate.getTime() <= checkOutDate.getTime()) {
+              daysToUpdate.add(item.id);
+            }
+          });
+        }
+      });
+      hotels.forEach(hotel => {
+        console.log("Processing hotel:", hotel.hotel?.hotelName);
+        if (hotel.specificDayId) {
+          const dayIndex = updatedItems.findIndex(item => item.id === hotel.specificDayId);
+          if (dayIndex !== -1) {
+            console.log(`✅ Assigning specific-day hotel ${hotel.hotel?.hotelName} to day ${hotel.specificDayId}`);
+            updatedItems[dayIndex].hotel = {
+              name: hotel.hotel?.hotelName || "Unknown Hotel",
+              details: hotel,
+              hotelSpecificDetails: Number(hotel.booking?.totalPrice) || 0
+            };
+          }
+        }
+        else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
+          const checkInDate = new Date(hotel.booking.checkInDate);
+          let checkOutDate = new Date(hotel.booking.checkOutDate);
+          checkInDate.setHours(0, 0, 0, 0);
+          checkOutDate.setHours(0, 0, 0, 0);
+          console.log(`Hotel ${hotel.hotel?.hotelName} is assigned from ${checkInDate.toISOString()} to ${checkOutDate.toISOString()}`);
+          const nights = hotel.booking?.nights || 1;
+          const hotelPrice = Number(hotel.booking?.totalPrice) / Number(nights);
+          updatedItems.forEach(item => {
+            const itemDate = new Date(item.dateObj);
+            itemDate.setHours(0, 0, 0, 0);
+            if (itemDate.getTime() >= checkInDate.getTime() && 
+                itemDate.getTime() <= checkOutDate.getTime()) {
+              console.log(`✅ Assigning hotel ${hotel.hotel?.hotelName} to date ${itemDate.toISOString()}`);
+              item.hotel = {
                 name: hotel.hotel?.hotelName || "Unknown Hotel",
-                details: hotel
+                details: hotel,
+                hotelSpecificDetails: hotelPrice
               };
             }
-          }
-          // Handle multi-day hotel bookings (no specificDayId)
-          else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
-            const checkInDate = new Date(hotel.booking.checkInDate);
-            let checkOutDate = new Date(hotel.booking.checkOutDate);
-
-            // If check-in and check-out are the same, do not adjust check-out
-            if (checkInDate.getTime() === checkOutDate.getTime()) {
-              console.log("Single-night booking, no adjustment to check-out.");
-              checkOutDate = checkInDate; // Keep check-out the same as check-in
-            } else {
-              // If check-in and check-out are different, adjust the check-out to the next day if needed
-              checkOutDate.setHours(0, 0, 0, 0);
-            }
-
-            // Reset time components for accurate comparison
-            checkInDate.setHours(0, 0, 0, 0);
-
-            console.log(`Hotel ${hotel.hotel?.hotelName} is assigned from ${checkInDate.toISOString()} to ${checkOutDate.toISOString()}`);
-
-            // Process each day between check-in and check-out
-            updatedItems.forEach(item => {
-              const itemDate = new Date(item.dateObj);
-              itemDate.setHours(0, 0, 0, 0);
-
-              console.log(`Comparing item date ${itemDate.toISOString()} with hotel check-in ${checkInDate.toISOString()} and check-out ${checkOutDate.toISOString()}`);
-
-
-              let hotelPrice = Number(hotel.booking?.totalPrice) / Number(hotel.booking?.nights)
-
-              // For both single and multi-day bookings, assign hotel to all dates from check-in to check-out
-              if (itemDate.getTime() >= checkInDate.getTime() && itemDate.getTime() <= checkOutDate.getTime()) {
-                if (!item.hotel) {
-                  console.log(`✅ Assigning hotel ${hotel.hotel?.hotelName} to date ${itemDate.toISOString()}`);
-                  item.hotel = {
-                    name: hotel.hotel?.hotelName ||
-                      "Unknown Hotel",
-                    details: hotel,
-                    hotelSpecificDetails: hotelPrice
-                  };
-                }
-              }
-            });
-          }
-        });
-
-        console.log("Updated planner items:", updatedItems);
-        return updatedItems;
+          });
+        }
       });
-    }
+      console.log("Updated planner items:", updatedItems);
+      return updatedItems;
+    });
   }, [hotels]);
 
   useEffect(() => {
@@ -479,10 +474,8 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
   }, [hotels, plannerItems]);
 
   useEffect(() => {
-
     const processedHotels = new Map();
     let total = 0; 
-
     hotels.forEach(hotel => {
       const hotelKey = hotel.specificDayId || `${hotel.hotel?.hotelId}-${hotel.booking?.checkInDate}-${hotel.booking?.checkOutDate}`;
       if (!processedHotels.has(hotelKey)) {
@@ -502,9 +495,8 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
     const hotelUniqueId = plannerItem.hotel.details.uniqueId;
     const hotelDetails = plannerItem.hotel.details;
     const hotelPrice = plannerItem.hotel.hotelSpecificDetails;
-    setTotalHotelPrice(prev => prev - hotelPrice);
-    let totalPrice = totalHotelPrice;
-    const hotelNights = hotelDetails.booking?.nights || 1;
+    // let totalPrice = totalHotelPrice;
+    // const hotelNights = hotelDetails.booking?.nights || 1;
     const plannerItemId = plannerItem.id;
     // Step 1: Remove the hotel from the planner items
     let newPlannerItems = plannerItems.map(item => {
@@ -517,6 +509,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
       return item;
     });
     console.log("plannerItems", newPlannerItems)
+    setTotalHotelPrice(prev => prev - hotelPrice);
     // Step 2: Update sessionStorage
     setPlannerItems(newPlannerItems);
     sessionStorage.setItem('tripPlannerItems', JSON.stringify(newPlannerItems));
@@ -541,6 +534,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
             ...hotel,
             booking: {
               ...hotel.booking,
+              ...hotel.booking,
               nights: updatedNights,
               totalPrice: updatedTotalPrice
             }
@@ -557,7 +551,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
         return sum + (item.tours?.details?.booking?.totalPrice || 0);
       }, 0);
 
-    // setGrandTotal(updatedGrandTotal);
+    setGrandTotal(updatedGrandTotal);
     // Step 6: Remove from sessionStorage and update UI
     setTimeout(() => {
       const itemsFromStorage = JSON.parse(sessionStorage.getItem('tripPlannerItems') || '[]');
@@ -584,6 +578,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
     // setPlannerItems(updatedHotels);
   };
 
+  
   const handleRemoveTour = (plannerItem) => {
     if (!plannerItem.tours) return;
     const priceToSubtract = plannerItem.tours.details?.booking?.totalPrice || 0;

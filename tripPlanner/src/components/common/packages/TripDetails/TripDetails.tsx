@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Typography, Grid, Box ,Paper} from '@mui/material';
 
 interface TripDetailsProps {
@@ -7,8 +7,8 @@ interface TripDetailsProps {
 }
 
 const TripDetails: React.FC<TripDetailsProps> = ({ hotels, totalPrice}) => {
-  
-  return (
+ 
+return (
     <Box className="hotel-details-container" sx={{ bgcolor: 'transparent', boxShadow: 'none' }}>
     {hotels.length > 0 ? (
         hotels.map((hotel, index) => (<Grid 
@@ -67,7 +67,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ hotels, totalPrice}) => {
                 </Grid>
                 <Grid item xs={12} sm={8} md={2} className="booking-column">
                     <Typography component='span' className="details-label">
-                    Total Amount: USD {totalPrice.toFixed(2) || "0.00"}
+                    Total Amount:USD {hotel.booking?.totalPrice || 0}
                     </Typography>
                     <Typography component='span' className="details-label">
                     Status: {hotel.room?.status || hotel.booking?.status || 'Available (Payment Needed)'}
@@ -85,6 +85,8 @@ const TripDetails: React.FC<TripDetailsProps> = ({ hotels, totalPrice}) => {
     )}
     </Box>
 );
+
 };
+
 
 export default TripDetails;
