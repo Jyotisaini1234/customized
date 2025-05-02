@@ -865,7 +865,7 @@ return (
         
         {activeTab === 'hotel' && showHotelTab && !showThankYou && (
           <Paper elevation={3} className="hotel-details-container" sx={{ bgcolor: 'transparent', boxShadow: 'none' }}>
-            <TripDetails hotels={hotels} />
+            <TripDetails hotels={hotels} totalPrice={undefined} />
           </Paper>
         )}
         
