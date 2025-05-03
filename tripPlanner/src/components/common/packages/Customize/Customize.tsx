@@ -40,18 +40,21 @@
     const [country, setCountry] = useState<{ label: string; value: string } | undefined>(
       countrie[0] ? { label: countrie[0].label, value: countrie[0].id.toString() } : undefined
     );
-    const parseDate = (dateString?: string): Date | null => {
-      return dateString ? new Date(dateString) : null;
-    };
-    
-    const addDays = (date: Date, days: number): Date => {
-      if (days === 1) {
-        return new Date(date);
+    const parseDate = (dateString: string | null | undefined) => {
+      if (!dateString) return null;
+      try {
+        const parsedDate = new Date(dateString);
+        return isNaN(parsedDate.getTime()) ? null : parsedDate;
+      } catch (e) {
+        return null;
       }
+    };
+    const addDays = (date: Date, days: number): Date => {
       const newDate = new Date(date);
-      newDate.setDate(newDate.getDate() + (days - 1)); // Subtract 1 because 1 night means same day
+      newDate.setDate(newDate.getDate() + days);
       return newDate;
     };
+
     const [checkInDate, setCheckInDate] = useState<Date | null>(
       parseDate(searchParams?.checkInDate) || new Date()
     );
@@ -59,7 +62,7 @@
     const [checkOutDate, setCheckOutDate] = useState<Date | null>(
       parseDate(searchParams?.checkOutDate) || addDays(new Date(), 1)
     );
-    const [nights, setNights] = useState<number>(0); 
+    const [nights, setNights] = useState<number>(1); 
   
     const { data, isLoading, error } = useGetHotelsByCityQuery({ city: city?.value || '', country: country?.value || '' });
     const [packageType, setPackageType] = useState(searchParams?.packageType || "hotel-land");
@@ -91,20 +94,11 @@
 
     const calculateNights = (startDate: Date | null, endDate: Date | null) => {
       if (startDate && endDate) {
-        if (
-          startDate.getDate() === endDate.getDate() && 
-          startDate.getMonth() === endDate.getMonth() && 
-          startDate.getFullYear() === endDate.getFullYear()
-        ) {
-          return 1;
-        }
-        const oneDay = 24 * 60 * 60 * 1000;
         const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-        const diffDays = Math.ceil(diffTime / oneDay);
-        return diffDays + 1; // Add 1 because diffDays is 0 for same day
-      }
-      return 0;
-    };
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;}
+      return 0;};
+    
 
     const handleNightsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newNights = parseInt(e.target.value);
@@ -132,37 +126,37 @@
       }
     };
 
-  const handleCheckInChange = (date: Date | null) => {
-    setCheckInDate(date);
-    if (date) {
-      if (nights === 1) {
-        setCheckOutDate(new Date(date));
-      } else if (checkOutDate) {
-        const newCheckOutDate = addDays(date, parseInt(nights.toString()));
-        setCheckOutDate(newCheckOutDate);
+    const handleCheckInChange = (date: Date | null) => {
+      setCheckInDate(date);
+      if (date) {
+        if (nights === 1) {
+          setCheckOutDate(new Date(date));
+        } else if (checkOutDate) {
+          const newCheckOutDate = addDays(date, parseInt(nights.toString()));
+          setCheckOutDate(newCheckOutDate);
+        }
       }
-    }
-  };
-  const handleCheckOutChange = (date: Date | null) => {
-    if (date && checkInDate) {
-      setCheckOutDate(date);
-      const isSameDay = 
-        date.getDate() === checkInDate.getDate() && 
-        date.getMonth() === checkInDate.getMonth() && 
-        date.getFullYear() === checkInDate.getFullYear();
-        
-      if (isSameDay) {
-        setNights(1);
-      } else if (date < checkInDate) {
-        setCheckOutDate(checkInDate);
-        setCheckInDate(date);
-        setNights(1);
-      } else {
-        const nightsCount = calculateNights(checkInDate, date);
-        setNights(nightsCount);
+    };
+    const handleCheckOutChange = (date: Date | null) => {
+      if (date && checkInDate) {
+        setCheckOutDate(date);
+        const isSameDay = 
+          date.getDate() === checkInDate.getDate() && 
+          date.getMonth() === checkInDate.getMonth() && 
+          date.getFullYear() === checkInDate.getFullYear();
+          
+        if (isSameDay) {
+          setNights(1);
+        } else if (date < checkInDate) {
+          setCheckOutDate(checkInDate);
+          setCheckInDate(date);
+          setNights(1);
+        } else {
+          const nightsCount = calculateNights(checkInDate, date);
+          setNights(nightsCount);
+        }
       }
-    }
-  };
+    };
     const handleAddRoom = () => {
       setRooms([
         ...rooms,
@@ -297,7 +291,7 @@ return (
                         <Typography variant="body2" sx={{ mb: 0.5 }}>Check Out</Typography>
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                           <DatePicker value={checkOutDate} onChange={handleCheckOutChange}
-                            minDate={checkInDate ? checkInDate : new Date()}
+                            minDate={checkInDate ? addDays(checkInDate, 1) : addDays(new Date(), 1)}
                             slotProps={{textField: {size: "small",fullWidth: true,InputProps: { sx: { height: '40px' } }} }}/>
                         </LocalizationProvider>
                       </Grid>

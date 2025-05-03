@@ -12,7 +12,16 @@ export const city = [
 { label: 'Shamakhi', id: 5},
 ];
 
-
+export const cities = [  
+  { label: 'Azerbaijan', id: 1},
+  ];
+  export const countries = [
+  { label: 'Baku', id: 1},
+  { label: 'Gabala', id: 2},
+  { label: 'Shahdag', id: 3},
+  { label: 'Sheki', id: 4},
+  { label: 'Shamakhi', id: 5},
+  ];
 export const services = [
     { name: "Hotel / Resort Reservations", img: "https://www.uandiholidays.net/images/about-services-1.png" },
     { name: "Logistic Support", img: "https://www.uandiholidays.net/images/about-services-2.png" },

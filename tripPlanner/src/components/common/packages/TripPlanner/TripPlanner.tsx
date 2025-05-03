@@ -43,75 +43,54 @@ const [bookingRef] = useState(`BK${Math.floor(Math.random() * 90000) + 10000}`);
 const [showThankYou, setShowThankYou] = useState(false);
 const [selectedHotels, setSelectedHotels] = useState<any[]>([]); // if using hotel selection
 
+  
 const calculateNights = (startDate: Date | null, endDate: Date | null) => {
   if (startDate && endDate) {
-    if (
-      startDate.getDate() === endDate.getDate() && 
-      startDate.getMonth() === endDate.getMonth() && 
-      startDate.getFullYear() === endDate.getFullYear()
-    ) {
-      return 1;
-    }
-    const oneDay = 24 * 60 * 60 * 1000;
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / oneDay);
-    return diffDays ; // Add 1 because diffDays is 0 for same day
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   }
   return 0;
 };
-
 const generateInitialPlannerItems = () => {
   let startDate, endDate;
   if (searchParams?.checkInDate && searchParams?.checkOutDate) {
     startDate = new Date(searchParams.checkInDate);
     endDate = new Date(searchParams.checkOutDate);
-  } else if (checkInDate && checkOutDate) {
+  }
+  else if (checkInDate && checkOutDate) {
     startDate = new Date(checkInDate);
     endDate = new Date(checkOutDate);
-  } else {
+  }
+  else {
     startDate = new Date();
     endDate = new Date();
+    endDate.setDate(endDate.getDate() + 1);
   }
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     console.error('Invalid date values', { checkInDate, checkOutDate, searchParamsIn: searchParams?.checkInDate, searchParamsOut: searchParams?.checkOutDate });
     startDate = new Date();
     endDate = new Date();
+    endDate.setDate(endDate.getDate() + 1);
   }
-  
   const items: PlannerItem[] = [];
   const currentDate = new Date(startDate);
-  const totalNights = searchParams?.nights || calculateNights(startDate, endDate);
-  if (totalNights === 1) {
+  const totalNights = calculateNights(startDate, endDate);
+  for (let i = 0; i <= totalNights; i++) {
     const dayDate = new Date(currentDate);
     const day = dayDate.getDate();
     const month = dayDate.toLocaleString('default', { month: 'short' });
     const year = dayDate.getFullYear();
     items.push({
-      id: `day-1`,
+      id: `day-${items.length + 1}`,
       date: `${day.toString().padStart(2, '0')}-${month} ${year}`,
       dateObj: new Date(dayDate),
-      hotel: null,
-      transfer: null,
-      tours: null,
-      meals: null,
+      hotel: null, 
+      transfer: null, 
+      tours: null, 
+      meals: null
     });
-  } else {
-    for (let i = 0; i < totalNights; i++) {
-      const dayDate = new Date(currentDate);
-      const day = dayDate.getDate();
-      const month = dayDate.toLocaleString('default', { month: 'short' });
-      const year = dayDate.getFullYear();
-      items.push({
-        id: `day-${items.length + 1}`,
-        date: `${day.toString().padStart(2, '0')}-${month} ${year}`,
-        dateObj: new Date(dayDate),
-        hotel: null,
-        transfer: null,
-        tours: null,
-        meals: null,
-      });
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    currentDate.setDate(currentDate.getDate() + 1);
   }
   return items;
 };
@@ -247,55 +226,52 @@ useEffect(() => {
     const hotelCurrency = hotels[0]?.booking?.currency || 'USD';
     setCurrency(hotelCurrency);
     console.log("Processing hotels for calendar:", hotels);
+    
     setPlannerItems(prevItems => {
       const updatedItems = [...prevItems];
       updatedItems.forEach(item => {
-        item.hotel = null;});
+        item.hotel = null;
+      });
       hotels.forEach(hotel => {
         if (hotel.specificDayId) {
-          const specificDay = updatedItems.find(item => item.id === hotel.specificDayId);
-          if (specificDay) {
-            const dayIndex = updatedItems.indexOf(specificDay);
-            const hotelCheckIn = new Date(specificDay.dateObj);
-            const hotelCheckOut = new Date(hotelCheckIn);
-            hotelCheckOut.setDate(hotelCheckOut.getDate() + 1); // Just for one night
+          const dayIndex = updatedItems.findIndex(item => item.id === hotel.specificDayId);
+          if (dayIndex !== -1) {
             updatedItems[dayIndex].hotel = {
               name: hotel.hotel?.hotelName || "Unknown Hotel",
               details: hotel,
-              hotelSpecificDetails: hotel.hotelSpecificDetails || {} 
-            };}
-        } else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
+              hotelSpecificDetails: hotel.hotelSpecificDetails || {}
+            };
+          }
+        }
+        else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
           const hotelCheckIn = new Date(hotel.booking.checkInDate);
           const hotelCheckOut = new Date(hotel.booking.checkOutDate);
+          hotelCheckIn.setHours(0, 0, 0, 0);
+          hotelCheckOut.setHours(0, 0, 0, 0);
           updatedItems.forEach((item, index) => {
             const itemDate = new Date(item.dateObj);
             itemDate.setHours(0, 0, 0, 0);
-            const inDate = new Date(hotelCheckIn);
-            const outDate = new Date(hotelCheckOut);
-            inDate.setHours(0, 0, 0, 0);
-            outDate.setHours(0, 0, 0, 0);
-            if (itemDate >= inDate && itemDate < outDate) {
+            if (itemDate >= hotelCheckIn && itemDate < hotelCheckOut) {
               updatedItems[index].hotel = {
                 name: hotel.hotel?.hotelName || "Unknown Hotel",
                 details: hotel,
                 hotelSpecificDetails: hotel.hotelSpecificDetails || {}
-              };}
-            if (
-              itemDate.getTime() === outDate.getTime() &&
-              index === updatedItems.length - 1) {
-              updatedItems[index].hotel = {
-                name: hotel.hotel?.hotelName || "Unknown Hotel",
-                details: hotel,
-                hotelSpecificDetails: hotel.hotelSpecificDetails || {}
-              }; }
-          });}});
+              };
+            }
+          });
+        }
+      });
       return updatedItems;
     });
-    if (!selectedHotel && hotels.length > 0) { setSelectedHotel(hotels[0]);}
+    if (!selectedHotel && hotels.length > 0) {
+      setSelectedHotel(hotels[0]);
+    }
     const total = hotels.reduce((sum, hotel) => {
       if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
-      return sum + hotel.booking.totalPrice;}
-      return sum; }, 0);
+        return sum + hotel.booking.totalPrice;
+      }
+      return sum;
+    }, 0);
     setGrandTotal(total);
     sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
   } else {
@@ -309,7 +285,6 @@ useEffect(() => {
     });
   }
 }, [hotels, currentSearchParams.nights]);
-
 
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -390,17 +365,24 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
       }
     });
   } else if (itemType === 'tours') {
+    const { totalPax, adults, infants } = calculatePassengersBreakdown(currentSearchParams.rooms);
+
     const params = new URLSearchParams();
     params.append('city', selectedCity);
     params.append('country', selectedCountry);
-    params.append('occupancy', String(currentSearchParams.rooms?.[0]?.adults || 2));
-    params.append('adult', String(currentSearchParams.rooms?.[0]?.adults || 2));
+    params.append('pax', String(totalPax));
+    params.append('adult', String(adults));
+    params.append('infant', String(infants));
     params.append('fromTripPlanner', 'true');
     params.append('dayId', itemId.split('-')[1]);
     params.append('checkInDate', itemDate.toISOString());
     params.append('specificDayId', itemId);
     params.append('packageType', packageType);
+    if (currentSearchParams.rooms && currentSearchParams.rooms.length > 0) {
+      params.append('rooms', encodeURIComponent(JSON.stringify(currentSearchParams.rooms)));
+    }
     window.location.href = `${TRIP_PLANNER}${params.toString()}`;
+    
   } else {
     navigate(`/${itemType}-summary`, {
       state: {...currentSearchParams,
@@ -411,73 +393,95 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
   }
 };
 
+const calculatePassengersBreakdown = (rooms) => {
+  if (!rooms || !Array.isArray(rooms)) {
+    return { totalPax: 2, adults: 2, infants: 0};}
+  let adults = 0;
+  let infants = 0;
+  rooms.forEach(room => {
+    adults += room.adults +room.cwb +room.cnb;
+    infants += room.infant || 0;});
+  const totalPax = adults + infants;
+  return {totalPax,adults,infants};};
+
+
 useEffect(() => {
   if (hotels.length > 0) {
-    console.log("Processing hotels:", hotels);
-
     setPlannerItems(prevItems => {
       const updatedItems = JSON.parse(JSON.stringify(prevItems));
-
-      // Clear existing hotel assignments
+      const totalDays = updatedItems.length;
       updatedItems.forEach(item => {
         item.hotel = null;
       });
-
       hotels.forEach(hotel => {
-        console.log("Processing hotel:", hotel.hotel?.hotelName);
-
-        // Handle specifically assigned day hotels (specificDayId)
         if (hotel.specificDayId) {
           const dayIndex = updatedItems.findIndex(item => item.id === hotel.specificDayId);
           if (dayIndex !== -1) {
-            console.log(`✅ Assigning specific-day hotel ${hotel.hotel?.hotelName} to day ${hotel.specificDayId}`);
+            const dayNumber = parseInt(hotel.specificDayId.split('-')[1]);
             updatedItems[dayIndex].hotel = {
               name: hotel.hotel?.hotelName || "Unknown Hotel",
               details: hotel
             };
+            if (dayIndex === totalDays - 2) {
+              const lastDayIndex = totalDays - 1;
+              updatedItems[lastDayIndex].hotel = {
+                name: hotel.hotel?.hotelName || "Unknown Hotel",
+                details: hotel
+              };
+            }
           }
-        } 
-        // Handle multi-day hotel bookings (no specificDayId)
+        }
         else if (hotel.booking?.checkInDate && hotel.booking?.checkOutDate) {
           const checkInDate = new Date(hotel.booking.checkInDate);
-          let checkOutDate = new Date(hotel.booking.checkOutDate);
-
-          // If check-in and check-out are the same, do not adjust check-out
-          if (checkInDate.getTime() === checkOutDate.getTime()) {
-            console.log("Single-night booking, no adjustment to check-out.");
-            checkOutDate = checkInDate; // Keep check-out the same as check-in
-          } else {
-            // If check-in and check-out are different, adjust the check-out to the next day if needed
-            checkOutDate.setHours(0, 0, 0, 0);
-          }
-
-          // Reset time components for accurate comparison
+          const checkOutDate = new Date(hotel.booking.checkOutDate);
           checkInDate.setHours(0, 0, 0, 0);
-
-          console.log(`Hotel ${hotel.hotel?.hotelName} is assigned from ${checkInDate.toISOString()} to ${checkOutDate.toISOString()}`);
-
-          // Process each day between check-in and check-out
-          updatedItems.forEach(item => {
+          checkOutDate.setHours(0, 0, 0, 0);
+          const checkInDayIndex = updatedItems.findIndex(item => {
             const itemDate = new Date(item.dateObj);
             itemDate.setHours(0, 0, 0, 0);
-
-            console.log(`Comparing item date ${itemDate.toISOString()} with hotel check-in ${checkInDate.toISOString()} and check-out ${checkOutDate.toISOString()}`);
-
-            // For both single and multi-day bookings, assign hotel to all dates from check-in to check-out
-            if (itemDate.getTime() >= checkInDate.getTime() && itemDate.getTime() <= checkOutDate.getTime()) {
-              if (!item.hotel) {
-                console.log(`✅ Assigning hotel ${hotel.hotel?.hotelName} to date ${itemDate.toISOString()}`);
-                item.hotel = {
-                  name: hotel.hotel?.hotelName || "Unknown Hotel",
-                  details: hotel
-                };
-              }
-            }
+            return itemDate.getTime() === checkInDate.getTime();
           });
+          const checkOutDayIndex = updatedItems.findIndex(item => {
+            const itemDate = new Date(item.dateObj);
+            itemDate.setHours(0, 0, 0, 0);
+            return itemDate.getTime() === checkOutDate.getTime();
+          });
+          if (checkInDayIndex !== -1) {
+            const numNights = checkOutDayIndex - checkInDayIndex;
+            const isFullItinerary = checkInDayIndex === 0 && checkOutDayIndex === totalDays - 1;
+            const isLastDayCheckout = checkOutDayIndex === totalDays - 1;
+            const isFirstDayCheckIn = checkInDayIndex === 0;
+            const isTwoNightStay = numNights === 2;
+            const isOneNightStay = numNights === 1;
+            const hasMoreDatesAfterwards = checkOutDayIndex < totalDays - 1;
+            let startShowIndex = checkInDayIndex;
+            let endShowIndex = checkOutDayIndex;
+            // Case 1: Full itinerary booking - show on all days
+            if (isFullItinerary) {
+              endShowIndex = totalDays - 1; // Show on all days
+            }
+            else if (isLastDayCheckout) {
+              // endShowIndex is already set to checkOutDayIndex
+            }
+            else if (isTwoNightStay) {
+              endShowIndex = checkInDayIndex + 1;
+            }
+            else if (isOneNightStay && hasMoreDatesAfterwards) {
+              endShowIndex = checkInDayIndex;
+            }
+            else {
+              endShowIndex = checkOutDayIndex - 1;
+            }
+            // Apply the hotel to all relevant days
+            for (let i = startShowIndex; i <= endShowIndex; i++) {
+              updatedItems[i].hotel = {
+                name: hotel.hotel?.hotelName || "Unknown Hotel",
+                details: hotel
+              };
+            }
+          }
         }
       });
-
-      console.log("Updated planner items:", updatedItems);
       return updatedItems;
     });
   }
@@ -528,18 +532,17 @@ useEffect(() => {
 }, [hotels, plannerItems]);
 
 
-
 const handleRemoveHotel = (plannerItem: PlannerItem) => {
   if (!plannerItem.hotel || !plannerItem.hotel.details) return;
   const hotelUniqueId = plannerItem.hotel.details.uniqueId;
   const hotelDetails = plannerItem.hotel.details;
   const totalHotelPrice = hotelDetails.booking?.totalPrice || 0;
-  const hotelNights = hotelDetails.booking?.nights || 1;
-  const perNightPrice = totalHotelPrice / hotelNights;
-  const plannerItemId = plannerItem.id;
-  // Step 1: Remove the hotel from the planner items
+  const daysWithSameHotel = plannerItems.filter(item => 
+    item.hotel?.details?.uniqueId === hotelUniqueId
+  );
+  const isMultiDayBooking = daysWithSameHotel.length > 1;
   const newPlannerItems = plannerItems.map(item => {
-    if (item.id === plannerItemId) {
+    if (item.hotel?.details?.uniqueId === hotelUniqueId) {
       return {
         ...item,
         hotel: null
@@ -547,69 +550,22 @@ const handleRemoveHotel = (plannerItem: PlannerItem) => {
     }
     return item;
   });
-  // Step 2: Update sessionStorage
+  
   setPlannerItems(newPlannerItems);
   sessionStorage.setItem('tripPlannerItems', JSON.stringify(newPlannerItems));
-  // Step 3: Find other instances of the same hotel
-  const updatedPlannerItems = plannerItems.map(item => 
-    item.id === plannerItem.id ? { ...item, hotel: null } : item
-  );
-  const otherDaysWithSameHotel = updatedPlannerItems.filter(item => 
-    item.hotel?.details?.uniqueId === hotelUniqueId
-  );
-  // Step 4: Update hotel list based on the removal
-  let updatedHotels = [...hotels];
-  if (otherDaysWithSameHotel.length === 0) {
-    updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
-  } else {
-    updatedHotels = hotels.map(hotel => {
-      if (hotel.uniqueId === hotelUniqueId) {
-        const updatedNights = Math.max(1, (hotel.booking?.nights || 1) - 1);
-        const updatedTotalPrice = (hotel.booking?.totalPrice || 0) - perNightPrice;
-        return {
-          ...hotel,
-          booking: {
-            ...hotel.booking,
-            nights: updatedNights,
-            totalPrice: updatedTotalPrice
-          }
-        };
-      }
-      return hotel;
-    });
-  }
-  // Step 5: Calculate new Grand Total after removing the hotel
-  let updatedGrandTotal = updatedHotels.reduce((sum, hotel) => {
+  const updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
+  setHotels(updatedHotels);
+  sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
+  const updatedGrandTotal = updatedHotels.reduce((sum, hotel) => {
     return sum + (hotel.booking?.totalPrice || 0);
-  }, 0) + updatedPlannerItems.reduce((sum, item) => {
+  }, 0) + newPlannerItems.reduce((sum, item) => {
     return sum + (item.tours?.details?.booking?.totalPrice || 0);
   }, 0);
-
+  
   setGrandTotal(updatedGrandTotal);
-  // Step 6: Remove from sessionStorage and update UI
-  setTimeout(() => {
-    const itemsFromStorage = JSON.parse(sessionStorage.getItem('tripPlannerItems') || '[]');
-    const nightsStillUsing = itemsFromStorage.filter(
-      (item: PlannerItem) => item.hotel?.details?.uniqueId === hotelUniqueId
-    ).length;
-    const totalNightsBefore = plannerItems.filter(
-      (item) => item.hotel?.details?.uniqueId === hotelUniqueId
-    ).length;
-    // Update Grand Total
-    const pricePerNight = totalNightsBefore > 0 ? totalHotelPrice / totalNightsBefore : 0;
-    setGrandTotal(prev => prev - pricePerNight);
-    if (nightsStillUsing === 0) {
-      const updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
-      setHotels(updatedHotels);
-      sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
-      if (selectedHotel?.uniqueId === hotelUniqueId) {
-        setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
-      }
-    }
-  }, 0);
-
-  // Step 7: Update Hotels and Grand Total in UI
-  // setHotels(updatedHotels);
+  if (selectedHotel?.uniqueId === hotelUniqueId) {
+    setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
+  }
 };
 
 const handleRemoveTour = (plannerItem) => {
