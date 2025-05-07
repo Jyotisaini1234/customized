@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './PrimaryNavbar.scss';
 import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstans.ts';
-import { Box } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import { dropdownMenus } from '../../../../model/selectOptions.ts';
-
+import { Menu as MenuIcon } from '@mui/icons-material';
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
 }
@@ -17,15 +17,14 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   const location = useLocation();
   
 
+  
   useEffect(() => {
     const currentPath = location.pathname;
-    
     const dashboardItem = DASHBOARD_NAV_ITEMS.find(item => currentPath.startsWith(item.path));
     if (dashboardItem) {
       setActiveItem(dashboardItem.key);
       return;
     }
-    
     const userItem = USER_NAV_ITEMS.find(item => item.path === currentPath);
     if (userItem) {
       setActiveItem(userItem.key);
@@ -37,11 +36,9 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
       handleLogout();
       return;
     }
-    
     setActiveItem(item);
     setShowSearch(true);
     setMenuOpen(false);
-    
     if (path) {
       navigate(path);
       return;
@@ -64,17 +61,13 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   };
 
   const handleLogout = () => {
-    // Remove JWT token from localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Remove any session cookies
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     document.cookie.split(";").forEach((c) => {
-      document.cookie = c
+    document.cookie = c
         .replace(/^ +/, "")
         .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    
     navigate('/');
   };
 
@@ -84,78 +77,57 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   };
 
   return (
-    <div className="nav-holder">
+    <Box className="nav-holder">
       <nav className="primary-navbar">
         <Box className="logo">
         <img src="/fly-divine.png" alt="U&I Logo" />
         </Box>
-        <div className="nav-items">
-          <div className="trip_details">
-            <span>Welcome :</span>
+        <Box className="nav-items">
+          <Box className="trip_details">
+            {/* <span>Welcome :</span> */}
             {USER_NAV_ITEMS.map((item, index) => (
               <React.Fragment key={item.key}>
-                <Link 
-                  to={item.path} 
-                  onClick={() => handleItemClick(item.key)}
-                >
+                <Link to={item.path}  onClick={() => handleItemClick(item.key)} >
                   {item.label}
                 </Link>
                 {index < USER_NAV_ITEMS.length - 1 && ' | '}
               </React.Fragment>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       </nav>
 
-      <div className="secondary-navbar">
-        <div className={`iteam-container ${menuOpen ? 'open' : ''}`}>
+      <Box className="secondary-navbar">
+        <Box className={`item-container ${menuOpen ? 'open' : ''}`}>
           {DASHBOARD_NAV_ITEMS.map(item => (
-            <li 
-              key={item.key}
-              className={`iteam-list ${activeItem === item.key ? 'active' : ''}`}
-              onClick={() => handleItemClick(item.key)}
-            >
-              <Link 
-                to={item.path} 
-                className={activeItem === item.key ? 'active' : ''}
-              >
+            <li key={item.key}className={`item-list ${activeItem === item.key ? 'active' : ''}`}onClick={() => handleItemClick(item.key)}>
+              <Link to={item.path}  className={activeItem === item.key ? 'active' : ''}>
                 <span className="icon">
                   <img src={item.icon} alt={item.label} />
                 </span>
                 {item.label}
               </Link>
-              
-              {/* Dropdown menu for Baku Packages and My Bookings */}
+              {/* Dropdown menu for baku Packages and My Bookings */}
               {(item.key === 'baku-packages' || item.key === 'bookings') && 
-                <div className={`dropdown-menu ${openDropdown === item.key ? 'show' : ''}`}>
+                <Box className={`dropdown-menu ${openDropdown === item.key ? 'show' : ''}`}>
                   {dropdownMenus[item.key as keyof typeof dropdownMenus].map((dropdownItem, idx) => (
-                    <Link 
-                      key={idx} 
-                      to={dropdownItem.path}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleItemClick(item.key, dropdownItem.path);
-                      }}
-                      className="dropdown-item"
-                    >
+                    <Link  key={idx}  to={dropdownItem.path}
+                      onClick={(e) => { e.stopPropagation();
+                        handleItemClick(item.key, dropdownItem.path);}}className="dropdown-item">
                       {dropdownItem.label}
                     </Link>
                   ))}
-                </div>
+                </Box>
               }
             </li>
           ))}
-        </div>
-        
-        <button 
-          className={`menu-toggle ${menuOpen ? 'open' : ''}`} 
-          onClick={toggleMenu}
-          aria-label="Toggle navigation menu"
-        >
-        </button>
-      </div>
-    </div>
+        </Box>
+
+        <IconButton className={`menu-toggle ${menuOpen ? 'open' : ''}`} onClick={toggleMenu} aria-label="Toggle navigation menu">
+          <MenuIcon  sx={{color:'white',marginLeft:'-1rem',height:'2rem', width:'4rem',marginTop:'0.4rem'}}/>
+        </IconButton>
+      </Box>
+    </Box>
   );
 };
-
 export default PrimaryNavbar;

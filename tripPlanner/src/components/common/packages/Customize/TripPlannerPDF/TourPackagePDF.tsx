@@ -5,6 +5,7 @@ import './TourPackagePDF.scss';
 import { TripPlannerData } from '../../../../../types/types.ts';
 import { Box } from '@mui/material';
 
+
 const TourPackagePDF: React.FC = () => {
   const [packageData, setPackageData] = useState<TripPlannerData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -43,7 +44,22 @@ const TourPackagePDF: React.FC = () => {
       return dateString;
     }
   };
-
+  
+  const calculateCheckoutDate = (checkInDateStr, nights) => {
+    if (!checkInDateStr) return '';
+    try {
+      const checkInDate = new Date(checkInDateStr);
+      if (isNaN(checkInDate.getTime())) return '';
+      
+      const checkOutDate = new Date(checkInDate);
+      checkOutDate.setDate(checkOutDate.getDate() + (nights || 1));
+      
+      return formatDate(checkOutDate.toISOString());
+    } catch (e) {
+      return '';
+    }
+  };
+  
   const generatePDF = () => {
     const content = document.getElementById('tour-package-content');
     const dayContainers = document.querySelectorAll('.day-container');
@@ -64,6 +80,7 @@ const TourPackagePDF: React.FC = () => {
     const footerText = "This document provides a summary of your tour package. Please request an official voucher to confirm your reservation.";
     const headerSection = document.querySelector('.tour-package-header');
     const bookingSection = document.querySelector('.booking-reference');
+    const clientDetailsSection = document.querySelector('.client-details-section');
     const detailsSection = document.querySelector('.package-details-section');
     const itineraryTitle = document.querySelector('.itinerary-section .section-title');
     const costSummary = document.querySelector('.cost-summary');
@@ -102,6 +119,10 @@ const TourPackagePDF: React.FC = () => {
         yPosition = await captureAndAddElement(bookingSection, yPosition);
       }
       
+      if (clientDetailsSection) {
+        yPosition = await captureAndAddElement(clientDetailsSection, yPosition);
+      }
+
       if (detailsSection) {
         yPosition = await captureAndAddElement(detailsSection, yPosition);
       }
@@ -181,18 +202,57 @@ const TourPackagePDF: React.FC = () => {
     currentSearchParams,
     hotels = [],
     plannerItems = [],
-    costs = { finalAmount: 0 },
+    costs = { finalAmount: 0, packageDetails: { totalPersons: 0 } },
     currency = 'USD'
   } = packageData;
-  const mainHotel = hotels && hotels.length > 0 ? hotels[0] : null;
-  const nights = currentSearchParams?.nights || 
-    (currentSearchParams?.checkInDate && currentSearchParams?.checkOutDate ? 
-      Math.round((new Date(currentSearchParams.checkOutDate).getTime() - new Date(currentSearchParams.checkInDate).getTime()) / (1000 * 60 * 60 * 24)) : 0);
+  
+  // Calculate room-related information
+  const calculateRoomInfo = () => {
+    if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
+      return {
+        totalRooms: 1,
+        totalAdults: 2,
+        totalChildren: 0,
+        totalCWB: 0,
+        totalCNB: 0,
+        totalInfants: 0
+      };
+    }
+    
+    return currentSearchParams.rooms.reduce((info, room) => {
+      const adults = room.adults || 0;
+      const cwb = room.cwb || 0;    // Child with bed
+      const cnb = room.cnb || 0;    // Child no bed
+      const infants = room.infants || 0;
+      
+      return {
+        totalRooms: info.totalRooms + 1,
+        totalAdults: info.totalAdults + adults,
+        totalChildren: info.totalChildren + cwb + cnb,
+        totalCWB: info.totalCWB + cwb,
+        totalCNB: info.totalCNB + cnb,
+        totalInfants: info.totalInfants + infants
+      };
+    }, {
+      totalRooms: 0,
+      totalAdults: 0,
+      totalChildren: 0,
+      totalCWB: 0,
+      totalCNB: 0,
+      totalInfants: 0
+    });
+  };
+
   // Calculate total persons including adults, children (CWB and CNB), and infants
   const calculateTotalPersons = () => {
-    if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
-      return 1;
+    if (costs.packageDetails && costs.packageDetails.totalPersons) {
+      return costs.packageDetails.totalPersons;
     }
+    
+    if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
+      return 2; // Default to 2 persons if no room data
+    }
+    
     return currentSearchParams.rooms.reduce((total, room) => {
       const adults = room.adults || 0;
       const cwb = room.cwb || 0;    // Child with bed
@@ -201,14 +261,57 @@ const TourPackagePDF: React.FC = () => {
       return total + adults + cwb + cnb + infants;
     }, 0);
   };
+  
+  const roomInfo = calculateRoomInfo();
   const totalPersons = calculateTotalPersons();
+  // const destination = currentSearchParams?.city || 'Baku';
+  const destination = hotels && hotels.length > 0 && hotels[0].hotel?.city 
+  ? hotels[0].hotel.city 
+  : currentSearchParams?.city || 'Baku';
+
+
+  const getHotelData = () => {
+    // First get all hotel entries from hotels array directly
+    const hotelEntries = hotels.map(hotel => ({
+      name: hotel.hotel?.hotelName || hotel.hotel?.name || 'Unknown Hotel',
+      checkInDate: formatDate(hotel.booking?.checkInDate),
+      checkOutDate: formatDate(hotel.booking?.checkOutDate || currentSearchParams?.checkOutDate),
+      roomType: hotel.booking?.roomType || 
+                hotel.room?.roomCategory || 
+                'Standard',
+      mealPlan: hotel.booking?.mealPlan || 
+                hotel.room?.mealPlan || 
+                'BB',
+      nights: hotel.booking?.nights || 1,
+      starRating: hotel.hotel?.starRating || 
+                'N/A',
+      city: hotel.hotel?.city || currentSearchParams?.city || 'Baku'
+    }));
+    
+    // Process each hotel to ensure correct checkout date calculation
+    return hotelEntries.map(hotel => ({
+      name: hotel.name,
+      checkInDate: hotel.checkInDate,
+      checkOutDate: hotel.checkOutDate || calculateCheckoutDate(hotel.checkInDate, hotel.nights),
+      nights: hotel.nights,
+      roomType: hotel.roomType,
+      mealPlan: hotel.mealPlan,
+      starRating: hotel.starRating,
+       city: hotel.city
+    }));
+  }
+  const hotelData = getHotelData();
+  const mainHotel = hotels && hotels.length > 0 ? hotels[0] : null;
+  const nights = currentSearchParams?.nights ||
+    (currentSearchParams?.checkInDate && currentSearchParams?.checkOutDate ? 
+      Math.round((new Date(currentSearchParams.checkOutDate).getTime() - new Date(currentSearchParams.checkInDate).getTime()) / (1000 * 60 * 60 * 24)) : 0);
+
   return (
     <Box className="tour-package-container">
       <Box id="tour-package-content" className="tour-package-content">
         {/* Header */}
         <Box className="tour-package-header">
           <h1 className="header-title">TOUR PACKAGE</h1>
-          <p className="header-subtitle">Created by Fly Divine Travels </p>
         </Box>
         <Box className="booking-reference">
           <Box className="booking-reference-content">
@@ -221,17 +324,41 @@ const TourPackagePDF: React.FC = () => {
         {/* Package Details */}
         <Box className="package-details-section">
           <h2 className="section-title">Package Details</h2>
-          <Box className="details-grid">
-            <Box className="detail-label">Main Hotel:</Box>
-            <Box className="detail-value">{mainHotel?.hotel?.hotelName || 'Multiple Hotels (See Daily Itinerary)'}</Box>
-            <Box className="detail-label">Duration:</Box>
-            <Box className="detail-value">{nights} nights</Box>
-            <Box className="detail-label">Meal Plan:</Box>
-            <Box className="detail-value">{mainHotel?.booking?.mealPlan || 'As per itinerary'}</Box>
-            <Box className="detail-label">Room Setup:</Box>
-            <Box className="detail-value">{mainHotel?.booking?.roomType || 'Standard'}</Box>
-            <Box className="detail-label">Total Persons:</Box>
-            <Box className="detail-value">{totalPersons}</Box>
+          {/* Hotel Table */}
+          <Box className="hotels-table-container">
+            <h3 className="table-title">Hotel Details</h3>
+            <table className="hotels-table">
+              <thead>
+                <tr>
+                  <th>Hotel Name</th>
+                  <th>Check-in Date</th>
+                  <th>Check-out Date</th>
+                  <th>Nights</th>
+                  <th>Room Type</th>
+                  <th>Meal Plan</th>
+                  <th>Rooms</th>
+                  <th>Area</th>
+                  <th>Total Person</th>
+                  <th>Stars Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hotelData.map((hotel, index) => (
+                  <tr key={index}>
+                    <td>{hotel.name}</td>
+                    <td>{hotel.checkInDate}</td>
+                    <td>{hotel.checkOutDate}</td>
+                    <td>{hotel.nights}</td>
+                    <td>{hotel.roomType}</td>
+                    <td>{hotel.mealPlan}</td>
+                    <td>{roomInfo.totalRooms}</td>
+                    <td>{hotel.city}</td>
+                    <td>{totalPersons}</td>
+                    <td>{hotel.starRating}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Box>
         </Box>
 
@@ -245,56 +372,47 @@ const TourPackagePDF: React.FC = () => {
                   <h3 className="day-title">DAY {index + 1} - {formattedDate}</h3>
                 </Box>
                 
-              {item.hotel && (
-                <Box className="activity-container">
-                  <Box className="activity-title">• Stay at {item.hotel.name}</Box>
-                  <Box className="activity-detail">
-                    Room Type: {item.hotel.details?.booking?.roomType || item.hotel.details?.room?.roomCategory || 'Standard'}
-                  </Box>
-                  <Box className="activity-detail">
-                    Meal Plan: {item.hotel.details?.booking?.mealPlan || item.hotel.details?.room?.mealPlan || 'BB'}
-                  </Box>
-                </Box>
-              )}
-              {item.tours && (
-                <Box className="activity-container">
-                  <Box className="activity-title">• {item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity'}</Box>
-                  {(item.tours.details?.tour?.eventDuration || item.tours.eventDuration) && (
-                    <Box className="activity-detail">Duration: {item.tours.details?.tour?.eventDuration || item.tours.eventDuration}</Box>
-                  )}
-                  <Box className="activity-detail">
-                    Description: {
-                    (item.tours.description && item.tours.description !== "No description available") ? 
-                    item.tours.description : 
-                    (item.tours.details?.tour?.description && item.tours.details?.tour?.description !== "No description available") ? item.tours.details.tour.description : "No description available"}
-                  </Box>
-                </Box>
-              )}
-                {item.meals && (
+                {item.tours && (
                   <Box className="activity-container">
-                    <Box className="activity-title">• {item.meals.name || 'Meal Plan'}</Box>
+                    <Box className="activity-title">• {item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity'}</Box>
+                    {(item.tours.details?.tour?.eventDuration || item.tours.eventDuration) && (
+                      <Box className="activity-detail">Duration: {item.tours.details?.tour?.eventDuration || item.tours.eventDuration}</Box>
+                    )}
                     <Box className="activity-detail">
-                      {item.meals.description || item.meals.details || 'Traditional local cuisine experience'}
+                      Description: {
+                      (item.tours.description && item.tours.description !== "No description available") ? 
+                      item.tours.description : 
+                      (item.tours.details?.tour?.description && item.tours.details?.tour?.description !== "No description available") ? item.tours.details.tour.description : "No description available"}
                     </Box>
                   </Box>
                 )}
-                
-                {!item.hotel && !item.tours && !item.transfer && !item.meals && (
+   
+                {item.transfer && (
                   <Box className="activity-container">
-                    <Box className="activity-detail">Free day - No activities planned</Box>
+                    <Box className="activity-title">• Transfer: {item.transfer.type || 'Transportation'}</Box>
+                    {item.transfer.description && (
+                      <Box className="activity-detail">Details: {item.transfer.description}</Box>
+                    )}
                   </Box>
                 )}
-              </Box> );
+                {!item.tours && !item.transfer && !item.meals && (
+                  <Box className="activity-container">
+                    <Box className="activity-detail">Day at Leisure</Box>
+                  </Box>
+                )}
+              </Box>
+            );
           })}
         </Box>
         <Box className="cost-summary">
           <h2 className="cost-summary-title">COST SUMMARY</h2>
           <Box className="cost-grid">
-            <Box className="cost-label">Cost Per Person:</Box>
-            <Box className="cost-value">{currency} {(costs.finalAmount / totalPersons).toFixed(2)}</Box>
             <Box className="cost-label">Total Package Cost:</Box>
             <Box className="cost-value">{currency} {costs.finalAmount.toFixed(2)}</Box>
-          </Box>
+            
+            <Box className="cost-label">Cost Per Person:</Box>
+            <Box className="cost-value">{currency} {(costs.finalAmount / totalPersons).toFixed(2)}</Box>
+            </Box>
         </Box>
       </Box>
     </Box>

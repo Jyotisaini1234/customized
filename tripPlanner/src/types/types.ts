@@ -62,13 +62,13 @@ export interface PlannerItem {
   meals: any | null;
 }
 
-export interface RoomState {
-    id: number;
-    adults: number;
-    cwb: number;
-    cnb: number;
-    infants: number;
-}
+// export interface RoomState {
+//     id: number;
+//     adults: number;
+//     cwb: number;
+//     cnb: number;
+//     infants: number;
+// }
 
 
 export interface AreaOption {
@@ -90,18 +90,22 @@ export const Areas: Area[] = [
 
 
 export interface Hotel {
-  mealPlan: string | undefined;
-  details: any;
-  roomType: any;
-  hotel?: {
-    hotelName: string;
-  };
+  hotel?: HotelDetails;
   booking?: {
-    roomType: string;
-    mealPlan: string;
-    totalRooms: number;
+    roomType?: string;
+    mealPlan?: string;
+    nights?: number;
+    totalRooms?: number;
   };
+  room?: {
+    roomCategory?: string;
+    mealPlan?: string;
+  };
+  mealPlan?: string;
+  details?: any;
+  roomType?: any;
 }
+
 export interface Tour {
   duration?: string;
   description?: string;
@@ -138,15 +142,11 @@ export interface PackageCosts {
 }
 
 export interface SearchParams {
+  city: any;
   checkInDate?: string;
   checkOutDate?: string;
   nights?: number;
-  rooms?: Array<{
-    cnb: number;
-    infants: number;
-    cwb: number;
-    adults: number;
-  }>;
+  rooms?: Room[]
 }
 
 export interface TripPlannerData {
@@ -187,4 +187,79 @@ export interface Lead {
   status: 'Quote Created' | 'Lead Converted';
   quotes: Quote[];
   referenceId?: string;
+}
+
+
+export interface HotelDetails {
+  starRating?: string | number;
+  city?: string;
+  name?: string;
+  hotelName?: string;
+  area?: string;
+  hotel?: {
+    starRating?: string | number;
+    city?: string;
+    name?: string;
+    hotelName?: string;
+    area?: string;
+  };
+  booking?: {
+    roomType?: string;
+    mealPlan?: string;
+    nights?: number;
+    totalRooms?: number;
+  };
+  room?: {
+    roomCategory?: string;
+    mealPlan?: string;
+  };
+  details?: {
+    starRating?: string | number;
+    city?: string;
+    hotel?: {
+      starRating?: string | number;
+      city?: string;
+      name?: string;
+      hotelName?: string;
+      area?: string;
+    };
+    booking?: {
+      roomType?: string;
+      mealPlan?: string;
+      nights?: number;
+    };
+    room?: {
+      roomCategory?: string;
+      mealPlan?: string;
+    };
+  };
+  hotelSpecificDetails?: {
+    starRating?: string | number;
+    city?: string;
+  };
+  nights?: number;
+}
+
+export interface TourDetails {
+  name?: string;
+  description?: string;
+  eventDuration?: string;
+  details?: {
+    tour?: {
+      tourName?: string;
+      description?: string;
+      eventDuration?: string;
+    };
+  };
+}
+
+
+export interface TransferDetails {
+  type?: string;
+  description?: string;
+}
+
+export interface MealDetails {
+  type?: string;
+  description?: string;
 }

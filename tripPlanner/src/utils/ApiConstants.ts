@@ -1,5 +1,5 @@
 
-export const BASE_URL = 'http://ec2-52-66-243-255.ap-south-1.compute.amazonaws.com:8081';
+export const BASE_URL = 'http://ec2-3-6-138-99.ap-south-1.compute.amazonaws.com:8081';
 export const HOTEL_FETCH = 'http://localhost:8081';
 export const GENERATEUID=`${BASE_URL}/sightTour/generateUid`;
 export const SIGHTTOURBYCITY =`${BASE_URL}/sightTour/byCity`;

@@ -92,7 +92,7 @@ export const USER_NAV_ITEMS = [
   },
   {
     path: ROUTE_CONSTANTS.UI_TEAMS,
-    label: "U & I Team",
+    label: "FLY & DIVINE Team",
     key: 'u_i_teams'
   },
   {

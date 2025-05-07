@@ -17,7 +17,22 @@
   .MuiPaper-root {
     box-shadow: none;
   }
+  .MuiTypography-root{
+    @media (max-width: 20rem) {
+      font-size: 0.7rem;
+    }
+  }
 
+  .heading{
+
+    @media (max-width: 30rem) {
+      font-size: 0.8rem;
+    }
+    @media (max-width: 20rem) {
+      font-size: 0.7rem;
+    }
+
+  }
   // Form container styles
   .form-container {
     gap: 1rem;
@@ -45,7 +60,6 @@
     
     .city-select {
       width: 100%;
-     
       .MuiInputBase-root {
         width: 100%;
       }
@@ -61,20 +75,43 @@
       .MuiInputBase-root {
         width: 3.5rem;
       }
-      
+      @media (max-width: 64rem) {
+        .MuiInputBase-root {
+          width: 3.5rem;
+        }}
+      @media (max-width: 48rem) {
+        .MuiInputBase-root {
+          height: 2rem;
+          width: 3.5rem;
+        }}
+        @media (max-width: 32rem) {
+          .MuiInputBase-root {
+            height: 2rem;
+            width: 3.5rem;
+            
+          }}
+          @media (max-width: 30rem) {
+            .MuiInputBase-root {
+              height: 2rem;
+              width: 3rem;
+              
+            }}
+          @media (max-width: 20rem) {
+            .MuiInputBase-root {
+              height: 2rem;
+              width: 3rem;
+            }}
       .person-div {
         display: flex;
         .MuiGrid-root{
           flex-wrap: inherit;
+          margin-left: 1rem;
+          @media (max-width: 30rem) {
+            margin-left: -2rem;
+          }
         }
       }
-      
-      .room {
-        display: flex;
-        width: 5rem;
-        align-items: end;
-        margin-bottom: 0.5rem;
-      }
+    
     }
     
     // Side image styles
@@ -100,10 +137,16 @@
   .entry-btn {
     padding: 0.3rem;
     font-size: 0.9rem;
+    @media (max-width: 30rem) {
+      font-size: 0.8rem;
+    }
   }
   
   .btn-container {
-    
+    justify-content: space-between;
+
+    @media (max-width: 20rem) {
+      display: block;    }
     .add-another-btn {
       padding: 0.3rem;
       font-size: 0.8rem;
@@ -116,7 +159,23 @@
       padding: 0.3rem;
     }
   }
-  
+    
+  .room {
+    display: flex;
+    width: 5rem;
+    align-items: end;
+    margin-bottom: 0.5rem;
+    @media (max-width: 30rem) {
+      width: 4rem;
+      align-items: start;
+      margin-top: -.9rem;
+    }
+    @media (max-width: 20rem) {
+      width: 4rem;
+      align-items: start;
+      margin-top: -.9rem;
+    }
+  }
   // Responsive styles - Large screens
   @media (max-width: 64rem) {
     .MuiGrid-item {
@@ -183,7 +242,7 @@
         
         .person-div {
           flex-direction: row;
-          width: 40rem;
+          width: 30rem;
         }
       }
       
@@ -220,11 +279,11 @@
     }
     
     .select-option-2 {
-      width: 25rem;
+      // width: 25rem;
       height: 2.5rem;
       
       .city-select {
-        width: 25rem;
+        // width: 25rem;
         height: 2.5rem;
         
         .MuiInputBase-root {
@@ -252,20 +311,20 @@
       padding: 0;
       
       .MuiInputBase-root {
-        height: 3rem;
+        height: 2rem;
       }
       
       .destination-select {
         width: 100%;
-        height: 2.5rem;
+        height: 2rem;
         
         .select-destination {
           width: 100%;
-          height: 2.5rem;
+          height: 2rem;
           
           .MuiInputBase-root {
             width: 100%;
-            height: 3rem;
+            height: 2rem;
           }
         }
       }
@@ -277,10 +336,10 @@
         
         .city-select {
           width: 100%;
-          height: 3.3rem;
+          height: 2rem;
           
           .MuiInputBase-root {
-            height: 3rem;
+            height: 2rem;
             width: 25.5rem;
           }
         }
@@ -299,20 +358,12 @@
           -webkit-flex-wrap: inherit;
           flex-wrap: inherit;
         }
-        
-        .MuiInputBase-root {
-          width: 4rem;
-        }
-        
+
         .person-div {
           padding: 0;
           flex-direction: row;
         }
-        
-        .room {
-          width: 10rem;
-          align-items: end;
-        }
+
       }
       
       .side-image {
@@ -320,11 +371,11 @@
         height: auto;
         
         .side-box {
-          width: 35rem;
+          margin-left: -1rem;
           margin-bottom: 2rem;
           
           img {
-            width: 35rem;
+            width: 100%;
             height: auto;
             max-height: 26rem;
             object-fit: cover;
@@ -347,30 +398,12 @@
     
     .form-container {
       padding: 0;
-      
-      .side-image {
-        .side-box {
-          width: 21rem;
-          margin-bottom: 2rem;
-          
-          img {
-            width: 21rem;
-            object-fit: cover;
-            max-height: 25rem;
-          }
-        }
-      }
     }
     
     .person-count {
       display: flex;
       
-      .room {
-        display: flex;
-        width: 5rem;
-        align-items: end;
-        margin-bottom: 0.5rem;
-      }
+
     }
   }
   
@@ -386,34 +419,29 @@
     }
     
     .entry-btn {
-      padding: 0.5rem;
       font-size: 0.9rem;
     }
     
     .btn-container {
       gap: 1.2rem;
-      width: 27rem;
+      width: 18rem;
       
       .add-another-btn {
         padding: 0;
-        font-size: 0.9rem;
-        width: 12rem;
+        font-size: 0.8rem;
+        width: 13rem;
       }
       
       .search-btn {
         padding: 0.1rem;
+        width: 13rem;
       }
     }
     
     .person-count {
       display: flex;
       
-      .room {
-        display: flex;
-        width: 4rem;
-        align-items: end;
-        margin-bottom: 0.5rem;
-      }
+
     }
     
     .side-image {
@@ -434,8 +462,8 @@
     }
   }
   
-  // Responsive styles - Smallest screens
   @media (max-width: 20rem) {
+
     .MuiGrid-item {
       padding-left: 0;
       gap: 0.2rem;
@@ -444,52 +472,59 @@
     h4 {
       font-size: 1.8rem;
     }
-    
     .entry-btn {
-      padding: 0.5rem;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
     }
     
     .btn-container {
       gap: 1rem;
-      width: 23rem;
+      width: 17rem;.MuiInputBase-root
       
       .add-another-btn {
         padding: 0.1rem;
-        font-size: 0.9rem;
-        width: 12rem;
+        font-size: 0.8rem;
+        width: 13rem;
       }
       
       .search-btn {
         padding: 0.1rem;
+        width: 13rem;
+        margin-top: 0.5rem;
       }
     }
     
     .person-count {
       display: flex;
-      
-      .room {
-        display: flex;
-        width: 4rem;
-        align-items: end;
-        margin-bottom: 0.5rem;
-      }
     }
-    
     .side-image {
       width: 100%;
       height: auto;
       
       .side-box {
-        width: 24rem;
+        width: 16rem;
         margin-bottom: 2rem;
         
         img {
-          width: 24rem;
           object-fit: cover;
           max-height: 25rem;
         }
       }
     }
   }
+
+  .remove-container{
+    margin-top: 0.9rem;
+
+
+    @media (max-width: 30rem) {
+      .MuiButton-root{
+      margin-top: 1.6rem;
+    }}
+    @media (max-width: 20rem) {
+      .MuiButton-root{
+      margin-top: 1.4rem;
+    }}
+}
+  
+  
 }

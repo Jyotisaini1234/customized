@@ -361,7 +361,9 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
         specificDay: false,
         specificDayId: itemId,
         applyToAllDays: false,
-        isLastDay: isLastDay
+        isLastDay: isLastDay,
+        city: selectedCity,
+        country: selectedCountry
       }
     });
   } else if (itemType === 'tours') {
@@ -388,7 +390,9 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
       state: {...currentSearchParams,
         dayId: itemId.split('-')[1],
         fromTripPlanner: true,
-        checkInDate: itemDate.toISOString()}
+        checkInDate: itemDate.toISOString(),
+        city: selectedCity,
+        country: selectedCountry}
     });
   }
 };
@@ -685,6 +689,8 @@ const handleClientFormSubmit = (clientData) => {
       checkInDate: currentSearchParams.checkInDate,
       checkOutDate: currentSearchParams.checkOutDate,
       nights: currentSearchParams.nights || nights,
+      city: currentSearchParams.city || 'Baku',
+      country: currentSearchParams.country ,
       rooms: currentSearchParams.rooms || [{ adults: 2 }]
     },
     hotels: hotels.map(hotel => ({
@@ -692,7 +698,8 @@ const handleClientFormSubmit = (clientData) => {
       hotel: {
         ...hotel.hotel,
         hotelName: hotel.hotel.hotelName || hotel.hotel.name,
-        description: hotel.hotel.description
+        description: hotel.hotel.description,
+        starRating: hotel.hotel.starRating || hotel.hotel.starRatings || 'No'
       },
       booking: {
         ...hotel.booking,
@@ -713,11 +720,13 @@ const handleClientFormSubmit = (clientData) => {
             tour: {
               ...(item.tours.details?.tour || {}),
               description: item.tours.details?.tour?.description || item.tours.description || 'N/A',
-              duration: item.tours.details?.tour?.duration || item.tours.eventDuration || 'N/A'
+              duration: item.tours.details?.tour?.duration || item.tours.eventDuration || 'N/A',
+              
             }
           },
         };
       }
+
       return {
         ...item,
         tours: toursData,
@@ -731,6 +740,7 @@ const handleClientFormSubmit = (clientData) => {
     },
     currency: currency || 'USD'
   };
+  
   const existingBookings = JSON.parse(sessionStorage.getItem('myBookings') || '[]');
   existingBookings.push({
     id: bookingRef,
@@ -767,12 +777,12 @@ return (
                 <Customize isModifying={true} initialValues={currentSearchParams} onSearchComplete={handleSearchComplete} />
               </div>
             )}
-            <Box sx={{ mb: 0 }}>
-              <Tabs value={activeTab} onChange={handleTabChange} sx={{ color: 'black' }}>
-                <Tab value="planner" label="Planner" style={{ color: activeTab === 'planner' ? 'white' : 'black', }} sx={{ color: activeTab === 'planner' ? 'black' : 'white', 
+            <Box sx={{ mb: 0 ,height:'2rem'}} className='tablist-container'>
+              <Tabs className='tablist-btn'  value={activeTab} onChange={handleTabChange} sx={{ color: 'black' }}>
+                <Tab className='planner-btn' value="planner" label="Planner" style={{ color: activeTab === 'planner' ? 'white' : 'black', }} sx={{ color: activeTab === 'planner' ? 'black' : 'white', 
                   bgcolor: activeTab === 'planner' ? 'grey' : 'white', marginLeft: '0rem', width: '10rem' }} />
                 {showHotelTab && (
-                  <Tab value="hotel" label="Hotel Details" style={{ color: activeTab === 'planner' ? 'black' : 'white', }} sx={{ color: activeTab === 'planner' ? 'black' : 'white', 
+                  <Tab className='hotel-btn' value="hotel" label="Hotel Details" style={{ color: activeTab === 'planner' ? 'black' : 'white', }} sx={{ color: activeTab === 'planner' ? 'black' : 'white', 
                     bgcolor: activeTab === 'planner' ? 'white' : 'grey', marginLeft: '0.5rem', width: '10rem' }} />
                 )}
               </Tabs>
@@ -792,10 +802,10 @@ return (
                 <Box className="header-cell">Meals</Box>
               </Box>
               {plannerItems.map((plannerItem) => (
-                <Box key={plannerItem.id} className="table-row">
+                <Box key={plannerItem.id} className="table-row ">
                   <Box className="cell date-cell">
-                    <Typography variant="body2">{formatDate(plannerItem.date)}</Typography>
-                    <Typography variant="body2">{formatYear(plannerItem.date)}</Typography>
+                    <Typography className='date-cell-1' variant="body2">{formatDate(plannerItem.date)}</Typography>
+                    <Typography className='date-cell-2' variant="body2">{formatYear(plannerItem.date)}</Typography>
                   </Box>
                   {/* Show hotel cell only for hotel-land package */}
                   {packageType === 'hotel-land' && (
@@ -803,7 +813,7 @@ return (
                       {plannerItem.hotel ? (
                         <Box className="selected-hotel">
                           <Box sx={{}}>
-                            <Typography variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis',
+                            <Typography className='hotel_name' variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap', overflow: 'hidden', textAlign: 'center', maxWidth: '100%', }}>
                               {plannerItem.hotel.name}
                             </Typography>
@@ -818,7 +828,7 @@ return (
                       ) : (
                         <Box display="flex" justifyContent="flex-end">
                           <IconButton className="add-button" onClick={() => handleHotelSelection(plannerItem.id)} sx={{ color: '#777777', fontSize: '1rem', '& .MuiSvgIcon-root': { fill: 'grey' }, }}>
-                            <AddCircleOutline />
+                            <AddCircleOutline  className='add-btn'/>
                           </IconButton>
                         </Box>
                       )}
@@ -827,14 +837,14 @@ return (
                   <Box className="cell">
                     <Box display="flex" justifyContent="flex-end">
                       <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'transfer')} aria-label="Add transfer" sx={{ color: '#777777', "& .MuiSvgIcon-root": { fill: 'grey' } }}>
-                        <AddCircleOutline />
+                        <AddCircleOutline className='add-btn'/>
                       </IconButton>
                     </Box>
                   </Box>
                   <Box className="cell">
                     {plannerItem.tours ? (
                       <Box className="selected-tour">
-                        <Box>
+                        <Box className='tour-container'>
                           <Typography variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis', textAlign: 'center', maxWidth: '100%' }} >
                             {plannerItem.tours.name}
                           </Typography>
@@ -850,7 +860,7 @@ return (
                         <IconButton className="add-button"
                           onClick={() => handleAddItem(plannerItem.id, 'tours')}
                           aria-label="Add tours" sx={{ color: '#777777', fontSize: '1rem', "& .MuiSvgIcon-root": { fill: 'grey' } }}>
-                          <AddCircleOutline />
+                          <AddCircleOutline className='add-btn' />
                         </IconButton>
                       </Box>
                     )}
@@ -858,7 +868,7 @@ return (
                   <Box className="cell">
                     <Box display="flex" justifyContent="flex-end">
                       <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'meals')} aria-label="Add meals" sx={{ color: '#777777', "& .MuiSvgIcon-root": { fill: 'grey' } }} >
-                        <AddCircleOutline />
+                        <AddCircleOutline className='add-btn' />
                       </IconButton>
                     </Box>
                   </Box>

@@ -243,7 +243,7 @@ return (
         {!showHotelListing ? (<>
           {!isModifying && (
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }}>Customize Search</Typography>
+          <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading">Customize Search</Typography>
           <Button className='entry-btn' variant="contained" sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1,bgcolor:'red' }} > baku Entry Requirements</Button>
           </Box>)}
             <Grid container spacing={1} className='form-container'>
@@ -339,8 +339,8 @@ return (
                               </FormControl>
                             </Grid>
                             {room.id > 1 && (
-                              <Grid item xs={12} sm={3}>
-                                <Button variant="contained" color="secondary" onClick={() => handleRemoveRoom(room.id)}fullWidth 
+                              <Grid item xs={12} sm={3}className="remove-container">
+                                <Button variant="contained" className="remove-btn" color="secondary" onClick={() => handleRemoveRoom(room.id)}fullWidth 
                                   sx={{ mt: { xs: 0, sm: 3.5 },backgroundColor: '#6c757d',  boxShadow:'none',  '&:hover': { backgroundColor: '#5a6268' } }} >  Remove
                                 </Button>
                               </Grid>
@@ -350,7 +350,7 @@ return (
                       </Grid>
                     ))}
                     <Grid item xs={12}>
-                      <Box display="flex" justifyContent="space-between" mt={1} className='btn-container'>
+                      <Box display="flex"  mt={1} className='btn-container'>
                         <Button className='add-another-btn' variant="contained" onClick={handleAddRoom}
                           sx={{  backgroundColor: '#6c757d', boxShadow:'none',  textTransform: 'none'  }} >+ Add Another Room
                         </Button>
@@ -364,7 +364,7 @@ return (
               </Grid>
               <Grid item xs={12} md={5} className='side-image'>
                 <Box sx={{ overflow: 'hidden', height: '100%' }} className='side-box'>
-                  <img src="https://www.uandiholidays.net/Admin/UploadFiles/Advertising/WhatsAppImage2023-12-02at1.09.55PM_2-12-2023-13438.jpeg"  alt="Trans Studio baku" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                  <img src="https://assets.micontenthub.com/traveloffers/travel-tips/baku_OIPJAbO-S.jpg"  alt="Trans Studio baku" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
                 </Box>
               </Grid>
             </Grid></>): (<TripPlanner location={city?.label || ""}  nights={Number(nights)}  checkInDate={checkInDate ? checkInDate.toISOString() : new Date().toISOString()} 
