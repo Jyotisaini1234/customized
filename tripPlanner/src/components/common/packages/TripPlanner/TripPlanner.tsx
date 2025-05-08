@@ -712,6 +712,17 @@ const handleClientFormSubmit = (clientData) => {
     plannerItems: plannerItems.map(item => {
       let toursData = null;
       if (item.tours) {
+        const selectedActivities = item.tours.details?.booking?.selectedActivities || {};
+        const activityDetails = item.tours.details?.booking?.activityDetails || [];
+        const processedActivityDetails = activityDetails.length > 0 
+          ? activityDetails 
+          : Object.keys(selectedActivities)
+              .filter(activityName => selectedActivities[activityName] === true)
+              .map(activityName => ({
+                name: activityName,
+                price: item.tours.details?.activityPrices?.[activityName] || 0,
+                currency: item.tours.currency || currency || 'USD'
+              }));
         toursData = {
           ...item.tours,
           name: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
@@ -722,8 +733,16 @@ const handleClientFormSubmit = (clientData) => {
               description: item.tours.details?.tour?.description || item.tours.description || 'N/A',
               duration: item.tours.details?.tour?.duration || item.tours.eventDuration || 'N/A',
               
+            },
+            booking: {
+              ...(item.tours.details?.booking || {}),
+              selectedActivities,
+              // Include processed activity details
+              activityDetails: processedActivityDetails
             }
+          
           },
+          activities: processedActivityDetails
         };
       }
 
