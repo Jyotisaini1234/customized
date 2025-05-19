@@ -4,6 +4,7 @@ import { BASE_URL } from '../utils/ApiConstants.ts';
 export const tourApi = createApi({
   reducerPath: 'tourApi',
   baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
+  tagTypes: ['Bookings'],
   endpoints: (builder) => ({
     getHotelsByCity: builder.query<any, { city: string; country: string }>({
       query: ({ city, country }) =>
@@ -12,20 +13,24 @@ export const tourApi = createApi({
 
     submitLead: builder.mutation<any, any>({
       query: (leadData) => ({
-        url: '/sightTour',
+        url: '/sightTour/lead',
         method: 'POST',
         body: leadData,
       }),
     }),
     getLeads: builder.query<any[], void>({
-      query: () => '/sightTour/leads', // Assuming your backend has a GET /leads endpoint
+      query: () => '/sightTour/leads',
     }),
+  
     
+
+
+
   }),
 });
 
 export const {
   useGetHotelsByCityQuery,
   useSubmitLeadMutation,
-  useGetLeadsQuery
+  useGetLeadsQuery,
 } = tourApi;

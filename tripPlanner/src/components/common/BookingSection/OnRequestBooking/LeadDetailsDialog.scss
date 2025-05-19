@@ -1,0 +1,111 @@
+.MuiDialog-paper {
+  overflow-y: auto;
+  
+  .MuiDialogTitle-root {
+    background-color: #f5f5f5;
+    padding: 16px 24px;
+    
+    .MuiTypography-h5 {
+      font-weight: 600;
+      color: #333;
+    }
+  }
+  
+  .MuiDialogContent-root {
+    padding: 24px;
+  }
+  
+  .MuiTableContainer-root {
+    margin-bottom: 24px;
+    
+    .MuiTableHead-root {
+      background-color: rgba(25, 118, 210, 0.08);
+      
+      .MuiTableCell-head {
+        font-weight: 600;
+        color: #333;
+      }
+    }
+    
+    .MuiTableCell-root {
+      padding: 12px 16px;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .MuiTable-root {
+      display: block;
+      overflow-x: auto;
+      
+      thead, tbody, tr, th, td {
+        display: block;
+      }
+      
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      
+      tr {
+        border: 1px solid #ccc;
+        margin-bottom: 8px;
+      }
+      
+      td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        min-height: 30px;
+        
+        &:before {
+          position: absolute;
+          top: 12px;
+          left: 16px;
+          width: 45%;
+          white-space: nowrap;
+          font-weight: 600;
+        }
+        
+        &:nth-of-type(1):before { content: "Room Type"; }
+        &:nth-of-type(2):before { content: "Check-In"; }
+        &:nth-of-type(3):before { content: "Check-Out"; }
+        &:nth-of-type(4):before { content: "Nights"; }
+        &:nth-of-type(5):before { content: "Stars"; }
+        &:nth-of-type(6):before { content: "Rooms"; }
+        &:nth-of-type(7):before { content: "Adults"; }
+        &:nth-of-type(8):before { content: "Children"; }
+      }
+    }
+  }
+  
+  .detail-section {
+    margin-bottom: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    
+    .section-header {
+      background-color: #f5f5f5;
+      padding: 12px;
+      font-weight: 600;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .section-content {
+      padding: 16px;
+    }
+  }
+  
+  .guest-card {
+    background-color: #f9f9f9;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    
+    .guest-card-title {
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+  }
+}

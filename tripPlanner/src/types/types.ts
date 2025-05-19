@@ -48,6 +48,7 @@ export interface TripPlannerProps {
 
   
 export interface PlannerItem {
+  eventDate: string;
   dateObj: any;
   id: string;
   date: string;
@@ -61,15 +62,6 @@ export interface PlannerItem {
   tours: any | null;
   meals: any | null;
 }
-
-// export interface RoomState {
-//     id: number;
-//     adults: number;
-//     cwb: number;
-//     cnb: number;
-//     infants: number;
-// }
-
 
 export interface AreaOption {
   value: string;
@@ -96,6 +88,9 @@ export interface Hotel {
     mealPlan?: string;
     nights?: number;
     totalRooms?: number;
+    checkInDate?: string;  // or Date
+    checkOutDate?: string;
+    totalAmount:string;
   };
   room?: {
     roomCategory?: string;
@@ -147,16 +142,32 @@ export interface SearchParams {
   checkOutDate?: string;
   nights?: number;
   rooms?: Room[]
+  
+}
+export interface ClientDetails {
+  name?: string;
+  email?: string;
+  phone?: string;
+  from?: string;
+  conversion?: string;
+  options?: string;
 }
 
 export interface TripPlannerData {
-  bookingRef: string;
-  generateDate: string;
-  currentSearchParams: SearchParams;
-  hotels: Hotel[];
-  plannerItems: PlannerItem[];
-  costs: PackageCosts;
-  currency: string;
+  bookingRef?: string;
+  generateDate?: string;
+  clientDetails?: ClientDetails;
+  currentSearchParams?: SearchParams;
+  hotels?: Hotel[];
+  plannerItems?: PlannerItem[];
+  costs?: {
+    finalAmount?: number;
+    packageDetails?: {
+      totalPersons?: number;
+    };
+  };
+  currency?: string;
+  
 }
 
 export interface ClientDetailsFormProps {
@@ -166,7 +177,18 @@ export interface ClientDetailsFormProps {
   bookingRef: string;
   destinations:string;
   nights:string;
-  travelDate:string
+  hotelName:string;
+  travelDate:string;
+  grandTotal:number;
+  marginTotal:string;
+  currency:number;
+  currentSearchParams:string;
+  hotels:string;
+  plannerItems:string;
+  hotelDetails:HotelDetails[];
+  tourActivities:TourDetails[];
+  activities:Activity[];
+  persons:string;
 }
 
 export interface Quote {
@@ -176,17 +198,24 @@ export interface Quote {
 }
 
 export interface Lead {
-  id: string;
-  clientName: string;
-  phone: string;
-  creationDate: string;
-  destinations: string;
-  from: string;
-  travelDate: string;
-  nights: number;
-  status: 'Quote Created' | 'Lead Converted';
-  quotes: Quote[];
-  referenceId?: string;
+  id?: string;
+  bookingNo?: string;
+  type?: string;
+  status?: string;
+  bookingTime?: string;
+  creationDate?: string;
+  travelDate?: string;
+  clientName?: string;
+  destination?: string;
+  destinations?: string;
+  costs?: {
+    finalAmount?: number;
+  };
+  totalAmount?: number;
+  pendingAmount?: number;
+  invoice?: string;
+  voucher?: string;
+  nights?: number;
 }
 
 
@@ -196,18 +225,25 @@ export interface HotelDetails {
   name?: string;
   hotelName?: string;
   area?: string;
+  description?:string;
   hotel?: {
     starRating?: string | number;
     city?: string;
     name?: string;
     hotelName?: string;
     area?: string;
+    starRatings?: string | number; // ✅ add this if needed
+    description?: string;
+  
   };
   booking?: {
     roomType?: string;
     mealPlan?: string;
     nights?: number;
     totalRooms?: number;
+    checkOutDate?: string; // ✅ add this
+    checkInDate?: string;  // ✅ optionally add this
+    totalPrice?: number;   // ✅ add this
   };
   room?: {
     roomCategory?: string;
@@ -239,27 +275,49 @@ export interface HotelDetails {
   };
   nights?: number;
 }
+export interface Activity {
+  date: string;
+  duration: string;
+  description: string;
+  name: string;
+  price?: number;
+  currency?: string;
+}
 
 export interface TourDetails {
+  tourName: string | undefined;
+  eventDate: any;
+  booking: any;
+  duration: string | undefined;
+  price: number;
   name?: string;
   description?: string;
-  eventDuration?: string;
   details?: {
     tour?: {
       tourName?: string;
       description?: string;
-      eventDuration?: string;
+      duration?: string;
+    };
+    booking?: {
+      selectedActivities?: Record<string, boolean>;
+      activityDetails?: Activity[];
+      activityPrices?: Record<string, number>;
     };
   };
+  eventDuration?: string;
+  currency?: string;
+  activities?: Activity[];
 }
 
 
 export interface TransferDetails {
+  name?: string;
   type?: string;
-  description?: string;
+  amount?: number;
 }
 
 export interface MealDetails {
+  name?: string;
   type?: string;
-  description?: string;
+  amount?: number;
 }

@@ -9,6 +9,7 @@ import { PlannerItem, TripPlannerProps } from '../../../../types/types.ts';
 import { TRIP_PLANNER } from '../../../../utils/ApiConstants.ts';
 import TripDetails from '../TripDetails/TripDetails.tsx';
 import ClientDetailsForm from '../../BookingSection/ClientForm/ClientDetailsForm.tsx';
+import { useSubmitLeadMutation } from '../../../../api/TourAPI.tsx';
 
 const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutDate, onCancel, onProceed}) => {
 const location = useLocation(); 
@@ -28,6 +29,7 @@ const getSearchParams = () => {
       packageType: 'hotel-land' // Default to hotel-land package
     };
 };
+const [submitLead] = useSubmitLeadMutation();
 const [currency, setCurrency] = useState('');
 const searchParams = getSearchParams();
 const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
@@ -88,7 +90,8 @@ const generateInitialPlannerItems = () => {
       hotel: null, 
       transfer: null, 
       tours: null, 
-      meals: null
+      meals: null,
+      eventDate:'',
     });
     currentDate.setDate(currentDate.getDate() + 1);
   }
@@ -663,6 +666,7 @@ const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hot
 const handleDownloadPDF = () => {
   setClientFormOpen(true);
 };
+
 const handleClientFormSubmit = (clientData) => {
   setClientFormOpen(false);
   setShowThankYou(true);
@@ -690,7 +694,7 @@ const handleClientFormSubmit = (clientData) => {
       checkOutDate: currentSearchParams.checkOutDate,
       nights: currentSearchParams.nights || nights,
       city: currentSearchParams.city || 'Baku',
-      country: currentSearchParams.country ,
+      country: currentSearchParams.country,
       rooms: currentSearchParams.rooms || [{ adults: 2 }]
     },
     hotels: hotels.map(hotel => ({
@@ -737,7 +741,6 @@ const handleClientFormSubmit = (clientData) => {
             booking: {
               ...(item.tours.details?.booking || {}),
               selectedActivities,
-              // Include processed activity details
               activityDetails: processedActivityDetails
             }
           
@@ -745,7 +748,6 @@ const handleClientFormSubmit = (clientData) => {
           activities: processedActivityDetails
         };
       }
-
       return {
         ...item,
         tours: toursData,
@@ -759,26 +761,85 @@ const handleClientFormSubmit = (clientData) => {
     },
     currency: currency || 'USD'
   };
-  
-  const existingBookings = JSON.parse(sessionStorage.getItem('myBookings') || '[]');
-  existingBookings.push({
+  const newLead = {
     id: bookingRef,
+    bookingNo: bookingRef,
     clientName: clientData.name,
-    destination: currentSearchParams.city || 'Baku',
-    creationDate: new Date(),
-    travelDate: new Date(currentSearchParams.checkInDate),
-    nights: currentSearchParams.nights || nights,
-    amount: grandTotal + (parseFloat(marginTotal) || 0),
-    currency: currency || 'USD',
-    status: 'Quote Created'
-  });
-  sessionStorage.setItem('myBookings', JSON.stringify(existingBookings));
-  sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
-  window.open('/tour-package-pdf', '_blank');
+    email: clientData.email,
+    phone: clientData.phone,
+    from: clientData.from,
+    conversion: clientData.conversion,
+    options: clientData.options,
+    creationDate: new Date().toISOString(),
+    bookingTime: new Date().toISOString(),
+    status: 'Confirm',
+    destinations: currentSearchParams.city,
+    travelDate: currentSearchParams.checkInDate,
+    nights: currentSearchParams.nights || nights || 1,
+    totalAmount: grandTotal + (parseFloat(marginTotal) || 0),
+    referenceId: bookingRef,
+    bookingStatus: 'confirmed',
+    type: clientData.type,
+    invoice: `/invoices/${bookingRef}`,
+    voucher: `/vouchers/${bookingRef}`,
+    totalPersons:totalPersons,
+    hotelDetails: hotels.map(hotel => ({
+      hotelName: hotel.hotel?.hotelName || hotel.hotel?.name || 'Unknown Hotel',
+      roomType: hotel.booking?.roomType || hotel.room?.roomCategory || 'Standard',
+      mealPlan: hotel.booking?.mealPlan || hotel.room?.mealPlan || 'None',
+      checkInDate: hotel.booking?.checkInDate,
+      checkOutDate: hotel.booking?.checkOutDate,
+      nights: hotel.booking?.nights || 1,
+      totalPrice: hotel.booking?.totalPrice || 0,
+      currency: hotel.booking?.currency || currency || 'USD',
+      starRating: hotel.hotel?.starRating || hotel.hotel?.starRatings || 'No',
+      city: hotel.city
+    })),
+    plannerItems: plannerItems.map(item => {
+      const toursData = item.tours ? {
+        name: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
+        description: item.tours.description || item.tours.details?.tour?.description || 'N/A',
+        duration: item.tours.details?.tour?.duration || item.tours.eventDuration || 'N/A',
+        currency: item.tours.currency || currency || 'USD',
+        price: item.tours.price || 0,
+        activities: item.tours.activities || (item.tours.details?.booking?.activityDetails || []).map(activity => ({
+          name: activity.name,
+          price: activity.price || 0,
+          currency: activity.currency || currency || 'USD'
+        })) || []
+      } : null;
 
+      return {
+        date: item.date || 'N/A',
+        tours: toursData,
+        transfer: item.transfer || null,
+        meals: item.meals || null
+      };
+    })
+  };
+
+  try {
+    submitLead(newLead).unwrap()
+      .then(() => {
+        console.log("Successfully stored client, hotel and activity details in the database");
+        sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
+        window.open('/tour-package-pdf', '_blank');
+      })
+      .catch(error => {
+        console.error('Error submitting lead with hotel and activity details:', error);
+        alert('Failed to submit lead.');
+        // Still open the PDF even if DB storage fails
+        sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
+        window.open('/tour-package-pdf', '_blank');
+      });
+  } catch (err) {
+    console.error('Error in submitting lead:', err);
+    alert('Failed to submit lead.');
+    // Still open the PDF even if there's an error
+    sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
+    window.open('/tour-package-pdf', '_blank');
+  }
 };
-
-
 const showHotelTab = packageType === 'hotel-land';
 return (
     <Box className="trip-planner-page">
@@ -936,10 +997,19 @@ return (
         )}
       </Container>
       
+    
       {clientFormOpen && (
-        <ClientDetailsForm open={clientFormOpen} onClose={() => setClientFormOpen(false)}  onSubmit={handleClientFormSubmit} bookingRef={bookingRef}
-          destinations={currentSearchParams?.city || 'Baku'}  nights={currentSearchParams?.nights?.toString() || displayNights.toString()}  travelDate={currentSearchParams?.checkInDate} />
-      )}
+  <ClientDetailsForm 
+        open={clientFormOpen}
+        onClose={() => setClientFormOpen(false)}
+        onSubmit={handleClientFormSubmit}
+        bookingRef={bookingRef}
+        destinations={currentSearchParams?.city || 'Baku'}
+        nights={currentSearchParams?.nights?.toString() || displayNights.toString()}
+        travelDate={currentSearchParams?.checkInDate}
+        grandTotal={grandTotal + (parseFloat(marginTotal) || 0)} marginTotal={''} 
+        currency={0} currentSearchParams={''} hotels={''} plannerItems={''} hotelDetails={[]} tourActivities={[]} activities={[]} persons={''} hotelName={''}  />
+)}
     </Box>
   );
 };

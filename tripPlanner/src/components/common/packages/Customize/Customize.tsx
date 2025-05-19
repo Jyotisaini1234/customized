@@ -183,7 +183,9 @@
     };
 
     const handleSearch = () => {
-      sessionStorage.removeItem('tripPlannerItems');
+      // sessionStorage.removeItem('tripPlannerParams');
+      // sessionStorage.removeItem('tripPlannerHotels');
+      // sessionStorage.removeItem('tripPlannerItems');
       if (!country || !city || !checkInDate || !checkOutDate) {
         alert("All fields are required!");
         return;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './PrimaryNavbar.scss';
-import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstans.ts';
+import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstants.ts';
 import { Box, IconButton } from '@mui/material';
 import { dropdownMenus } from '../../../../model/selectOptions.ts';
 import { Menu as MenuIcon } from '@mui/icons-material';

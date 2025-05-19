@@ -4,7 +4,7 @@ import Customize from '../components/common/packages/Customize/Customize.tsx';
 import TripPlanner from '../components/common/packages/TripPlanner/TripPlanner.tsx';
 import TripPlannerArea from '../components/common/packages/TripPlannerArea/TripPlannerArea.tsx';
 import MainLayout from '../pages/MainLayout/MainLayout.tsx';
-import { ROUTE_CONSTANTS } from '../constants/routeConstans.ts';
+import { ROUTE_CONSTANTS } from '../constants/routeConstants.ts';
 import TourPackagePDF from '../components/common/packages/Customize/TripPlannerPDF/TourPackagePDF.tsx';
 import MyLeads from '../components/common/BookingSection/MyLeads/MyLeads.tsx';
 

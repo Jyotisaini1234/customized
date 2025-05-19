@@ -6,8 +6,11 @@ import { useSubmitLeadMutation } from '../../../../api/TourAPI.tsx';
 import { ClientDetailsFormProps } from '../../../../types/types.ts';
 
 
-const ClientDetailsForm: React.FC<ClientDetailsFormProps> = ({open,onClose,onSubmit,destinations,bookingRef,nights,travelDate}) => {
-  const [clientData, setClientData] = useState({name: '',email: '',phone: '',from:'', conversion: '',options:'option 1'});
+const ClientDetailsForm: React.FC<ClientDetailsFormProps> = ({open,onClose,onSubmit,destinations,bookingRef,
+  nights,travelDate,grandTotal = 0,
+  marginTotal = '0',currency = 'USD',}) => {
+  const [clientData, setClientData] = useState({name: '',email: '',phone: '',from:'', conversion: '',options:'option 1', type: 'package'});
+  const [bookingStatus, setBookingStatus] = useState('confirmed'); 
   const handleChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     setClientData((prevData) => ({
@@ -28,20 +31,21 @@ const handleSubmit = async () => {
       alert('Please fill in all required fields');
       return;
     }
-  
+    const marginValue = typeof marginTotal === 'string' ? parseFloat(marginTotal) || 0 : marginTotal;
+    const totalAmount = grandTotal + marginValue;
+    const totalPrice = grandTotal;
     const newLead = {
       id: bookingRef,
+      bookingNo: bookingRef,
       clientName: clientData.name,
       email: clientData.email,
       phone: clientData.phone,
       from: clientData.from,
       conversion: clientData.conversion,
       options: clientData.options,
-      creationDate: new Date().toISOString(),
-      status: 'New Lead',
-      destinations: destinations,
       travelDate: travelDate,
-      nights: nights || 1,
+      totalAmount: totalAmount,
+      bookingStatus: bookingStatus,
     };
   
     try {
@@ -71,9 +75,9 @@ const handleSubmit = async () => {
         <FormControl fullWidth margin="dense">
           <InputLabel id="payment-mode-label">Options</InputLabel>
           <Select labelId="payment-mode-label" name="options" value={clientData.options} label="option 1" onChange={handleChange}>
-            <MenuItem value="option 1">option 1</MenuItem>
-            <MenuItem value="option 2">option 2</MenuItem>
-            <MenuItem value="option 3">option 3</MenuItem>
+            <MenuItem value="option 1">Package</MenuItem>
+            <MenuItem value="option 2"> Flight</MenuItem>
+            {/* <MenuItem value="option 3">option 3</MenuItem> */}
           </Select>
         </FormControl>
 
