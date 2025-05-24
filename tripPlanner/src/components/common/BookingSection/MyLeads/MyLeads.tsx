@@ -4,12 +4,14 @@ import { useGetLeadsQuery } from '../../../../api/TourAPI.tsx';
 import './MyLeads.scss';
 import LeadDetailsDialog from '../OnRequestBooking/LeadDetailsDialog.tsx';
 import { useNavigate } from 'react-router-dom';
+import { useLeadInvoiceDownload } from '../LeadInvoicePDF/LeadInvoicePDF.tsx';
 
 const MyLeads: React.FC = () => {
   const { data: leads = [], isLoading, isError } = useGetLeadsQuery();
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const handleInvoiceDownload = useLeadInvoiceDownload();
   
   const getStatusChip = (status: string) => {
     if (status === 'confirmed') {
@@ -27,90 +29,7 @@ const MyLeads: React.FC = () => {
   const handleCloseDetails = () => {
     setDetailsOpen(false);
   };
-  
-  const handleInvoiceDownload = (lead: any) => {
-    console.log(`Downloading invoice for lead: ${lead.referenceId}`);
-    try {
-      const tripPlannerData = {
-        bookingRef: lead.referenceId,
-        generateDate: new Date().toLocaleDateString(),
-        clientDetails: {
-          name: lead.clientName,
-          email: lead.email,
-          phone: lead.phone,
-          from: lead.from,
-          conversion: lead.conversion,
-          options: lead.options,
-          type: lead.type
-        },
-        currentSearchParams: {
-          checkInDate: lead.travelDate,
-          checkOutDate: new Date(new Date(lead.travelDate).getTime() + (lead.nights * 24 * 60 * 60 * 1000)).toISOString(),
-          nights: lead.nights,
-          city: lead.destinations,
-          country: lead.country,
-          rooms: lead.rooms || [{ adults: 2 }]
-        },
-        hotels: (lead.hotelDetails || []).map(hotel => ({
-          hotel: {
-            hotelName: hotel.hotelName,
-            description: hotel.description || 'No description available',
-            starRating: hotel.starRating
-          },
-          booking: {
-            roomType: hotel.roomType,
-            mealPlan: hotel.mealPlan,
-            totalRooms: hotel.totalRooms || 1,
-            checkInDate: hotel.checkInDate || lead.travelDate,
-            checkOutDate: hotel.checkOutDate || new Date(new Date(lead.travelDate).getTime() + (lead.nights * 24 * 60 * 60 * 1000)).toISOString(),
-            nights: hotel.nights || lead.nights,
-            totalPrice: hotel.totalPrice
-          },
-          room: {
-            roomCategory: hotel.roomType,
-            mealPlan: hotel.mealPlan
-          }
-        })),
-        plannerItems: (lead.plannerItems || []).map(item => {
-          let toursData = null;
-          if (item.tours) {
-            toursData = {
-              ...item.tours,
-              name: item.tours.name,
-              description: item.tours.description,
-              details: {
-                tour: {
-                  tourName: item.tours.name,
-                  description: item.tours.description,
-                  duration: item.tours.duration
-                },
-                booking: {
-                  selectedActivities: {},
-                  activityDetails: item.tours.activities || []
-                }
-              },
-              activities: item.tours.activities || []
-            };
-          }
-          return {
-            date: item.date,
-            tours: toursData,
-            transfer: item.transfer,
-            meals: item.meals
-          };
-        }),
-        costs: {
-          finalAmount: lead.totalAmount,
-          packageDetails: { totalPersons: lead.totalPersons || 2 }
-        },
-        currency: lead.currency || 'USD'
-      };
-      window.open('/tour-package-pdf', '_blank');
-    } catch (err) {
-      console.error('Error downloading invoice:', err);
-      alert('Failed to download invoice.');
-    }
-  };
+
   const getCorrectDestination = (lead) => {
     if (lead.currentSearchParams && lead.currentSearchParams.city) {
       return lead.currentSearchParams.city;
@@ -161,7 +80,7 @@ const MyLeads: React.FC = () => {
                       {lead.referenceId}
                     </Button>
                   </TableCell>
-                  <TableCell>{lead.type}</TableCell>
+                  <TableCell>{lead.options}</TableCell>
                   <TableCell className='status'>{getStatusChip(lead.status)}</TableCell>
                   <TableCell>{lead.clientName}</TableCell>
                   <TableCell>{lead.phone}</TableCell>

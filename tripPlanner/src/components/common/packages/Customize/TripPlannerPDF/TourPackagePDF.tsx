@@ -169,7 +169,6 @@ const TourPackagePDF: React.FC = () => {
         pdf.text(footerText, pageWidth / 2, pageHeight - 15, { align: 'center' });
         pdf.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       }
-      // Save with optimized settings
       const fileName = `Tour_Package_${packageData?.bookingRef || 'Package'}.pdf`;
       pdf.save(fileName);
     };
@@ -455,10 +454,10 @@ return (
           <h2 className="cost-summary-title">COST SUMMARY</h2>
           <Box className="cost-grid">
             <Box className="cost-label">Total Package Cost:</Box>
-            <Box className="cost-value">{currency} {costs.finalAmount.toFixed(2)}</Box>
+            <Box className="cost-value">{currency} {(costs.finalAmount ?? 0).toFixed(2)}</Box>
             
             <Box className="cost-label">Cost Per Person:</Box>
-            <Box className="cost-value">{currency} {(costs.finalAmount / totalPersons).toFixed(2)}</Box>
+            <Box className="cost-value">{currency} {((costs.finalAmount ?? 0) / totalPersons).toFixed(2)}</Box>
           </Box>
         </Box>
       </Box>

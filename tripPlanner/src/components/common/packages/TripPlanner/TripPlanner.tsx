@@ -12,7 +12,7 @@ import ClientDetailsForm from '../../BookingSection/ClientForm/ClientDetailsForm
 import { useSubmitLeadMutation } from '../../../../api/TourAPI.tsx';
 
 const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutDate, onCancel, onProceed}) => {
-const location = useLocation(); 
+const location = useLocation();
 const navigate = useNavigate();
 const getSearchParams = () => {
     if (location.state && Object.keys(location.state).length > 0) {
@@ -25,7 +25,7 @@ const getSearchParams = () => {
       checkInDate: checkInDate,
       checkOutDate: checkOutDate,
       nights: nights || 1, // Ensure nights has a default value
-      city: 'Baku',
+      city: '',
       packageType: 'hotel-land' // Default to hotel-land package
     };
 };
@@ -337,7 +337,7 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
   sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
   sessionStorage.setItem('tripPlannerItems', JSON.stringify(plannerItems));
   let selectedArea = '';
-  let selectedCity = currentSearchParams.city || 'Baku';
+  let selectedCity = currentSearchParams.city;
   let selectedCountry = currentSearchParams.country || 'Azerbaijan';
   if (packageType === 'hotel-land' && hotels.length > 0 && hotels[0].hotel?.area) {
     selectedArea = hotels[0].hotel.area;
@@ -636,7 +636,7 @@ const formatHeaderDate = (dateString: string | undefined) => {
 const displayCheckInDate = formatHeaderDate(currentSearchParams?.checkInDate) ;
 const displayCheckOutDate = formatHeaderDate(currentSearchParams?.checkOutDate);
 const displayNights = currentSearchParams?.nights || nights || '1';
-const displayCity = currentSearchParams?.city || 'BAKU';
+const displayCity = currentSearchParams?.city || '';
 const handleSearchComplete = (updatedParams: any) => {
     if (updatedParams) { 
       setCurrentSearchParams(updatedParams);
@@ -671,7 +671,7 @@ const handleClientFormSubmit = (clientData) => {
   setClientFormOpen(false);
   setShowThankYou(true);
 
-  const calculateTotalPersons = () => {
+const calculateTotalPersons = () => {
     if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
       return 2; // Default to 2 persons if no room data
     }
@@ -693,10 +693,11 @@ const handleClientFormSubmit = (clientData) => {
       checkInDate: currentSearchParams.checkInDate,
       checkOutDate: currentSearchParams.checkOutDate,
       nights: currentSearchParams.nights || nights,
-      city: currentSearchParams.city || 'Baku',
+      city: currentSearchParams.city,
       country: currentSearchParams.country,
       rooms: currentSearchParams.rooms || [{ adults: 2 }]
     },
+    
     hotels: hotels.map(hotel => ({
       ...hotel,
       hotel: {
@@ -761,6 +762,7 @@ const handleClientFormSubmit = (clientData) => {
     },
     currency: currency || 'USD'
   };
+  const selectedCity = currentSearchParams.city;
   const newLead = {
     id: bookingRef,
     bookingNo: bookingRef,
@@ -773,7 +775,7 @@ const handleClientFormSubmit = (clientData) => {
     creationDate: new Date().toISOString(),
     bookingTime: new Date().toISOString(),
     status: 'Confirm',
-    destinations: currentSearchParams.city,
+    destinations: selectedCity,
     travelDate: currentSearchParams.checkInDate,
     nights: currentSearchParams.nights || nights || 1,
     totalAmount: grandTotal + (parseFloat(marginTotal) || 0),
@@ -782,7 +784,7 @@ const handleClientFormSubmit = (clientData) => {
     type: clientData.type,
     invoice: `/invoices/${bookingRef}`,
     voucher: `/vouchers/${bookingRef}`,
-    totalPersons:totalPersons,
+    totalPersons: totalPersons,
     hotelDetails: hotels.map(hotel => ({
       hotelName: hotel.hotel?.hotelName || hotel.hotel?.name || 'Unknown Hotel',
       roomType: hotel.booking?.roomType || hotel.room?.roomCategory || 'Standard',
@@ -793,29 +795,42 @@ const handleClientFormSubmit = (clientData) => {
       totalPrice: hotel.booking?.totalPrice || 0,
       currency: hotel.booking?.currency || currency || 'USD',
       starRating: hotel.hotel?.starRating || hotel.hotel?.starRatings || 'No',
-      city: hotel.city
+      city: hotel.city || hotel.hotel?.city || currentSearchParams.city || 'Unknown City',  // <-- FIXED
+      description: hotel.hotel?.description || 'No description available',
+      totalRooms: hotel.booking.totalRooms || 1,
+      roomOccupancy: hotel.hotel?.roomsOccupancyDetails
     })),
     plannerItems: plannerItems.map(item => {
       const toursData = item.tours ? {
         name: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
-        description: item.tours.description || item.tours.details?.tour?.description || 'N/A',
-        duration: item.tours.details?.tour?.duration || item.tours.eventDuration || 'N/A',
+        description: item.tours.description || item.tours.details?.tour?.description || 'No description available',
+        duration: item.tours.details?.tour?.duration || item.tours.eventDuration || 'Duration not specified',
         currency: item.tours.currency || currency || 'USD',
         price: item.tours.price || 0,
-        activities: item.tours.activities || (item.tours.details?.booking?.activityDetails || []).map(activity => ({
+        city: item.tours.city || currentSearchParams.city || 'Unknown City',
+        activities: (item.tours.activities || (item.tours.details?.booking?.activityDetails || []).map(activity => ({
           name: activity.name,
           price: activity.price || 0,
-          currency: activity.currency || currency || 'USD'
-        })) || []
+          currency: activity.currency || currency || 'USD',
+        })) || [])
       } : null;
-
+    
       return {
         date: item.date || 'N/A',
         tours: toursData,
-        transfer: item.transfer || null,
-        meals: item.meals || null
+        transfer: item.transfer ? {
+          ...item.transfer,
+          city: item.transfer.city || currentSearchParams.city || 'Unknown City',
+          description: item.transfer.description || 'No description available',
+        } : null,
+        meals: item.meals ? {
+          ...item.meals,
+          city: item.meals.city || currentSearchParams.city || 'Unknown City',
+          description: item.meals.description || 'No description available',
+        } : null
       };
     })
+    
   };
 
   try {
@@ -828,14 +843,12 @@ const handleClientFormSubmit = (clientData) => {
       .catch(error => {
         console.error('Error submitting lead with hotel and activity details:', error);
         alert('Failed to submit lead.');
-        // Still open the PDF even if DB storage fails
         sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
         window.open('/tour-package-pdf', '_blank');
       });
   } catch (err) {
     console.error('Error in submitting lead:', err);
     alert('Failed to submit lead.');
-    // Still open the PDF even if there's an error
     sessionStorage.setItem('tripPlannerData', JSON.stringify(tripPlannerData));
     window.open('/tour-package-pdf', '_blank');
   }
@@ -1004,7 +1017,7 @@ return (
         onClose={() => setClientFormOpen(false)}
         onSubmit={handleClientFormSubmit}
         bookingRef={bookingRef}
-        destinations={currentSearchParams?.city || 'Baku'}
+        destinations={currentSearchParams?.city}
         nights={currentSearchParams?.nights?.toString() || displayNights.toString()}
         travelDate={currentSearchParams?.checkInDate}
         grandTotal={grandTotal + (parseFloat(marginTotal) || 0)} marginTotal={''} 

@@ -83,12 +83,13 @@ export const Areas: Area[] = [
 
 export interface Hotel {
   hotel?: HotelDetails;
+  city:string;
   booking?: {
     roomType?: string;
     mealPlan?: string;
     nights?: number;
     totalRooms?: number;
-    checkInDate?: string;  // or Date
+    checkInDate?: string;
     checkOutDate?: string;
     totalAmount:string;
   };
@@ -320,4 +321,124 @@ export interface MealDetails {
   name?: string;
   type?: string;
   amount?: number;
+}
+
+
+export interface HotelBooking {
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  roomType: string;
+  mealPlan: string;
+  totalPrice: number;
+  currency?: string;
+  starRating?: string;
+
+}
+
+// export interface Hotel {
+//   hotelName: string;
+// }
+
+export interface Room {
+  roomCategory: string;
+  mealPlan: string;
+}
+
+export interface HotelDetail {
+  totalRooms: string;
+  hotelName: string;
+  roomType: string;
+  mealPlan: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  totalPrice: number;
+  currency?: string;
+  starRating?: string;
+  city:string;
+}
+
+export interface HotelData {
+  hotel?: Hotel;
+  booking?: HotelBooking;
+  room?: Room;
+}
+
+export interface TourActivity {
+  name: string;
+  description: string;
+  price: number;
+  details?: {
+    tour?: {
+      duration: string;
+    }
+  };
+  eventDuration?: string;
+  activities?: Array<{price: number, name?: string}>;
+  duration?: string;
+  currency?: string;
+}
+
+// export interface PlannerItem {
+//   date: string;
+//   tours?: TourActivity;
+// }
+
+export interface PackageDetails {
+  totalPersons: number;
+}
+
+export interface Costs {
+  finalAmount: number;
+  packageDetails?: PackageDetails;
+}
+
+
+
+export interface LeadInvoiceData {
+  bookingRef: string;
+  generateDate: string;
+  clientDetails: ClientDetails;
+  currentSearchParams?: SearchParams;
+  hotels?: HotelData[];
+  hotelDetails?: HotelDetail[]; 
+  plannerItems: PlannerItem[];
+  costs: Costs;
+  currency: string;
+  totalPersons?: string | number;
+}
+
+export interface LeadDetail {
+  id?: string;
+  _id?: string;
+  referenceId: string;
+  bookingNo?: string;
+  clientName: string;
+  email?: string;
+  clientDetails?: {
+    name: string;
+    email: string;
+    phone: string;
+    from: string;
+    type: string;
+    destinations?: string;
+  };
+  currentSearchParams?: SearchParams;
+  hotels?: HotelData[];
+  hotelDetails?: HotelDetail[];
+  plannerItems?: PlannerItem[];
+  costs?: Costs;
+  currency?: string;
+  type: string;
+  phone: string;
+  creationDate: string;
+  travelDate: string;
+  from: string;
+  destinations?: string;
+  totalAmount: number;
+  pendingAmount?: number;
+  status: string;
+  totalPersons?: string | number;
+  nights?: string | number;
 }

@@ -1,0 +1,175 @@
+$primary-color: #333;
+$background-color: #fff;
+$light-gray: #2c3e50;
+$lighter-gray: #f9f9f9;
+$border-color: #ddd;
+$light-border: #eee;
+$medium-gray: #f2f2f2;
+$text-color-muted: #666;
+
+// Mixins
+@mixin section-container {
+  margin-bottom: 1.25rem;
+  padding: 0.625rem;
+  background-color: $background-color;
+  border: 1px solid $light-border;
+}
+
+@mixin section-title {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-bottom: 0.625rem;
+  padding-bottom: 0.3125rem;
+  border-bottom: 1px solid $border-color;
+}
+
+@mixin grid-layout($columns) {
+  display: grid;
+  grid-template-columns: $columns;
+  gap: 0.3125rem;
+}
+
+.invoice {
+  &-container {
+    font-family: Arial, sans-serif;
+    color: $primary-color;
+    background-color: $background-color;
+    padding: 0.625rem;
+    max-width: 50rem;
+    margin: 0 auto;
+  }
+
+  &-header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+    padding: 0.625rem;
+    color: white;
+    background-color: $light-gray;
+    
+    &-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0;
+    }
+  }
+
+  &-reference {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding: 0.625rem;
+    background-color: $lighter-gray;
+    
+    &-content {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .booking-ref {
+      font-weight: bold;
+    }
+  }
+
+  &-section {
+    @include section-container;
+    
+    &-title {
+      @include section-title;
+    }
+  }
+}
+
+.client-details {
+  &-section {
+    @include section-container;
+  }
+  
+  &-grid {
+    @include grid-layout(1fr 3fr);
+  }
+  
+  .detail {
+    &-row {
+      display: contents;
+    }
+    
+    &-label {
+      font-weight: bold;
+    }
+  }
+}
+
+.hotel-details {
+  &-section {
+    @include section-container;
+  }
+}
+
+.activities {
+  &-section {
+    @include section-container;
+  }
+}
+
+.cost-summary {
+  @include section-container;
+  background: $light-gray;
+  color: white;
+  
+  &-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin-bottom: 0.625rem;
+  }
+  
+  &-grid {
+    @include grid-layout(1fr 1fr);
+  }
+  
+  .cost {
+    &-label {
+      font-weight: bold;
+    }
+    
+    &-value {
+      text-align: right;
+    }
+  }
+}
+
+// Table styles
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.625rem;
+  
+  th, td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.875rem;
+  }
+  
+  th {
+    background-color: $medium-gray;
+    font-weight: bold;
+  }
+  
+  .nested-activity {
+    padding-left: 1.25rem;
+  }
+}
+
+// PDF specific styles
+.pdf-footer {
+  font-size: 0.5rem;
+  color: $text-color-muted;
+  text-align: center;
+}
+
+.page-number {
+  font-size: 0.5rem;
+  color: $text-color-muted;
+  text-align: center;
+}

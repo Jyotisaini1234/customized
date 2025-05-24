@@ -8,9 +8,10 @@ import { ClientDetailsFormProps } from '../../../../types/types.ts';
 
 const ClientDetailsForm: React.FC<ClientDetailsFormProps> = ({open,onClose,onSubmit,destinations,bookingRef,
   nights,travelDate,grandTotal = 0,
-  marginTotal = '0',currency = 'USD',}) => {
-  const [clientData, setClientData] = useState({name: '',email: '',phone: '',from:'', conversion: '',options:'option 1', type: 'package'});
-  const [bookingStatus, setBookingStatus] = useState('confirmed'); 
+  marginTotal = '0',currency = 'USD'}) => {
+  const [clientData, setClientData] = useState({name: '',email: '',phone: '',from:'', conversion: '', destination:'',options:'package', type: 'package'});
+  const [bookingStatus, setBookingStatus] = useState('confirmed');
+
   const handleChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     setClientData((prevData) => ({
@@ -31,9 +32,12 @@ const handleSubmit = async () => {
       alert('Please fill in all required fields');
       return;
     }
+
+
+
+    
     const marginValue = typeof marginTotal === 'string' ? parseFloat(marginTotal) || 0 : marginTotal;
     const totalAmount = grandTotal + marginValue;
-    const totalPrice = grandTotal;
     const newLead = {
       id: bookingRef,
       bookingNo: bookingRef,
@@ -46,6 +50,8 @@ const handleSubmit = async () => {
       travelDate: travelDate,
       totalAmount: totalAmount,
       bookingStatus: bookingStatus,
+      destination: clientData.destination
+
     };
   
     try {
@@ -73,10 +79,10 @@ const handleSubmit = async () => {
         <TextField margin="dense" name="from" label="From" type="text" fullWidth variant="outlined"value={clientData.from}onChange={handleInputChange}required/>
 
         <FormControl fullWidth margin="dense">
-          <InputLabel id="payment-mode-label">Options</InputLabel>
-          <Select labelId="payment-mode-label" name="options" value={clientData.options} label="option 1" onChange={handleChange}>
-            <MenuItem value="option 1">Package</MenuItem>
-            <MenuItem value="option 2"> Flight</MenuItem>
+          <InputLabel id="option-mode-label">Options</InputLabel>
+          <Select labelId="option-mode-label" name="options" value={clientData.options} label="package"  onChange={handleChange}>
+            <MenuItem value="package">Package</MenuItem>
+            <MenuItem value="flight"> Flight</MenuItem>
             {/* <MenuItem value="option 3">option 3</MenuItem> */}
           </Select>
         </FormControl>
