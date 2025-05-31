@@ -7,6 +7,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import MapIcon from '@mui/icons-material/Map';
 import './LeadDetailsDialog.scss';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 interface LeadDetailsDialogProps {
   open: boolean;
@@ -68,6 +69,18 @@ const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({ open, onClose, se
     }
     return totalAmount.toFixed(2);
   };
+  const bookingRef = selectedLead?.referenceId || selectedLead?.bookingNo || selectedLead?.id;
+
+  const handlePdfDownload = () => {
+        if (!bookingRef) {
+          alert('Booking reference is missing. Cannot generate PDF.');
+          return;
+        }
+        const pdfUrl = `/tour-package-pdf?bookingRef=${bookingRef}`;
+        window.open(pdfUrl, '_blank');
+      };
+    
+
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -81,32 +94,7 @@ const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({ open, onClose, se
       
       <DialogContent dividers>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <PersonIcon fontSize="small" sx={{ mr: 1 }} color="primary" />
-                <Typography variant="h6">Client Information</Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <Typography gutterBottom><strong>Name:</strong> {selectedLead.clientName}</Typography>
-                  <Typography gutterBottom><strong>Email:</strong> {selectedLead.email || 'N/A'}</Typography>
-                  <Typography gutterBottom><strong>Phone:</strong> {selectedLead.phone || 'N/A'}</Typography>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Typography gutterBottom><strong>From:</strong> {selectedLead.from || 'N/A'}</Typography>
-                  <Typography gutterBottom><strong>Conversion:</strong> {selectedLead.conversion || 'N/A'}</Typography>
-                  <Typography gutterBottom><strong>Options:</strong> {selectedLead.options || 'N/A'}</Typography>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Typography gutterBottom><strong>Created:</strong> {formatDate(selectedLead.creationDate)}</Typography>
-                  <Typography gutterBottom><strong>Booking Type:</strong> {selectedLead.type || 'N/A'}</Typography>
-                  <Typography gutterBottom><strong>Status:</strong> {selectedLead.bookingStatus || selectedLead.status || 'N/A'}</Typography>
-                </Grid>
-              </Grid>
-            </Box>
-          </Grid>
+          
           <Grid item xs={12} md={6}>
             <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
@@ -263,6 +251,10 @@ const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({ open, onClose, se
       </DialogContent>
       
       <DialogActions sx={{ p: 2 }}>
+        <Button  variant="contained" 
+          startIcon={<PictureAsPdfIcon />}  onClick={handlePdfDownload} sx={{   bgcolor: 'green', color: 'white', '&:hover': {   bgcolor: 'darkgreen' }  }}>
+          Download PDF
+        </Button>
         <Button variant="contained" sx={{color:'white', bgcolor:'red'}} onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>

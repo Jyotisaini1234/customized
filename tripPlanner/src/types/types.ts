@@ -190,6 +190,9 @@ export interface ClientDetailsFormProps {
   tourActivities:TourDetails[];
   activities:Activity[];
   persons:string;
+  isEditMode?: boolean;
+  initialClientData?: any;
+  originalLeadId?: string;
 }
 
 export interface Quote {
@@ -200,25 +203,30 @@ export interface Quote {
 
 export interface Lead {
   id?: string;
-  bookingNo?: string;
-  type?: string;
-  status?: string;
-  bookingTime?: string;
-  creationDate?: string;
-  travelDate?: string;
-  clientName?: string;
+  bookingRef?: string;
+  referenceId?: string;
+  clientName: string;
+  email?: string;
+  phone?: string;
+  from?: string;
+  conversion?: string;
+  options: string;
+  type: string;
+  travelDate: string;
+  totalAmount: number;
+  bookingStatus: string;
   destination?: string;
   destinations?: string;
-  costs?: {
-    finalAmount?: number;
-  };
-  totalAmount?: number;
+  creationDate: string;
+  bookingTime: string;
+  status: string;
+  nights: number;
+  currency: string;
+  hotelDetails?: any[];
+  plannerItems?: any[];
   pendingAmount?: number;
-  invoice?: string;
-  voucher?: string;
-  nights?: number;
+  paidAmount?: number;
 }
-
 
 export interface HotelDetails {
   starRating?: string | number;
@@ -336,9 +344,6 @@ export interface HotelBooking {
 
 }
 
-// export interface Hotel {
-//   hotelName: string;
-// }
 
 export interface Room {
   roomCategory: string;
@@ -380,10 +385,6 @@ export interface TourActivity {
   currency?: string;
 }
 
-// export interface PlannerItem {
-//   date: string;
-//   tours?: TourActivity;
-// }
 
 export interface PackageDetails {
   totalPersons: number;
@@ -442,3 +443,4 @@ export interface LeadDetail {
   totalPersons?: string | number;
   nights?: string | number;
 }
+

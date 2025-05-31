@@ -15,7 +15,7 @@
     const [loading, setLoading] = useState<boolean>(false);
     const [hotelDetails, setHotelDetails] = useState(null);
     const [city, setCity] = useState<string>(searchParams.city || '');
-    const [countrie, setCountrie] = useState<string>(searchParams.country || '');
+    const [countrie, setCountrie] = useState<string>(searchParams.country || 'Azerbaijan');
     const [adultsCount, setAdultsCount] = useState<number>(searchParams.rooms?.[0]?.adults || 2);
     const [cwbCount, setCwbCount] = useState<number>(searchParams.rooms?.[0]?.cwb || 0);
     const [cnbCount, setCnbCount] = useState<number>(searchParams.rooms?.[0]?.cnb || 0);
@@ -70,7 +70,7 @@ const handleSearch = () => {
   const checkOutDate = checkOutDateObj.toISOString();
   params.append('checkOutDate', checkOutDate);
   params.append('city', currentCity);
-  params.append('country', countrie);
+  params.append('country', 'Azerbaijan');
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
   if (searchParams.specificDay) {

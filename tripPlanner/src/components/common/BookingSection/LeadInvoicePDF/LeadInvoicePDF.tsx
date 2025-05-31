@@ -30,9 +30,6 @@ export const useLeadInvoiceDownload = () => {
         generateDate: new Date().toLocaleDateString('en-GB'),
         clientDetails: {
           name: lead.clientName || lead.clientDetails?.name || '',
-          email: lead.email || lead.clientDetails?.email || '',
-          phone: lead.phone || lead.clientDetails?.phone || '',
-          from: lead.from || lead.clientDetails?.from || '',
           options: lead.type || lead.clientDetails?.type || ''
         },
         currentSearchParams: lead.currentSearchParams || { nights: lead.nights },
@@ -208,24 +205,6 @@ export const useLeadInvoiceDownload = () => {
               <span class="bold-text">INVOICE NO:</span> ${bookingRef}
               <div class="generated-date">Generated on: ${generateDate}</div>
             </div>
-          </div>
-        </div>
-        
-        <div class="client-details-section" style="margin-bottom: 0.5rem;">
-          <h2 class="invoice-section-title" style="margin: 0.5rem 0;">Client Details</h2>
-          <div class="client-details-grid">
-            <div class="detail-label">Name:</div>
-            <div class="detail-value">${clientDetails.name}</div>
-            <div class="detail-label">Email:</div>
-            <div class="detail-value">${clientDetails.email}</div>
-            <div class="detail-label">Phone:</div>
-            <div class="detail-value">${clientDetails.phone}</div>
-            <div class="detail-label">From:</div>
-            <div class="detail-value">${clientDetails.from}</div>
-            <div class="detail-label">Type:</div>
-            <div class="detail-value">${clientDetails.options}</div>
-            <div class="cost-label">Total Persons:</div>
-            <div class="cost-value">${costs.packageDetails?.totalPersons || totalPersons || 0}</div>
           </div>
         </div>
         
