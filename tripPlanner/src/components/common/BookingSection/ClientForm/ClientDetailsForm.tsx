@@ -3,12 +3,12 @@ import {Dialog,DialogTitle,DialogContent,DialogActions, TextField, Button,Typogr
 import { Close } from '@mui/icons-material';
 import './ClientDetailsForm.scss';
 import { useSubmitLeadMutation, useUpdateLeadMutation } from '../../../../api/TourAPI.tsx';
-import { ClientDetailsFormProps } from '../../../../types/types.ts';
+import { ClientDetailsFormProps, Hotel, Lead, PlannerItem } from '../../../../types/types.ts';
 
 
 const ClientDetailsForm: React.FC<ClientDetailsFormProps> = ({open,onClose,onSubmit,destinations,bookingRef,
   nights,travelDate,grandTotal = 0, isEditMode = false,initialClientData = null,
-  marginTotal = '0',currency = 'USD'}) => {
+  marginTotal = '0',currency = 'USD' , selectedHotels = [],selectedPlannerItems = [] }) => {
   const [clientData, setClientData] = useState({name: '', destination:'',options:'package', type: 'package'});
   const [bookingStatus, setBookingStatus] = useState('confirmed');
   const [isEditModeState, setIsEditModeState] = useState(false);
@@ -16,7 +16,9 @@ const ClientDetailsForm: React.FC<ClientDetailsFormProps> = ({open,onClose,onSub
   
   const [updateLead] = useUpdateLeadMutation(); 
   const [submitLead] = useSubmitLeadMutation();
-
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
+  
   const handleChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     setClientData((prevData) => ({
@@ -39,12 +41,19 @@ useEffect(() => {
   if (editLeadData) {
     try {
       const parsedData = JSON.parse(editLeadData);
-      console.log(" Edit Lead Data from Session:", parsedData);
-      
+      console.log("Edit Lead Data from Session:", parsedData);
+  
       if (parsedData.isEditMode) {
         setIsEditModeState(true);
-        setCurrentBookingRef(parsedData.bookingRef || parsedData.leadId);
-        
+  
+        // ✅ Validate and set the bookingRef
+        const ref = parsedData.bookingRef || parsedData.leadId;
+        if (ref) {
+          setCurrentBookingRef(ref);
+        } else {
+          console.error("❌ No valid bookingRef or leadId found in sessionStorage");
+        }
+  
         if (parsedData.clientData) {
           setClientData(prevData => ({
             ...prevData,
@@ -56,7 +65,8 @@ useEffect(() => {
     } catch (error) {
       console.error("Error parsing edit lead data:", error);
     }
-  } else if (isEditMode && initialClientData) {
+  }
+  else if (isEditMode && initialClientData) {
     setIsEditModeState(true);
     setCurrentBookingRef(bookingRef);
     setClientData(initialClientData);
@@ -66,19 +76,15 @@ useEffect(() => {
   }
 }, [open, isEditMode, initialClientData, bookingRef]);
 
-
-
 useEffect(() => {
     if (!open) {
       sessionStorage.removeItem('editLeadData');
     }
   }, [open]);
 
-
-
   const handleSubmit = async () => {
-    if (!clientData.name) {
-      alert('Please fill in all required fields');
+    if (!clientData.name?.trim()) {
+      alert('Please enter client name');
       return;
     }
     
@@ -86,41 +92,69 @@ useEffect(() => {
     const totalAmount = grandTotal + marginValue;
     const finalId = isEditModeState ? currentBookingRef : (bookingRef || currentBookingRef);
     
-    const leadData = {
+    if (!finalId) {
+      alert('Invalid booking reference. Please try again.');
+      return;
+    }
+    
+    const currencyValue = typeof currency === 'number' ? currency.toString() : (currency || 'USD');
+    
+    const leadData: Partial<Lead> = {
       id: finalId,
-      clientName: clientData.name,
-      options: clientData.options,
+      clientName: clientData.name.trim(),
+      options: clientData.options || 'package',
       travelDate: travelDate,
       totalAmount: totalAmount,
-      bookingStatus: bookingStatus,
-      destination: clientData.destination,
-      ...(isEditModeState && (() => {
-        const editingDataStr = sessionStorage.getItem('editingClientData');
-        const editingData = editingDataStr ? JSON.parse(editingDataStr) : null;
-        
-        return {
-          creationDate: editingData?.creationDate || new Date().toISOString(),
-          bookingTime: editingData?.bookingTime || new Date().toISOString(),
-        };
-      })())
-      
+      bookingStatus: bookingStatus || 'confirmed',
+      destinations: clientData.destination,
+      hotelDetails: hotels || [],
+      plannerItems: plannerItems || [],
+      lastUpdated: new Date().toISOString(),
+      currency: currencyValue
     };
-    console.log("📌 Final ID for operation:", finalId);
-    console.log("📌 isEditMode:", isEditModeState);
+    
+    if (isEditModeState) {
+      const editingDataStr = sessionStorage.getItem('editingClientData');
+      if (editingDataStr) {
+        try {
+          const editingData = JSON.parse(editingDataStr);
+          leadData.creationDate = editingData.creationDate || new Date().toISOString();
+          leadData.bookingTime = editingData.bookingTime || new Date().toISOString();
+          leadData.paidAmount = editingData.paidAmount || 0;
+        } catch (error) {
+          console.error('Error parsing editing data:', error);
+        }
+      }
+    }
+    
+    console.log("📌 Final operation details:");
+    console.log("📌 ID:", finalId);
+    console.log("📌 Is Edit Mode:", isEditModeState);
     console.log("📌 Lead Data:", leadData);
+    
     try {
       if (isEditModeState) {
+        console.log("🔄 Updating lead...");
         await updateLead({ id: finalId, lead: leadData }).unwrap();
+        console.log("✅ Lead updated successfully");
       } else {
+        console.log("➕ Creating new lead...");
         await submitLead(leadData).unwrap();
+        console.log("✅ Lead created successfully");
       }
+      
+      // Clear session storage
       sessionStorage.removeItem('editLeadData');
+      sessionStorage.removeItem('editingClientData');
+      
+      // Call onSubmit callback
       onSubmit(clientData);
-    } catch (err) {
-      alert('Failed to submit lead.');
+      
+    } catch (error) {
+      console.error('❌ Error in lead operation:', error);
+      alert(isEditModeState ? 'Failed to update lead.' : 'Failed to create lead.');
     }
   };
-
   const submitButtonText = isEditModeState ? 'Update & Download' : 'Submit & Download';
 
   return (
@@ -150,7 +184,7 @@ useEffect(() => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{bgcolor:'grey',color:'white'}}> Cancel </Button>
-        <Button onClick={handleSubmit} variant="contained" sx={{bgcolor:'red'}}> 
+        <Button onClick={handleSubmit} className='submit_download'> 
           {submitButtonText}
         </Button>
       </DialogActions>
@@ -159,6 +193,5 @@ useEffect(() => {
 };
 
 export default ClientDetailsForm;
-
 
 

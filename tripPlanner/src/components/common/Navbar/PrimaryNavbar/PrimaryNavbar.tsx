@@ -5,6 +5,7 @@ import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/route
 import { Box, IconButton } from '@mui/material';
 import { dropdownMenus } from '../../../../model/selectOptions.ts';
 import { Menu as MenuIcon } from '@mui/icons-material';
+import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
 }
@@ -68,7 +69,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
         .replace(/^ +/, "")
         .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    navigate('/');
+    window.location.href = `${AWS_INSTANCE}/hotel`;
   };
 
   const toggleMenu = () => {
@@ -80,7 +81,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     <Box className="nav-holder">
       <nav className="primary-navbar">
         <Box className="logo">
-        <img src="/fly-divine.png" alt="U&I Logo" />
+        <img src="/fly-divine-1.png" alt="U&I Logo" />
         </Box>
         <Box className="nav-items">
           <Box className="trip_details">

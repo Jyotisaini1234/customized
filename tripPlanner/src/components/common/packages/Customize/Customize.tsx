@@ -6,9 +6,9 @@
   import { useLocation, useNavigate } from "react-router-dom";
   import "./Customize.scss"; 
   import { useGetHotelsByCityQuery } from "../../../../api/TourAPI.tsx";
-  import { CustomizeSearchProps, HotelSummaryParams } from "../../../../types/types.ts";
+  import { CustomizeSearchProps, HotelSummaryParams, OptionType } from "../../../../types/types.ts";
   import TripPlanner from "../TripPlanner/TripPlanner.tsx";
-  import { countrie ,city as cityOptions} from "../../../../model/selectOptions.ts"; 
+  import { country as countriesList  ,citiesList as citiesList} from "../../../../model/selectOptions.ts"; 
 
   const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initialValues = {}, onSearchComplete }) => {
     const location = useLocation();
@@ -34,12 +34,11 @@
     };
     const searchParams = getInitialSearchParams();
     const [showHotelListing, setShowHotelListing] = useState(false);
-    const [city, setCity] = useState<{ label: string; value: string } | undefined>(
-      cityOptions[0] ? { label: cityOptions[0].label, value: cityOptions[0].id.toString() } : undefined
+    const [country, setCountry] = useState(countriesList[0]);
+    const [cityOptions, setCityOptions] = useState(
+      citiesList.filter(city => city.countryId === countriesList[0].id)
     );
-    const [country, setCountry] = useState<{ label: string; value: string } | undefined>(
-      countrie[0] ? { label: countrie[0].label, value: countrie[0].id.toString() } : undefined
-    );
+    const [city, setCity] = useState(cityOptions[0]);
     const parseDate = (dateString: string | null | undefined) => {
       if (!dateString) return null;
       try {
@@ -54,17 +53,15 @@
       newDate.setDate(newDate.getDate() + days);
       return newDate;
     };
-
     const [checkInDate, setCheckInDate] = useState<Date | null>(
       parseDate(searchParams?.checkInDate) || new Date()
     );
-  
     const [checkOutDate, setCheckOutDate] = useState<Date | null>(
       parseDate(searchParams?.checkOutDate) || addDays(new Date(), 1)
     );
+    
     const [nights, setNights] = useState<number>(1); 
-  
-    const { data, isLoading, error } = useGetHotelsByCityQuery({ city: city?.value || '', country: country?.value || '' });
+    const { data, isLoading, error } = useGetHotelsByCityQuery({ city: city?.id.toString()  || '', country: country?.id.toString() || '' });
     const [packageType, setPackageType] = useState(searchParams?.packageType || "hotel-land");
     const [searchStartDate, setSearchStartDate] = useState('28-04-2025');
     const [searchEndDate, setSearchEndDate] = useState('01-07-2025');
@@ -98,43 +95,19 @@
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return diffDays;}
       return 0;};
-    
-
     const handleNightsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newNights = parseInt(e.target.value);
-      const value = e.target.value;
-      if (value === '') {
-        setNights(0); 
-        setCheckOutDate(null); 
-        return;
-      }
-      if (isNaN(newNights) || newNights < 1) {
-        setNights(1);
-        if (checkInDate) {
-          setCheckOutDate(new Date(checkInDate));
-        }
-      } else {
-        setNights(newNights);
-        if (checkInDate) {
-          if (newNights === 1) {
-            setCheckOutDate(new Date(checkInDate));
-          } else {
-            const newCheckOutDate = addDays(checkInDate, newNights);
-            setCheckOutDate(newCheckOutDate);
-          }
-        }
+      const nightsValue = parseInt(e.target.value, 10);
+      setNights(nightsValue);
+    
+      if (checkInDate && nightsValue > 0) {
+        setCheckOutDate(addDays(checkInDate, nightsValue));
       }
     };
-
     const handleCheckInChange = (date: Date | null) => {
       setCheckInDate(date);
-      if (date) {
-        if (nights === 1) {
-          setCheckOutDate(new Date(date));
-        } else if (checkOutDate) {
-          const newCheckOutDate = addDays(date, parseInt(nights.toString()));
-          setCheckOutDate(newCheckOutDate);
-        }
+      if (!nights) setNights(1); 
+      if (date && nights) {
+        setCheckOutDate(addDays(date, nights));
       }
     };
     const handleCheckOutChange = (date: Date | null) => {
@@ -183,9 +156,8 @@
     };
 
     const handleSearch = () => {
-      // sessionStorage.removeItem('tripPlannerParams');
-      // sessionStorage.removeItem('tripPlannerHotels');
-      // sessionStorage.removeItem('tripPlannerItems');
+      sessionStorage.removeItem('editLeadData');
+      sessionStorage.removeItem('editingClientData');
       if (!country || !city || !checkInDate || !checkOutDate) {
         alert("All fields are required!");
         return;
@@ -235,10 +207,14 @@
     const handlePackageTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setPackageType(event.target.value);
     };
-    const handleCountrySelect = (newValue: { label: string; value: string } | null) => {
-      setCountry(newValue ?? country);
+    const handleCountrySelect = (newValue) => {
+      setCountry(newValue);
+      const filteredCities = citiesList.filter(city => city.countryId === newValue.id);
+      setCityOptions(filteredCities);
+      setCity(filteredCities[0] || null); // set first city or null
     };
-
+    
+    
 return (
   <Box className={`customize-search-page ${isModifying ? 'modify-mode' : ''}`}>
       <Container sx={{paddingLeft:'0rem', paddingRight:'0rem'}}>
@@ -246,31 +222,27 @@ return (
           {!isModifying && (
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading">Customize Search</Typography>
-          <Button className='entry-btn' variant="contained" sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1,bgcolor:'red' }} > baku Entry Requirements</Button>
+          <Button className='entry-btn'  sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1 }} > baku Entry Requirements</Button>
           </Box>)}
             <Grid container spacing={1} className='form-container'>
               <Grid item xs={12} md={6}>
                 <Paper sx={{ p: 2 }}>
                   <Grid container spacing={2} className='select-form'>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth variant="outlined" size="small" className='select-option-1'>
-                        <Autocomplete 
-                          className="destination-select" disabled={true} options={countrie.map(c => ({ label: c.label, value: c.id.toString() }))}
-                          getOptionLabel={(option) => option.label}  value={country} onChange={(_, newValue) => handleCountrySelect(newValue)}
-                          renderInput={(params) => (
-                          <TextField  className='select-destination'   {...params} disabled  variant="outlined" size="small" fullWidth  required  inputProps={{ ...params.inputProps, readOnly: true}} /> )}  
-                          sx={{bgcolor:'white',  pointerEvents: 'none','& .MuiInputBase-input': { cursor: 'default'},'& .MuiInputBase-root': { height: '2rem', width:'16rem' } }}  disableClearable  freeSolo={false} />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth variant="outlined" size="small" className='select-option-2'>
-                        <Autocomplete  className="city-select" disabled={true} options={cityOptions.map(c => ({ label: c.label, value: c.id.toString() }))}
-                          getOptionLabel={(option) => option.label} value={city} onChange={(_, newValue) => setCity(newValue)} renderInput={(params) => (
-                            <TextField 
-                              className='city-select' {...params} disabled   variant="outlined" size="small" fullWidth  required inputProps={{ ...params.inputProps, readOnly: true}} />)} 
-                              sx={{bgcolor:'white', pointerEvents: 'none','& .MuiInputBase-input': { cursor: 'default'},'& .MuiInputBase-root': { height: '2rem', width:'16rem' } }}disableClearable  />
-                      </FormControl>
-                    </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth variant="outlined" size="small" className='select-option-1'>
+                    <Autocomplete  options={countriesList}  getOptionLabel={(option) => option.label}value={country}onChange={(_, newValue) => handleCountrySelect(newValue)} renderInput={(params) => (
+                    <TextField {...params}  variant="outlined" size="small" fullWidth required  inputProps={{ ...params.inputProps }}  />)}
+                    sx={{bgcolor:'white', '& .MuiInputBase-input': { cursor: 'default' }, '& .MuiInputBase-root': { height: '2rem', width: '16rem' }}}/>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth variant="outlined" size="small" className='select-option-2'>
+                  <Autocomplete options={cityOptions}getOptionLabel={(option) => option.label} value={city} onChange={(_, newValue) => setCity(newValue)}renderInput={(params) => (
+                      <TextField {...params} variant="outlined" size="small" fullWidth required inputProps={{ ...params.inputProps }}  /> )}
+                      sx={{bgcolor:'white', '& .MuiInputBase-input': { cursor: 'default' }, '& .MuiInputBase-root': { height: '2rem', width: '16rem' }}} disableClearable/>
+                  </FormControl>
+                </Grid>
+
                     <Grid item xs={12}><RadioGroup row name="package-type" sx={{}} value={packageType} onChange={handlePackageTypeChange}>
                         <FormControlLabel value="hotel-land"  control={<Radio size="small" sx={{height:'1rem',width:'1rem',padding:'1rem', '&.Mui-checked': { color: 'blue'} }}/>} label="Hotel + Land Package"  />
                         <FormControlLabel value="land-only"  control={<Radio size="small" sx={{height:'1rem',width:'1rem',padding:'1rem', '&.Mui-checked': { color: 'blue' } }}/>} label="Land Package" />
@@ -319,15 +291,6 @@ return (
                                   value={room.cwb.toString()} 
                                   onChange={(e) => handleRoomChange(room.id, 'cwb', +e.target.value)}
                                   sx={{ height: '40px' }}>{[0, 1, 2].map((num) => (<MenuItem key={num} value={num}>{num}</MenuItem>))}
-                                </Select>
-                              </FormControl>
-                            </Grid>
-                            <Grid item xs={12} sm={2}>
-                              <Typography variant="body2" sx={{ mb: 0.5 }}>CNB<br/>&lt; 12 yrs</Typography>
-                              <FormControl fullWidth size="small">
-                                <Select value={room.cnb.toString()} 
-                                  onChange={(e) => handleRoomChange(room.id, 'cnb', +e.target.value)}
-                                  sx={{ height: '40px' }} >{[0, 1, 2].map((num) => (<MenuItem key={num} value={num}>{num}</MenuItem> ))}
                                 </Select>
                               </FormControl>
                             </Grid>

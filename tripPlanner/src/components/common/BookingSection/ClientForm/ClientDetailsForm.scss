@@ -1,3 +1,4 @@
+@import '../../../../styles/variables';
 .client-details-dialog {
   width: 30rem;
   margin: auto;
@@ -21,5 +22,9 @@
     .MuiOutlinedInput-input{
       height: 0.5rem;
       width: 15rem;
+    }
+    .submit_download{
+      background: $primary-color;
+      color: $white;
     }
   }

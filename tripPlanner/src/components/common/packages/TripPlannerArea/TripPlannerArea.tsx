@@ -4,7 +4,7 @@
   import './TripPlannerArea.scss';
   import { AreaOption, Areas } from '../../../../types/types.ts';
   import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
-  import {  city as cityOptions,countrie} from "../../../../model/selectOptions.ts"; 
+  import {  citiesList as cityOptions,country} from "../../../../model/selectOptions.ts"; 
 
   const TripPlannerArea: React.FC = () => {
     const location = useLocation();
@@ -15,7 +15,7 @@
     const [loading, setLoading] = useState<boolean>(false);
     const [hotelDetails, setHotelDetails] = useState(null);
     const [city, setCity] = useState<string>(searchParams.city || '');
-    const [countrie, setCountrie] = useState<string>(searchParams.country || 'Azerbaijan');
+    const [country, setCountry] = useState<string>(searchParams.country);
     const [adultsCount, setAdultsCount] = useState<number>(searchParams.rooms?.[0]?.adults || 2);
     const [cwbCount, setCwbCount] = useState<number>(searchParams.rooms?.[0]?.cwb || 0);
     const [cnbCount, setCnbCount] = useState<number>(searchParams.rooms?.[0]?.cnb || 0);
@@ -58,6 +58,36 @@ const storedHotels = sessionStorage.getItem('tripPlannerHotels');
 };
     
 
+useEffect(() => {
+  const storedEditData = sessionStorage.getItem('editLeadData');
+  if (storedEditData) {
+    try {
+      const parsedData = JSON.parse(storedEditData);
+      console.log("🔍 Loading edit data in TripPlannerArea:", parsedData);
+      
+      if (parsedData.isEditMode && parsedData.currentSearchParams) {
+        const searchParams = parsedData.currentSearchParams;
+        
+        setCity(searchParams.city || '');
+        setSelectedCity(searchParams.city || '');
+        setCountry(searchParams.country || parsedData.country || '');
+        setNights(searchParams.nights || 1);
+        
+        if (searchParams.rooms && searchParams.rooms.length > 0) {
+          const firstRoom = searchParams.rooms[0];
+          setAdultsCount(firstRoom.adults || 2);
+          setCwbCount(firstRoom.cwb || 0);
+          setCnbCount(firstRoom.cnb || 0);
+          setInfantsCount(firstRoom.infants || 0);
+        }
+        
+        console.log("✅ Edit data loaded - Country:", searchParams.country, "City:", searchParams.city);
+      }
+    } catch (error) {
+      console.error("❌ Error parsing edit data in TripPlannerArea:", error);
+    }
+  }
+}, []);
 
 const handleSearch = () => {
   const params = new URLSearchParams();
@@ -70,7 +100,7 @@ const handleSearch = () => {
   const checkOutDate = checkOutDateObj.toISOString();
   params.append('checkOutDate', checkOutDate);
   params.append('city', currentCity);
-  params.append('country', 'Azerbaijan');
+  params.append('country', country);
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
   if (searchParams.specificDay) {
@@ -127,25 +157,25 @@ const formatDate = (dateStr) => {
     };
     
 useEffect(() => {
-  if (!countrie) {
+  if (!country) {
     const storedParams = sessionStorage.getItem('tripPlannerParams');
     if (storedParams) {
       try {
         const params = JSON.parse(storedParams);
         console.log('Retrieved params from sessionStorage:', params);
-        if (params.country) {setCountrie(params.country);}
+        if (params.country) {setCountry(params.country);}
         if (params.city && !city) { setCity(params.city); }
         if (params.rooms && params.rooms.length > 0) {
-          setAdultsCount(params.rooms[0].adults || 2);
-          setCwbCount(params.rooms[0].cwb || 0);
-          setCnbCount(params.rooms[0].cnb || 0);
-          setInfantsCount(params.rooms[0].infants || 0);}
+          setAdultsCount(params.rooms.adults || 2);
+          setCwbCount(params.rooms.cwb || 0);
+          setCnbCount(params.rooms.cnb || 0);
+          setInfantsCount(params.rooms.infants || 0);}
       } catch (e) {
         console.error('Error parsing stored trip planner params', e);
       }
     }
   }
-}, [countrie, city]);
+}, [country, city]);
 
 const getCheckOutDate = () => {
   try {
@@ -180,9 +210,9 @@ return (
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined" size="small" className="form-control">
-                    <Select value={countrie || searchParams.countrie || ''} disabled className="select-input">
-                      <MenuItem value={countrie || searchParams.countrie || ''}>
-                        {countrie || searchParams.countrie || 'Select countries'}
+                    <Select value={country || searchParams.country || ''} disabled className="select-input">
+                      <MenuItem value={country || searchParams.country || ''}>
+                        {country || searchParams.country || 'Select countries'}
                       </MenuItem>
                     </Select>
                   </FormControl>
@@ -232,13 +262,13 @@ return (
                             onChange={(e) => setCwbCount(parseInt(e.target.value) || 0)} fullWidth  size="small" variant="outlined"
                             className="occupancy-input" type="number" InputProps={{ inputProps: { min: 0 } }} />
                         </Grid>
-                        <Grid item xs={3}>
+                        {/* <Grid item xs={3}>
                           <Typography variant="body2" className="occupancy-label">  CNB<br/>&lt;12 yrs </Typography>
                           <TextField 
                             value={cnbCount}    onChange={(e) => setCnbCount(parseInt(e.target.value) || 0)}
                             fullWidth  size="small"  variant="outlined"  
                             className="occupancy-input" type="number" InputProps={{ inputProps: { min: 0 } }}/>
-                        </Grid>
+                        </Grid> */}
                         <Grid item xs={3}>
                           <Typography variant="body2" className="occupancy-label">
                             Infant/s<br/>&lt;2 yrs

@@ -1,12 +1,13 @@
 
-export const BASE_URL = 'http://ec2-3-6-138-99.ap-south-1.compute.amazonaws.com:8081';
-// export const HOTEL_FETCH = 'http://localhost:8081';
+// export const BASE_URL = 'http://localhost:8081';
+export const BASE_URL = 'https://b2b.flydivinetravels.com';
 export const GENERATEUID=`${BASE_URL}/sightTour/generateUid`;
 export const SIGHTTOURBYCITY =`${BASE_URL}/sightTour/byCity`;
 export const ACTIVITIESBYSIGHTCODE =`${BASE_URL}/sightTour/activities/bySightCode`;
 export const HOTELDETAILS=`${BASE_URL}/sightTour/hotelbyCity`;
 export const LOCALHOST='http://localhost:3002';
-// export const AWS_INSTANCE='https://b2b.flydivinetravels.com';
-export const AWS_INSTANCE='https://b2b.flydivinetravels.com:3002';
-export const TRIP_PLANNER=`${LOCALHOST}/home-page?`;
-export const TRIP_PLANNER_PAGE=`${LOCALHOST}/hotel-summary?`;
+export const AWS_INSTANCE='https://b2b.flydivinetravels.com';
+export const TRIP_PLANNER=`${AWS_INSTANCE}/hotel/home-page?`;
+export const TRIP_PLANNER_PAGE=`${AWS_INSTANCE}/hotel/hotel-summary?`;
+export let TOURS_TRANSFERS=`${AWS_INSTANCE}/hotel/transfer-search`;
+export let HOTEL_PAGE=`${AWS_INSTANCE}/hotel/hotel-search`;

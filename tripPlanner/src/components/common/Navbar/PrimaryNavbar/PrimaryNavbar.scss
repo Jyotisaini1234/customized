@@ -54,7 +54,7 @@
       align-items: center;
       gap: 1rem;
       color: white;
-      background-color: red;
+      background-color: $primary-color;
       padding: 0.5rem;
       border-radius: 0.3rem;
       margin-left: 1rem;
@@ -221,7 +221,7 @@
         justify-content: center;
         padding-bottom: 0.3rem;
         &:hover{
-          border-bottom: 0.25rem solid red;
+          border-bottom: 0.25rem solid $underline;
         }
         @include responsive(tablet) {
           width: 100%;
@@ -239,7 +239,7 @@
         }
         
         &.active {
-          border-bottom: 0.25rem solid red;
+          border-bottom: 0.25rem solid $underline;
           
           @include responsive(tablet) {
             border-bottom-width: 0.2rem;
@@ -252,7 +252,7 @@
               left: 0;
               width: 0.25rem;
               height: 100%;
-              background-color: red;
+              background-color: $primary-color;
               top: 0;
             }
           }
@@ -397,7 +397,7 @@
       
       &:hover {
         background-color: rgba(255, 255, 255, 0.1);
-        border-bottom: 0.25rem solid red;
+        border-bottom: 0.25rem solid $underline;
       }
       
      

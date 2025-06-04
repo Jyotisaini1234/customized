@@ -33,25 +33,33 @@ export const tourApi = createApi({
       providesTags: ['Lead'],
     }),
 
+  
     updateLead: builder.mutation<Lead, { id: string; lead: Partial<Lead> }>({
       query: ({ id, lead }) => {
-        console.log('API: Updating lead:', id, lead);
-        console.log('API: Full URL will be:', `${BASE_URL}/sightTour/lead/${id}`);
+        console.log('API: Updating lead with ID:', id);
+        console.log('API: Lead data:', lead);
+        
         return {
           url: `/sightTour/lead/${id}`,
           method: 'PUT',
           body: lead,
         };
       },
-      transformErrorResponse: (response, meta, arg) => {
-        console.error(' API Error:', response);
-        console.error(' API Meta:', meta);
-        console.error(' API Args:', arg);
+      transformResponse: (response: any) => {
+        console.log(' Update successful:', response);
         return response;
       },
-      invalidatesTags: ['Lead'],
+      transformErrorResponse: (response: any, meta: any, arg: any) => {
+        console.error('API Update Error:', response);
+        console.error('API Meta:', meta);
+        console.error('API Args:', arg);
+        return response;
+      },
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Lead', id },
+        { type: 'Lead', id: 'LIST' }
+      ],
     }),
-  
   
     getLeadById: builder.query<any, string>({
       query: (id) => {
@@ -78,4 +86,3 @@ export const {
   useGetLeadByIdQuery,
   useDeleteLeadMutation
 } = tourApi;
-

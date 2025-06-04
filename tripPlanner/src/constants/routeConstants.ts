@@ -11,10 +11,10 @@ export const ROUTE_CONSTANTS = {
   
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
-  HOTEL_PAGE: 'http://localhost:3002/hotel-search',
+  HOTEL_PAGE: 'http://b2b.flydivinetravels.com/hotel/hotel-search',
   HOME_PAGE: '/home-page',
   BAKU_PACKAGES: '/baku-packages',
-  TOURS_TRANSFERS: 'http://localhost:3002/transfer-search',
+  TOURS_TRANSFERS: 'http://b2b.flydivinetravels.com/hotel/transfer-search',
   BOOKINGS: '/bookings',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',
@@ -52,18 +52,18 @@ export const PUBLIC_NAV_ITEMS = [
   }
 ];
 export const DASHBOARD_NAV_ITEMS = [
-  {
-    path: ROUTE_CONSTANTS.DASHBOARD,
-    label: "Dashboard",
-    icon: "https://www.uandiholidays.net/image/m1.png",
-    key: 'dashboard'
-  },
-  {
-    path: ROUTE_CONSTANTS.HOTEL_PAGE,
-    label: "Hotels / Resorts",
-    icon: "https://www.uandiholidays.net/image/m2.png",
-    key: 'hotels-resorts'
-  },
+  // {
+  //   path: ROUTE_CONSTANTS.DASHBOARD,
+  //   label: "Dashboard",
+  //   icon: "https://www.uandiholidays.net/image/m1.png",
+  //   key: 'dashboard'
+  // },
+  // {
+  //   path:  ROUTE_CONSTANTS.HOTEL_PAGE,
+  //   label: "Hotels / Resorts",
+  //   icon: "https://www.uandiholidays.net/image/m2.png",
+  //   key: 'hotels-resorts'
+  // },
   {
     path: ROUTE_CONSTANTS.CUSTOMIZE,
     label: "Baku Packages",

@@ -351,8 +351,8 @@
         }
         
         .proceed-button {
-          background-color: #ff0000;
-          
+          background-color: $primary-color;
+          color: white;
           @include responsive(mobile) {
             font-size: 0.7rem;
             padding: 0.4rem 0.6rem;
@@ -360,12 +360,13 @@
           }
           
           &:hover {
-            background-color: #d32f2f;
+            background-color: $primary-color;
           }
         }
         
         .cancel-button {
           background-color: #6c757d;
+          color: white;
           
           @include responsive(mobile) {
             font-size: 0.7rem;

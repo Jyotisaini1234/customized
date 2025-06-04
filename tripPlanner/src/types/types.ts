@@ -157,10 +157,12 @@ export interface ClientDetails {
 export interface TripPlannerData {
   bookingRef?: string;
   generateDate?: string;
+  country?:string;
   clientDetails?: ClientDetails;
   currentSearchParams?: SearchParams;
   hotels?: Hotel[];
   plannerItems?: PlannerItem[];
+
   costs?: {
     finalAmount?: number;
     packageDetails?: {
@@ -193,6 +195,9 @@ export interface ClientDetailsFormProps {
   isEditMode?: boolean;
   initialClientData?: any;
   originalLeadId?: string;
+  selectedHotels?: Hotel[];
+  selectedPlannerItems?: PlannerItem[];
+  
 }
 
 export interface Quote {
@@ -221,11 +226,19 @@ export interface Lead {
   bookingTime: string;
   status: string;
   nights: number;
+  lastUpdated: string;
   currency: string;
   hotelDetails?: any[];
   plannerItems?: any[];
   pendingAmount?: number;
   paidAmount?: number;
+  currentSearchParams?: {
+    city: string;
+  };
+  clientDetails?: {
+    destinations?: string;
+  };
+
 }
 
 export interface HotelDetails {
@@ -443,4 +456,11 @@ export interface LeadDetail {
   totalPersons?: string | number;
   nights?: string | number;
 }
+
+
+  export interface OptionType {
+    label: string;
+    id: number;
+    countryId?: number;
+  }
 

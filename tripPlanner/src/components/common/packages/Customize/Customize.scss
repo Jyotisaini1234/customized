@@ -137,6 +137,8 @@
   .entry-btn {
     padding: 0.3rem;
     font-size: 0.9rem;
+    background: $primary-color;
+    color: white;
     @media (max-width: 30rem) {
       font-size: 0.8rem;
     }
@@ -157,6 +159,7 @@
     
     .search-btn {
       padding: 0.3rem;
+      background: $primary-color;
     }
   }
     
