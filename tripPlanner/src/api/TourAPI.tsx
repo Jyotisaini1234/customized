@@ -12,7 +12,7 @@ export const tourApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Bookings', 'Lead'],
+  tagTypes: ['Bookings', 'Lead','Package'],
   endpoints: (builder) => ({
     getHotelsByCity: builder.query<any, { city: string; country: string }>({
       query: ({ city, country }) =>
@@ -75,6 +75,28 @@ export const tourApi = createApi({
       }),
       invalidatesTags: ['Lead'],
     }),
+    searchPackages: builder.query<any, { 
+      country: string; 
+      city: string; 
+      startDate: string; 
+      endDate: string 
+    }>({
+      query: ({ country, city, startDate, endDate }) =>
+        `sightTour/package-search?country=${country}&city=${city}&startDate=${startDate}&endDate=${endDate}`,
+      providesTags: ['Package'],
+    }),
+
+    // Get ALL packages from database (no date filtering)
+    getAllPackages: builder.query<any, void>({
+      query: () => 'sightTour/all-packages',
+      providesTags: ['Package'],
+    }),
+
+    // Get package by ID
+    getPackageById: builder.query<any, string>({
+      query: (id) => `sightTour/package/${id}`,
+      providesTags: (_result, error, id) => [{ type: 'Package', id }],
+    }),
   }),
 });
 
@@ -84,5 +106,8 @@ export const {
   useGetLeadsQuery,
   useUpdateLeadMutation,
   useGetLeadByIdQuery,
-  useDeleteLeadMutation
+  useDeleteLeadMutation,
+  useGetPackageByIdQuery,
+  useSearchPackagesQuery,
+  useGetAllPackagesQuery,
 } = tourApi;

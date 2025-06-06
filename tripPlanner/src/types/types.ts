@@ -82,6 +82,7 @@ export const Areas: Area[] = [
 
 
 export interface Hotel {
+  nights: number;
   hotel?: HotelDetails;
   city:string;
   booking?: {
@@ -400,6 +401,7 @@ export interface TourActivity {
 
 
 export interface PackageDetails {
+  img: string;
   totalPersons: number;
 }
 
@@ -463,4 +465,126 @@ export interface LeadDetail {
     id: number;
     countryId?: number;
   }
+
+
+
+
+
+export interface Hotel {
+  star: number;
+  image: string;
+  hotelName: string;
+  rooms: Array<{
+    roomType: string;
+    prices: {
+      adult: number;
+      cwb: number;
+      cnb: number;
+    };
+    availability: boolean;
+    maxOccupancy: number;
+  }>;
+}
+
+export interface Hotel2{
+  name: string;
+  destination: string;
+  nights: number;
+  star?: number;
+  stayDates: string[];
+  mealPlan: string;
+  roomType: string;
+}
+
+export interface HotelOption {
+  option?: number;
+  totalPackageCost: number;
+  perPersonCost: number;
+  cnbCost: number;
+  cwbCost: number;
+  hotels: Hotel2[];
+}
+
+export interface Validity {
+  startDate: string;
+  endDate: string;
+}
+
+export interface TravelDates {
+  start: string;
+  end: string;
+}
+
+export interface Passengers {
+  adult: number;
+  child: number;
+  infant: number;
+}
+
+export interface Activity {
+  name: string;
+  type: string;
+  vehicle?: string;
+  ticketIncluded: boolean;
+  dropOff?: string;
+}
+
+export interface Transfer {
+  route: string;
+  vehicle: string;
+  type: string;
+}
+
+export interface Itinerary {
+  day: number;
+  date: string;
+  title: string;
+  details: string;
+}
+
+export interface CancellationPolicy {
+  before30Days: string;
+  before21Days: string;
+  before15Days: string;
+  nonRefundablePeriods: string;
+  notes: string;
+}
+
+export interface PackageDetails {
+  packageName: string;
+  validity: Validity;
+  quotationDate: string;
+  destination?: string;
+  destinations?: string[];
+  travelDates: TravelDates;
+  passengers: Passengers;
+  hotelOptions?: HotelOption[];
+  hotelOption: HotelOption[];
+  activities: Activity[];
+  transfers: Transfer[];
+  inclusions: string[];
+  exclusions: string[];
+  itinerary: Itinerary[];
+  cancellationPolicy: CancellationPolicy;
+  importantNotes: string[];
+}
+
+export interface PackageData {
+  isModifying?: boolean;
+  id: string;
+  packageDetails: PackageDetails;
+}
+
+export interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+export interface TabPanelPropsLocal {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
 

@@ -21,6 +21,8 @@ export const ROUTE_CONSTANTS = {
   TRIP_PLANNER_AREA:'/trip-planner-area',
   TRIP_PLANNER:'/trip-planner',
   MY_LEADS:'/my-leads',
+  READYMADE_PACKAGE:'/readymade-package',
+  PACKAGE_DETAILS: '/package-details/:id',
   // User related routes
   USER_PROFILE: '/user',
   LOGOUT: '/',
@@ -52,18 +54,7 @@ export const PUBLIC_NAV_ITEMS = [
   }
 ];
 export const DASHBOARD_NAV_ITEMS = [
-  // {
-  //   path: ROUTE_CONSTANTS.DASHBOARD,
-  //   label: "Dashboard",
-  //   icon: "https://www.uandiholidays.net/image/m1.png",
-  //   key: 'dashboard'
-  // },
-  // {
-  //   path:  ROUTE_CONSTANTS.HOTEL_PAGE,
-  //   label: "Hotels / Resorts",
-  //   icon: "https://www.uandiholidays.net/image/m2.png",
-  //   key: 'hotels-resorts'
-  // },
+
   {
     path: ROUTE_CONSTANTS.CUSTOMIZE,
     label: "Baku Packages",

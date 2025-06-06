@@ -19,8 +19,8 @@ export let citiesList = [
 
   export const dropdownMenus = {
     'baku-packages': [
-      { label: 'Readymade + Customized', path: '/baku-packages/readymade-customized' },
-      { label: 'Customized', path: '/customize-package' }
+      { label: 'Readymade + Customized', path: '/readymade-package' },
+      { label: 'Customized', path: '/customize-package' },
     ],
     'bookings': [
       { label: 'Quotation List', path: '/my-leads' },

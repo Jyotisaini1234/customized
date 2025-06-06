@@ -262,13 +262,6 @@ return (
                             onChange={(e) => setCwbCount(parseInt(e.target.value) || 0)} fullWidth  size="small" variant="outlined"
                             className="occupancy-input" type="number" InputProps={{ inputProps: { min: 0 } }} />
                         </Grid>
-                        {/* <Grid item xs={3}>
-                          <Typography variant="body2" className="occupancy-label">  CNB<br/>&lt;12 yrs </Typography>
-                          <TextField 
-                            value={cnbCount}    onChange={(e) => setCnbCount(parseInt(e.target.value) || 0)}
-                            fullWidth  size="small"  variant="outlined"  
-                            className="occupancy-input" type="number" InputProps={{ inputProps: { min: 0 } }}/>
-                        </Grid> */}
                         <Grid item xs={3}>
                           <Typography variant="body2" className="occupancy-label">
                             Infant/s<br/>&lt;2 yrs

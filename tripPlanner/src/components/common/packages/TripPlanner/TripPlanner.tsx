@@ -98,9 +98,9 @@ const generateInitialPlannerItems = () => {
       id: `day-${items.length + 1}`,
       date: `${day.toString().padStart(2, '0')}-${month} ${year}`,
       dateObj: new Date(dayDate),
-      hotel: null, 
-      transfer: null, 
-      tours: null, 
+      hotel: null,
+      transfer: null,
+      tours: null,
       meals: null,
       eventDate:'',
     });

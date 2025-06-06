@@ -7,6 +7,8 @@ import MainLayout from '../pages/MainLayout/MainLayout.tsx';
 import { ROUTE_CONSTANTS } from '../constants/routeConstants.ts';
 import TourPackagePDF from '../components/common/packages/Customize/TripPlannerPDF/TourPackagePDF.tsx';
 import MyLeads from '../components/common/BookingSection/MyLeads/MyLeads.tsx';
+import ReadymadePackages from '../components/common/packages/Readymade/Readymade_Package/ReadymadePackage.tsx';
+import PackageDetails from '../components/common/packages/Readymade/PackageDetails/PackageDetails.tsx';
 
 const Router: React.FC = () => {
 
@@ -14,6 +16,8 @@ const Router: React.FC = () => {
     <Routes>
       <Route path="/" element={<MainLayout />}>
         <Route path={ROUTE_CONSTANTS.CUSTOMIZE_PACKAGE} element={<Customize />} />
+        <Route path={ROUTE_CONSTANTS.READYMADE_PACKAGE} element={<ReadymadePackages />} />
+        <Route path={ROUTE_CONSTANTS.PACKAGE_DETAILS} element={<PackageDetails />} />
         <Route path={ROUTE_CONSTANTS.TRIP_PLANNER_AREA} element={<TripPlannerArea />} />
         <Route path={ROUTE_CONSTANTS.TRIP_PLANNER} element={<TripPlanner  location={''} nights={0} 
             checkInDate={''} checkOutDate={''}  onCancel={() => { window.location.href = '/';}}   onProceed={() => {}} />} />

@@ -1,0 +1,407 @@
+@import '../../../../../styles/variables';
+
+.package-details {
+min-height: 100vh;
+margin-top:1rem;
+.package-container {
+    max-width: 77rem;
+    margin: 0 auto;
+    color: black;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    .header-section{
+        background: white;
+        margin-bottom: 2rem;
+        height: 20rem;
+    }
+    .tabs-section {
+       
+        width: 100%;
+        display: grid;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        margin-top: 1rem;
+        .package-tabs {
+      
+        .MuiTab-root {
+            background: lightgray;
+            color: $text-color;
+            text-transform: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin: 1rem;
+            width: 10rem;
+            &:last-child {
+            border-right: none;
+            }
+            &:hover:not(.Mui-selected) {
+            background: darken(rgba(128, 128, 128, 0.541), 5%);
+            }
+            &.Mui-selected {
+            background: $primary-color;
+            color: white;
+            }
+        }
+        .MuiTabs-indicator {
+            display: none;
+        }
+        }
+}
+}
+
+.package-header {
+    color: black;
+    .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -1rem;
+    padding: 0rem 1rem 0rem;
+
+    .header-left {
+        flex: 1;
+        
+        text-align: center;
+        .package-title {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color:black;
+        align-items: center;
+        }
+
+        .package-duration {
+        opacity: 0.9;
+        color: black;
+        }
+    }
+
+    .header-icons {
+        display: flex;
+        gap: 0.75rem;
+
+        .header-icon-button {
+        background: rgba(255, 255, 255, 0.2);
+        color: black;
+        transition: background-color 0.3s;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        }
+    }
+    }
+}
+
+.back-button {
+    background: $primary-color;
+    color: white;
+    text-transform: none;
+    margin: 0rem;
+    left: 1rem;
+    top: 1rem;
+    
+    &:hover {
+      background: darken($primary-color, 10%);
+    }
+}
+
+.back-button-error {
+    color: $primary-color;
+    text-transform: none;
+}
+#package-tabpanel-0{
+    background: white;
+    .content-area {
+        padding: 2rem;
+        .proceed-section {
+            display: flex;
+            justify-content: flex-end;
+            .proceed-button {
+                background: $primary-color;
+                color: white;
+                text-transform: none;
+                padding: 0.75rem 2rem;
+                margin-bottom: 0.5rem;
+                justify-content: end;
+                &:hover {
+                background: darken($primary-color, 10%);
+                }
+        
+                &:disabled {
+                background: rgba(165, 163, 163, 0.644);
+                color:black;
+                }
+            }
+            }
+    }
+}
+
+
+.season-section {
+margin-bottom: 1.5rem;
+padding: 0rem 1rem 0rem;
+    .season-radio-group {
+    margin-bottom: 1rem;
+    .season-option {
+        margin-right: 2rem;
+
+        .season-radio {
+        color: $primary-color;
+
+        &.Mui-checked {
+            color: $primary-color;
+        }
+        }
+    }
+    }
+
+    .validity-text {
+      color: white;
+      font-size: 0.875rem;
+    }
+  }
+
+  // Tab Panel Content
+  .tab-panel-content {
+    padding: 0;
+  }
+
+  // Package Tab Content
+  .package-tab-content {
+    .note-text {
+      color: $primary-color;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .modify-text {
+      margin-bottom: 2rem;
+
+      .modify-link {
+        color: black;
+        text-decoration: underline;
+        text-transform: none;
+        padding: 0;
+        min-width: auto;
+      }
+    }
+
+    .hotel-table-container {
+      border: 0.0625rem solid gray;
+      margin-bottom: 2rem;
+
+      .hotel-table {
+        .table-header {
+          background: gray;
+
+          .table-header-cell {
+            font-weight: bold;
+            color: $primary-color;
+            text-align: center;
+            border: 0.0625rem solid gray;
+          }
+        }
+
+        .table-row {
+          &:nth-child(even) {
+            background: #f8f9fa;
+          }
+
+          .table-cell {
+            text-align: center;
+            border: 0.0625rem solid gray;
+            vertical-align: middle;
+
+            &.price-cell {
+              font-weight: 500;
+              color: green;
+            }
+          }
+
+          .radio-cell {
+            text-align: center;
+
+            .hotel-radio {
+              color: $primary-color;
+
+              &.Mui-checked {
+                color: $primary-color;
+              }
+            }
+          }
+
+          .hotel-rating {
+            .MuiRating-iconFilled {
+              color: #f39c12;
+            }
+          }
+        }
+    }
+    }
+
+
+}
+
+  // Includes Tab Content
+.includes-tab-content {
+    background: white;
+    padding: 0.5rem;
+    .section-title {
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: $primary-color;
+
+    &.excludes-title {
+        margin-top: 2rem;
+    }
+    }
+
+    .includes-list {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+
+    li {
+        margin-bottom: 0.5rem;
+        color: black;
+    }
+    }
+}
+
+.itinerary-tab-content {
+    .section-title {
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: $primary-color;
+    }
+
+    .itinerary-card {
+    margin-bottom: 1rem;
+
+    .day-title {
+        color: black;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .day-description {
+        color: gray;
+    }
+    }
+}
+
+.info-tab-content {
+    .section-title {
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: black;
+    }
+
+    .info-card {
+
+    .info-card-title {
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: $primary-color;
+    }
+
+    .info-list {
+        padding-left: 1rem;
+        margin: 0;
+
+        li {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: $secondary-color;
+        }
+    }
+    }
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 25rem;
+}
+
+.error-container {
+    padding: 2rem 0;
+    .error-alert,
+    .warning-alert {
+    margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 48rem) {
+    padding: 1rem;
+    .package-container {
+    border-radius: 0;
+    }
+    .package-header {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    }
+    .content-area {
+    padding: 1rem;
+    }
+    .season-section {
+    .season-radio-group {
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .season-option {
+        margin-right: 0;
+        }
+    }
+    }
+
+    .hotel-table-container {
+    .hotel-table {
+        font-size: 0.75rem;
+
+        .table-header-cell,
+        .table-cell {
+        padding: 0.5rem 0.25rem;
+        }
+    }
+    }
+
+    .info-tab-content {
+    .MuiGrid-container {
+        .MuiGrid-item {
+        &.MuiGrid-md6 {
+            flex-basis: 100%;
+            max-width: 100%;
+        }
+        }
+    }
+    }
+}
+
+@media (max-width: 30rem) {
+    .package-header {
+    padding: 1rem;
+
+    .header-content {
+        .package-title {
+        font-size: 1.5rem;
+        }
+
+        .package-duration {
+        font-size: 1rem;
+        }
+    }
+    }
+
+    .hotel-table-container {
+    overflow-x: auto;
+
+    .hotel-table {
+        min-width: 40rem;
+    }
+    }
+}
+}
