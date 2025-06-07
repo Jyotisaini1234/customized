@@ -548,6 +548,103 @@ useEffect(() => {
   setGrandTotal(total);
 }, [hotels, plannerItems]);
 
+// const handleRemoveHotel = (plannerItem) => {
+//   if (!plannerItem.hotel || !plannerItem.hotel.details) return;
+  
+//   const hotelUniqueId = plannerItem.hotel.details.uniqueId;
+//   const hotelDetails = plannerItem.hotel.details;
+//   const totalHotelPrice = hotelDetails.booking?.totalPrice || 0;
+  
+//   console.log("🗑️ Removing hotel with uniqueId:", hotelUniqueId);
+  
+//   // Find all planner items with the same hotel
+//   const daysWithSameHotel = plannerItems.filter(item => 
+//     item.hotel?.details?.uniqueId === hotelUniqueId
+//   );
+  
+//   console.log("📍 Days with same hotel:", daysWithSameHotel.length);
+  
+//   // Update planner items - remove hotel from specific days only
+//   const newPlannerItems = plannerItems.map(item => {
+//     if (item.hotel?.details?.uniqueId === hotelUniqueId) {
+//       return {
+//         ...item,
+//         hotel: null
+//       };
+//     }
+//     return item;
+//   });
+  
+//   setPlannerItems(newPlannerItems);
+  
+//   // Update hotels array - remove only the specific hotel
+//   const updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
+//   setHotels(updatedHotels);
+  
+//   // Update grand total - subtract hotel price
+//   setGrandTotal(prevTotal => {
+//     const newTotal = prevTotal - totalHotelPrice;
+//     console.log("💰 Updated grand total after hotel removal:", newTotal);
+//     return newTotal;
+//   });
+  
+//   // Update session storage for edit mode
+//   if (isEditMode) {
+//     const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
+//     editData.hotelDetails = updatedHotels;
+//     editData.plannerItems = newPlannerItems;
+//     editData.grandTotal = grandTotal - totalHotelPrice;
+//     sessionStorage.setItem('editLeadData', JSON.stringify(editData));
+//     console.log("🔄 Session storage updated after hotel removal");
+//   }
+  
+//   // Update selected hotel if it was the removed one
+//   if (selectedHotel?.uniqueId === hotelUniqueId) {
+//     setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
+//   }
+  
+//   // Update regular session storage
+//   sessionStorage.setItem('tripPlannerItems', JSON.stringify(newPlannerItems));
+//   sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
+// };
+
+// const handleRemoveTour = (plannerItem) => {
+//   if (!plannerItem.tours) return;
+//   const tourPrice = parseFloat(plannerItem.tours.price || plannerItem.tours.details?.booking?.totalPrice || 0);
+//   console.log("🗑️ Removing tour with price:", tourPrice);
+//   const updatedItem = { ...plannerItem, tours: null };
+//   setPlannerItems(prevItems => {
+//     const updatedItems = [...prevItems];
+//     const index = updatedItems.findIndex(item => item.id === plannerItem.id);
+//     if (index !== -1) {
+//       updatedItems[index] = {
+//         ...updatedItems[index],
+//         tours: null
+//       };
+      
+//       sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
+      
+//       if (isEditMode) {
+//         const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
+//         editData.plannerItems = updatedItems;
+//         editData.grandTotal = (editData.grandTotal || 0) - tourPrice;
+//         sessionStorage.setItem('editLeadData', JSON.stringify(editData));
+//         console.log("🔄 Edit mode session storage updated after tour removal");
+//       }
+//     }
+//     return updatedItems;
+//   });
+  
+//   if (tourPrice > 0) {
+//     setGrandTotal(prev => {
+//       const newTotal = prev - tourPrice;
+//       console.log("💰 Updated grand total after tour removal:", newTotal);
+//       return newTotal;
+//     });
+//   }
+// };
+
+
 const handleRemoveHotel = (plannerItem) => {
   if (!plannerItem.hotel || !plannerItem.hotel.details) return;
   
@@ -556,13 +653,6 @@ const handleRemoveHotel = (plannerItem) => {
   const totalHotelPrice = hotelDetails.booking?.totalPrice || 0;
   
   console.log("🗑️ Removing hotel with uniqueId:", hotelUniqueId);
-  
-  // Find all planner items with the same hotel
-  const daysWithSameHotel = plannerItems.filter(item => 
-    item.hotel?.details?.uniqueId === hotelUniqueId
-  );
-  
-  console.log("📍 Days with same hotel:", daysWithSameHotel.length);
   
   // Update planner items - remove hotel from specific days only
   const newPlannerItems = plannerItems.map(item => {
@@ -581,19 +671,26 @@ const handleRemoveHotel = (plannerItem) => {
   const updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
   setHotels(updatedHotels);
   
-  // Update grand total - subtract hotel price
-  setGrandTotal(prevTotal => {
-    const newTotal = prevTotal - totalHotelPrice;
-    console.log("💰 Updated grand total after hotel removal:", newTotal);
-    return newTotal;
-  });
+  // 🔥 FIX: Recalculate grand total properly
+  const newHotelTotal = updatedHotels.reduce((sum, hotel) => {
+    return sum + parseFloat(hotel.booking?.totalPrice || 0);
+  }, 0);
+  
+  const tourTotal = plannerItems.reduce((sum, item) => {
+    return sum + parseFloat(item.tours?.price || item.tours?.details?.booking?.totalPrice || 0);
+  }, 0);
+  
+  const newGrandTotal = newHotelTotal + tourTotal;
+  setGrandTotal(newGrandTotal);
+  
+  console.log("💰 Recalculated totals - Hotels:", newHotelTotal, "Tours:", tourTotal, "Grand Total:", newGrandTotal);
   
   // Update session storage for edit mode
   if (isEditMode) {
     const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
     editData.hotelDetails = updatedHotels;
     editData.plannerItems = newPlannerItems;
-    editData.grandTotal = grandTotal - totalHotelPrice;
+    editData.grandTotal = newGrandTotal;
     sessionStorage.setItem('editLeadData', JSON.stringify(editData));
     console.log("🔄 Session storage updated after hotel removal");
   }
@@ -610,9 +707,10 @@ const handleRemoveHotel = (plannerItem) => {
 
 const handleRemoveTour = (plannerItem) => {
   if (!plannerItem.tours) return;
+  
   const tourPrice = parseFloat(plannerItem.tours.price || plannerItem.tours.details?.booking?.totalPrice || 0);
   console.log("🗑️ Removing tour with price:", tourPrice);
-  const updatedItem = { ...plannerItem, tours: null };
+  
   setPlannerItems(prevItems => {
     const updatedItems = [...prevItems];
     const index = updatedItems.findIndex(item => item.id === plannerItem.id);
@@ -622,27 +720,34 @@ const handleRemoveTour = (plannerItem) => {
         tours: null
       };
       
+      // 🔥 FIX: Recalculate grand total after tour removal
+      const newTourTotal = updatedItems.reduce((sum, item) => {
+        return sum + parseFloat(item.tours?.price || item.tours?.details?.booking?.totalPrice || 0);
+      }, 0);
+      
+      const hotelTotal = hotels.reduce((sum, hotel) => {
+        return sum + parseFloat(hotel.booking?.totalPrice || 0);
+      }, 0);
+      
+      const newGrandTotal = hotelTotal + newTourTotal;
+      setGrandTotal(newGrandTotal);
+      
+      console.log("💰 Recalculated totals - Hotels:", hotelTotal, "Tours:", newTourTotal, "Grand Total:", newGrandTotal);
+      
       sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
       
       if (isEditMode) {
         const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
         editData.plannerItems = updatedItems;
-        editData.grandTotal = (editData.grandTotal || 0) - tourPrice;
+        editData.grandTotal = newGrandTotal;
         sessionStorage.setItem('editLeadData', JSON.stringify(editData));
         console.log("🔄 Edit mode session storage updated after tour removal");
       }
     }
     return updatedItems;
   });
-  
-  if (tourPrice > 0) {
-    setGrandTotal(prev => {
-      const newTotal = prev - tourPrice;
-      console.log("💰 Updated grand total after tour removal:", newTotal);
-      return newTotal;
-    });
-  }
 };
+
 
 const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -893,6 +998,12 @@ const handleClientFormSubmit = async (clientData) => {
   setClientFormOpen(false);
   setShowThankYou(true);
   const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
+  if (plannerItems?.length > 0) {
+    sessionStorage.setItem('editLeadData', JSON.stringify({
+      ...editData,
+      plannerItems
+    }));
+  }
   const editingClientData = JSON.parse(sessionStorage.getItem('editingClientData') || '{}');
   
   const calculateRoomCounts = () => {
@@ -936,8 +1047,11 @@ const handleClientFormSubmit = async (clientData) => {
   const finalBookingRef = isEditMode ? (originalLeadId || editingClientData?.id || editingClientData?._id || editData.leadId) : bookingRef;
   const selectedCity = currentSearchParams.city || editData.currentSearchParams?.city;
   const selectedCountry = currentSearchParams.country || editData.currentSearchParams?.country;
-  const finalHotels = editData.hotelDetails || hotels;
-  const finalPlannerItems = editData.plannerItems || plannerItems;
+  const finalHotels = Array.isArray(hotels) && hotels.length > 0 ? hotels : editData.hotelDetails || [];
+  const finalPlannerItems = Array.isArray(plannerItems) && plannerItems.length > 0
+  ? plannerItems
+  : editData.plannerItems || [];
+
   const finalGrandTotal = editData.grandTotal || grandTotal;
   const finalCurrency = editData.currency || currency || 'USD';
 
@@ -1081,6 +1195,7 @@ const handleClientFormSubmit = async (clientData) => {
       });
     }
   });
+  
   try {
     if (isEditMode) {
       console.log("Updating lead with ID:", finalBookingRef);

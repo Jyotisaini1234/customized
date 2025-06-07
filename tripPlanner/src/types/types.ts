@@ -588,3 +588,28 @@ export interface TabPanelPropsLocal {
 }
 
 
+
+
+export interface PackagePDFGeneratorProps {
+  packageData?: PackageData;
+  selectedHotelOption?: {
+    hotels: Array<{
+      name: string;
+      destination: string;
+      roomType: string;
+      nights: number;
+      mealPlan?: string;
+      stayDates?: string[];
+    }>;
+    perPersonCost: number;
+    totalPackageCost: number;
+  };
+  selectedOptionIndex?: number;
+  selectedSeason?: string;
+  customerName?: string;
+  companyDetails?: {
+    name: string;
+    subtitle: string;
+    title: string;
+  };
+}

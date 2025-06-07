@@ -7,6 +7,15 @@ import { useGetPackageByIdQuery } from "../../../../../api/TourAPI.tsx";
 import { TabPanelPropsLocal } from "../../../../../types/types.ts";
 import './PackageDetails.scss';
 import { Box, CircularProgress, Container, Alert, Button, Typography, IconButton, Tabs, Tab, FormControl, RadioGroup, FormControlLabel, Radio, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Rating, Card, CardContent, Grid } from "@mui/material";
+import PackagePDFGenerator from "../PackagePDFGenerator/PackagePDFGenerator.tsx";
+
+interface ItineraryItem {
+  day: number;
+  title: string;
+  details: string;
+  description: string;
+  date?: string;
+}
 
 function TabPanel(props: TabPanelPropsLocal) {
   const { children, value, index, ...other } = props;
@@ -27,7 +36,8 @@ const PackageDetails: React.FC = () => {
   const packageDataFromState = location.state?.packageData;
   const { data: packageFromApi,  isLoading,error } = useGetPackageByIdQuery(id!, { skip: !!packageDataFromState || !id});
   const packageData = packageDataFromState || (packageFromApi?.status === 'success' ? packageFromApi.data : null);
-  
+  const [generatePdf, setGeneratePdf] = useState(false);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
@@ -39,65 +49,56 @@ const PackageDetails: React.FC = () => {
   };
 
   const handleSelectAndProceed = () => {
-    if (!selectedHotel) {
-      alert('Please select a hotel option first');
-      return;
+    if (selectedHotel) {
+      setGeneratePdf(true); // trigger the rendering of the PDF component
     }
-    
-    const selectedOptionIndex = parseInt(selectedHotel);
-    const selectedOption = packageData?.packageDetails?.hotelOption?.[selectedOptionIndex];
-    
-    console.log('Selected hotel option:', selectedOption);
-    navigate('/booking-form', {
-      state: { 
-        packageData,
-        selectedHotelOption: selectedOption,
-        selectedOptionIndex: selectedOptionIndex
-      }
-    });
+
   };
 
   const getValidityText = (): string => {
     return `01-Mar-2025 till 30-Jun-2025 | 16-Sep-2025 till 19-Dec-2025 | 06-Jan-2026 till 31-Mar-2026`;
   };
-  const getItineraryData = () => {
-    if (!packageData?.packageDetails?.itinerary) {
-      const firstHotel = packageData?.packageDetails?.hotelOption?.[0]?.hotels?.[0];
-      const totalNights = firstHotel?.nights || 3;
-      const destination = firstHotel?.destination || 'destination';
-      
-      const itineraryDays = [];
-
-      for (let i = 1; i <= totalNights + 1; i++) {
-        let title = '';
-        let details = '';
-      
-        if (i === 1) {
-          title = `Arrival in ${destination}`;
-          details = `Arrive at ${destination} International Airport. Meet and greet by our local representative. Transfer to the hotel and check in. Free time to relax or explore the nearby city area on your own.`;
-        } else if (i === totalNights + 1) {
-          title = `Departure from ${destination}`;
-          details = `Check out from the hotel and transfer to the airport for your onward journey.`;
-        } else {
-          title = `Explore ${destination}`;
-          details = `City tour and sightseeing in ${destination}`;
-        }
-      
-        itineraryDays.push({
-          day: i,
-          title: title,
-          details: details
-        });
-      }
-      
-      return itineraryDays;
-      
+ const getItineraryData = (): ItineraryItem[] => {
+    if (packageData?.packageDetails?.itinerary && packageData.packageDetails.itinerary.length > 0) {
+      return packageData.packageDetails.itinerary.map((item: any): ItineraryItem => ({
+        day: item.day,
+        title: item.title,
+        details: item.details,
+        description: item.description || item.title,
+        date: item.date
+      }));
     }
     
-    return packageData.packageDetails.itinerary.map((item: any, index: number) => ({
-      day: index + 1,
-      description: item.description || item.title || `Day ${index + 1} activities`
-    }));
+    const firstHotel = packageData?.packageDetails?.hotelOption?.[0]?.hotels?.[0];
+    const totalNights = firstHotel?.nights || 3;
+    const destination = firstHotel?.destination || packageData?.packageDetails?.destination || 'destination';
+    
+    const itineraryDays: ItineraryItem[] = [];
+  
+    for (let i = 1; i <= totalNights + 1; i++) {
+      let title = '';
+      let details = '';
+    
+      if (i === 1) {
+        title = `Arrival in ${destination}`;
+        details = `Arrive at ${destination} International Airport. Meet and greet by our local representative. Transfer to the hotel and check in. Free time to relax or explore the nearby city area on your own.`;
+      } else if (i === totalNights + 1) {
+        title = `Departure from ${destination}`;
+        details = `Check out from the hotel and transfer to the airport for your onward journey.`;
+      } else {
+        title = `Explore ${destination}`;
+        details = `City tour and sightseeing in ${destination}. Visit popular attractions and landmarks.`;
+      }
+    
+      itineraryDays.push({
+        day: i,
+        title: title,
+        details: details,
+        description: title
+      });
+    }
+    
+    return itineraryDays;
   };
 
   if (isLoading) {
@@ -134,15 +135,19 @@ const PackageDetails: React.FC = () => {
     );
   }
 
-  // Use packageDetails instead of hotelDetails
   const { packageDetails } = packageData;
   const itineraryData = getItineraryData();
-  
-  // Get basic package info
   const packageTitle = packageDetails.packageName || packageDetails.title || 'Package Details';
   const firstHotel = packageDetails.hotelOption?.[0]?.hotels?.[0];
   const totalNights = firstHotel?.nights || packageDetails.nights || 3;
-
+  const selectedOptionIndex = selectedHotel ? parseInt(selectedHotel) : -1;
+  const selectedOption = selectedOptionIndex >= 0 ? packageDetails.hotelOption?.[selectedOptionIndex] : null;
+  const calculateTotalCost = (option: any) => {
+  const passengerCounts = packageDetails.passengers || { adult: 2, child: 0, infant: 0 };
+  return option.perPersonCost * passengerCounts.adult + 
+         option.cwbCost * passengerCounts.child + 
+         option.cnbCost * passengerCounts.infant;
+};
   return (
     <Box className="package-details">
       <Box className="package-container">
@@ -163,7 +168,7 @@ const PackageDetails: React.FC = () => {
                 <EmailIcon />
               </IconButton>
               <IconButton className="header-icon-button">
-                <DownloadIcon />
+                  <DownloadIcon />
               </IconButton>
             </Box>
           </Box>
@@ -196,81 +201,74 @@ const PackageDetails: React.FC = () => {
           </Box>
 
         <TabPanel value={selectedTab} index={0}>
-          <Box className="content-area">
+            <Box className="content-area">
             <Box className="proceed-section">
-              <Button onClick={handleSelectAndProceed}  disabled={!selectedHotel}  className="proceed-button"> 
-                Select Option & Proceed
-              </Button>
+              {selectedOption ? (
+                <PackagePDFGenerator
+                  packageData={packageData}
+                  selectedHotelOption={{
+                    ...selectedOption,
+                    totalPackageCost: calculateTotalCost(selectedOption)
+                  }}
+                  selectedOptionIndex={selectedOptionIndex}
+                  selectedSeason={selectedSeason} />
+              ) : (
+                <Button onClick={handleSelectAndProceed}  disabled={!selectedHotel}   className="proceed-button" > 
+                  Download PDF
+                </Button>
+              )}
             </Box>
-            
             {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
-              <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
-                <TableContainer component={Paper} className="hotel-table-container">
-                  <Table className="hotel-table">
-                    <TableHead className="table-header">
-                      <TableRow>
-                        <TableCell className="table-header-cell" sx={{ width: '60px', textAlign: 'center' }}>Select</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '200px' }}>Hotel</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '100px' }}>Area</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '80px' }}>Star</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '80px' }}>Nights</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '120px' }}>Room</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '100px' }}>Adult</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '100px' }}>CWB</TableCell>
-                        <TableCell className="table-header-cell" sx={{ width: '100px' }}>CNB</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {option.hotels?.map((hotel: any, hotelIndex: number) => (
-                        <TableRow key={hotelIndex} className="table-row">
-                          <TableCell className="table-cell" sx={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                            {hotelIndex === 0 && (
-                              <Radio 
-                                checked={selectedHotel === optionIndex.toString()} 
-                                onChange={() => setSelectedHotel(optionIndex.toString())}
-                                value={optionIndex.toString()} 
-                                className="hotel-radio" 
-                                size="small"
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell className="table-cell" sx={{ 
-                            maxWidth: '200px', 
-                            wordWrap: 'break-word',
-                            whiteSpace: 'normal',
-                            lineHeight: '1.4'
-                          }}>
-                            {hotel.name}
-                          </TableCell>
-                          <TableCell className="table-cell">{hotel.destination}</TableCell>
-                          <TableCell className="table-cell">
-                            <Rating value={hotel.star || 0} readOnly size="small" className="hotel-rating"/>
-                          </TableCell>
-                          <TableCell className="table-cell">{hotel.nights}</TableCell>
-                          <TableCell className="table-cell" sx={{ 
-                            maxWidth: '120px', 
-                            wordWrap: 'break-word',
-                            whiteSpace: 'normal',
-                            lineHeight: '1.4'
-                          }}>
-                            {hotel.roomType}
-                          </TableCell>
-                          <TableCell className="table-cell" sx={{ textAlign: 'center' }}>
-                            {hotelIndex === 0 ? `USD ${option.perPersonCost}` : ''}
-                          </TableCell>
-                          <TableCell className="table-cell" sx={{ textAlign: 'center' }}>
-                            {hotelIndex === 0 ? `USD ${option.cwbCost}` : ''}
-                          </TableCell>
-                          <TableCell className="table-cell" sx={{ textAlign: 'center' }}>
-                            {hotelIndex === 0 ? `USD ${option.cnbCost}` : ''}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            ))}
+    <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
+    <TableContainer component={Paper} className="hotel-table-container">
+      <Table className="hotel-table">
+        <TableHead className="table-header">
+          <TableRow>
+            <TableCell className="table-header-cell" sx={{ width: '60px', textAlign: 'center' }}>Select</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '200px' }}>Hotel</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>Area</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '80px' }}>Star</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '80px' }}>Nights</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '120px' }}>Room</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>Adult</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>CWB</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>CNB</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {option.hotels?.map((hotel: any, hotelIndex: number) => (
+            <TableRow  key={hotelIndex}  className={`table-row ${selectedHotel === optionIndex.toString() ? 'selected-row' : ''}`}>
+              {hotelIndex === 0 && (
+                <TableCell  className="table-cell" rowSpan={option.hotels.length}>
+                  <Radio checked={selectedHotel === optionIndex.toString()} onChange={() => {setSelectedHotel(optionIndex.toString());}}  value={optionIndex.toString()}  className="hotel-radio" size="small" />
+                </TableCell>
+              )}
+              
+              <TableCell className="table-cell">  {hotel.name} </TableCell>
+              <TableCell className="table-cell" > {hotel.destination}</TableCell>
+              <TableCell className="table-cell"> <Rating   value={hotel.star || 0} readOnly size="small" className="hotel-rating" /> </TableCell>
+              <TableCell className="table-cell">{hotel.nights} </TableCell>
+              <TableCell className="table-cell" > {hotel.roomType} </TableCell>
+              {hotelIndex === 0 && (
+                <>
+                  <TableCell  className="table-cell" rowSpan={option.hotels.length}  > {`USD ${option.perPersonCost}`}  </TableCell>
+                  <TableCell  className="table-cell"  rowSpan={option.hotels.length}  > {`USD ${option.cwbCost}`} </TableCell>
+                  <TableCell
+                    className="table-cell"
+                    rowSpan={option.hotels.length} >
+                    {`USD ${option.cnbCost}`}
+                  </TableCell>
+                </>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+    
+    </Box>
+    ))}
+
           </Box>
         </TabPanel>
 
@@ -319,10 +317,10 @@ const PackageDetails: React.FC = () => {
                 <Card key={index} className="itinerary-card">
                   <CardContent>
                     <Typography variant="h6" className="day-title"> 
-                      Day {dayData.day} : {dayData.description}
+                      Day {dayData.day} : {dayData.title || dayData.description}
                     </Typography>
                     <Typography variant="body1" className="day-description">
-                      {itineraryData.details}
+                      {dayData.details || dayData.description || 'Details not available'}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -369,5 +367,4 @@ const PackageDetails: React.FC = () => {
 };
 
 export default PackageDetails;
-
 
