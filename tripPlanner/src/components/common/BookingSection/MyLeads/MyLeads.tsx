@@ -198,7 +198,6 @@ const handleEditLead = (lead) => {
 };
 
 
-
 const getCorrectDestination = (lead) => {
   if (lead.currentSearchParams && lead.currentSearchParams.city) {
     return lead.currentSearchParams.city;

@@ -158,7 +158,7 @@ return (
             </Box>
     
             <Box className="currency-notice">
-                QUOTATION COSTS ARE PROVIDED IN [INR]
+                QUOTATION COSTS ARE PROVIDED IN [USD]
             </Box>
             </Box>
     
@@ -198,12 +198,12 @@ return (
                     ))}
                     <tr className="total-row">
                     <td colSpan={5}>{selectedHotelOption.hotels.length} DBL Room :</td>
-                    <td>Per Person INR {selectedHotelOption.perPersonCost || 0}/-</td>
+                    <td>Per Person USD {selectedHotelOption.perPersonCost || 0}/-</td>
                     </tr>
                 </tbody>
                 </table>
                 
-                <div className="package-cost-banner">TOTAL PACKAGE COST FOR HOTEL OPTION {selectedOptionIndex + 1} : INR {totalPackageCost}.00 /-
+                <div className="package-cost-banner">TOTAL PACKAGE COST FOR HOTEL OPTION {selectedOptionIndex + 1} : USD {totalPackageCost}
                 </div>
             </Box>
             )}
