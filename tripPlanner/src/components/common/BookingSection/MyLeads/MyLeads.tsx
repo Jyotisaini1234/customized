@@ -34,8 +34,8 @@ const handleCloseDetails = () => {
   setDetailsOpen(false);
 };
 
-const handleEditLead = (lead) => {
-  const leadId = lead._id || lead.id;
+const handleEditLead = (lead: Lead) => {
+  const leadId =lead.id;
   const selectedLead = leads.find((l) => (l._id || l.id) === leadId);
   if (!selectedLead) {
     alert(' Lead not found. Please refresh the list.');
@@ -194,9 +194,9 @@ const handleEditLead = (lead) => {
   }));
   sessionStorage.setItem('editLeadData', JSON.stringify(editLeadData));
   console.log('Edit data saved to sessionStorage:', editLeadData);
+  
   navigate('/trip-planner');
 };
-
 
 const getCorrectDestination = (lead) => {
   if (lead.currentSearchParams && lead.currentSearchParams.city) {

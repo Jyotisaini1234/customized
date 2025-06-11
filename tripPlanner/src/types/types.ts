@@ -62,6 +62,13 @@ export interface PlannerItem {
   tours: any | null;
   meals: any | null;
 }
+export interface TourItem {
+  name: string;
+  details?: {
+    tour?: Tour;
+  };
+  price?: number;
+}
 
 export interface AreaOption {
   value: string;

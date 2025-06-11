@@ -47,12 +47,11 @@ const packageType = currentSearchParams.packageType || 'hotel-land';
 const [clientFormOpen, setClientFormOpen] = useState(false);
 const [bookingRef,] = useState(`BK${Math.floor(Math.random() * 90000) + 10000}`);
 const [showThankYou, setShowThankYou] = useState(false);
-const [selectedHotels, setSelectedHotels] = useState<any[]>([]); // if using hotel selection
 const [isEditMode, setIsEditMode] = useState(false);
 const [originalLeadId, setOriginalLeadId] = useState<string | null>(null);
 const [editingClientData, setEditingClientData] = useState<any>(null);
-const [editLeadData, setEditLeadData] = useState({});
-const [, setNights] = useState(1);
+const [editDataVersion, setEditDataVersion] = useState(0);
+
 const onCancel = () => {
   navigate('/customize-package');
 };
@@ -138,6 +137,7 @@ useEffect(() => {
 }, []);
 
 const handleHotelSelection = (itemId) => {
+  
   const plannerItem = plannerItems.find(item => item.id === itemId);
   if (!plannerItem) return;
   const itemDate = new Date(plannerItem.dateObj);
@@ -232,6 +232,7 @@ useEffect(() => {
     }
   }
 }, [plannerItems, currentSearchParams.nights]);
+
 
 useEffect(() => {
   if (hotels.length > 0) {
@@ -342,9 +343,10 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
     console.error(`Invalid date object for planner item ${itemId}`);
     return;
   }
+  
   sessionStorage.setItem('tripPlannerParams', JSON.stringify(currentSearchParams));
-  sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
   sessionStorage.setItem('tripPlannerItems', JSON.stringify(plannerItems));
+  sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
   
   let selectedArea = '';
   let selectedCity = currentSearchParams.city;
@@ -558,8 +560,6 @@ const handleRemoveHotel = (plannerItem) => {
   const totalHotelPrice = hotelDetails.booking?.totalPrice || 0;
   
   console.log("🗑️ Removing hotel with uniqueId:", hotelUniqueId);
-  
-  // Update planner items - remove hotel from specific days only
   const newPlannerItems = plannerItems.map(item => {
     if (item.hotel?.details?.uniqueId === hotelUniqueId) {
       return {
@@ -571,12 +571,11 @@ const handleRemoveHotel = (plannerItem) => {
   });
   
   setPlannerItems(newPlannerItems);
-  
-  // Update hotels array - remove only the specific hotel
+
   const updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
   setHotels(updatedHotels);
-  
-  // 🔥 FIX: Recalculate grand total properly
+  sessionStorage.setItem("tripPlannerHotels", JSON.stringify(updatedHotels));
+
   const newHotelTotal = updatedHotels.reduce((sum, hotel) => {
     return sum + parseFloat(hotel.booking?.totalPrice || 0);
   }, 0);
@@ -589,8 +588,6 @@ const handleRemoveHotel = (plannerItem) => {
   setGrandTotal(newGrandTotal);
   
   console.log("💰 Recalculated totals - Hotels:", newHotelTotal, "Tours:", tourTotal, "Grand Total:", newGrandTotal);
-  
-  // Update session storage for edit mode
   if (isEditMode) {
     const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
     editData.hotelDetails = updatedHotels;
@@ -599,13 +596,9 @@ const handleRemoveHotel = (plannerItem) => {
     sessionStorage.setItem('editLeadData', JSON.stringify(editData));
     console.log("🔄 Session storage updated after hotel removal");
   }
-  
-  // Update selected hotel if it was the removed one
   if (selectedHotel?.uniqueId === hotelUniqueId) {
     setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
   }
-  
-  // Update regular session storage
   sessionStorage.setItem('tripPlannerItems', JSON.stringify(newPlannerItems));
   sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels));
 };
@@ -752,28 +745,12 @@ useEffect(() => {
       });
       setOriginalLeadId(parsedData.leadId || parsedData.bookingRef || null);
       setCurrentSearchParams(parsedData.currentSearchParams || {});
+
+      setHotels(parsedData.hotelDetails || parsedData.hotels || []);
+      setPlannerItems(parsedData.plannerItems || parsedData.tours || []);
     }
   }
 }, []);
-
-
-// useEffect(() => {
-//   const storedEditData = sessionStorage.getItem('editLeadData');
-//   if (storedEditData) {
-//     const parsedData = JSON.parse(storedEditData);
-//     console.log("🔍 Loading edit data:", parsedData);
-
-//     if (parsedData.isEditMode) {
-//       setIsEditMode(true);
-//       setEditingClientData(parsedData);
-//       setOriginalLeadId(parsedData.leadId || parsedData.bookingRef || null);
-//       setCurrentSearchParams(parsedData.currentSearchParams || {});
-//       setHotels(parsedData.hotelDetails || parsedData.hotels || []);
-//       setPlannerItems(parsedData.plannerItems || parsedData.tours || []);
-//     }
-//   }
-// }, []);
-
 
 const handleClientFormSubmit = async (clientData) => {
   setClientFormOpen(false);
@@ -786,7 +763,23 @@ const handleClientFormSubmit = async (clientData) => {
     }));
   }
   const editingClientData = JSON.parse(sessionStorage.getItem('editingClientData') || '{}');
-  
+
+const mergedHotels = [
+  ...(editData.hotelDetails || editData.hotels || []),
+  ...(hotels || [])
+];
+
+const mergedPlannerItems = [
+  ...(editData.plannerItems || []),
+  ...(plannerItems || [])
+];
+
+sessionStorage.setItem('editLeadData', JSON.stringify({
+  ...editData,
+  hotels: mergedHotels,
+  plannerItems: mergedPlannerItems
+}));
+
   const calculateRoomCounts = () => {
     let totalRooms = 0;
     let adult = 0;
@@ -828,12 +821,13 @@ const handleClientFormSubmit = async (clientData) => {
   const finalBookingRef = isEditMode ? (originalLeadId || editingClientData?.id || editingClientData?._id || editData.leadId) : bookingRef;
   const selectedCity = currentSearchParams.city || editData.currentSearchParams?.city;
   const selectedCountry = currentSearchParams.country || editData.currentSearchParams?.country;
-  const finalHotels = Array.isArray(hotels) && hotels.length > 0 ? hotels : editData.hotelDetails || [];
+  // const finalHotels = Array.isArray(hotels) && hotels.length > 0 ? hotels : editData.hotelDetails || [];
+  // const finalPlannerItems = Array.isArray(plannerItems) && plannerItems.length > 0
+  // ? plannerItems
+  // : editData.plannerItems || [];
+  const finalHotels = mergedHotels;
+  const finalPlannerItems = mergedPlannerItems;
   
-  const finalPlannerItems = Array.isArray(plannerItems) && plannerItems.length > 0
-  ? plannerItems
-  : editData.plannerItems || [];
-
   const finalGrandTotal = editData.grandTotal || grandTotal;
   const finalCurrency = editData.currency || currency || 'USD';
 
@@ -915,8 +909,8 @@ const handleClientFormSubmit = async (clientData) => {
         date: item.date || 'N/A',
         dateObj: item.dateObj,
         tours: item.tours ? {
-          name: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
-          description: item.tours.details?.tour?.description || 'No description available',
+          name: item.tours.name || item.tours.details?.tour?.tourName ,
+          description: item.tours.details?.tour?.description,
           duration: item.tours.details?.tour?.eventDuration || 'N/A',
           currency: item.tours.details?.booking?.currency || finalCurrency || 'USD',
           price: parseFloat(tourPrice),
@@ -981,19 +975,20 @@ const handleClientFormSubmit = async (clientData) => {
   try {
     if (isEditMode) {
       console.log("Updating lead with ID:", finalBookingRef);
-      console.log("Updated lead data:", newLead);
       console.log("Tour prices in updated lead:", newLead.plannerItems?.map(item => ({
         date: item.date,
         tourPrice: item.tours?.price,
         tourName: item.tours?.name
       })));
+      console.log("Saving merged hotels:", mergedHotels);
+      console.log("Saving merged plannerItems:", mergedPlannerItems);
+
       await updateLead({ id: finalBookingRef, lead: newLead }).unwrap();
       console.log(' Successfully updated lead');
       alert('Lead updated successfully!');
       
       sessionStorage.removeItem('editLeadData');
       sessionStorage.removeItem('editingClientData');
-      
       window.open(`/tour-package-pdf?bookingRef=${finalBookingRef}`, '_blank');
     } else {
       console.log("Creating new lead...");
@@ -1011,12 +1006,7 @@ const handleClientFormSubmit = async (clientData) => {
 const handleDownloadPDF = () => {
   setClientFormOpen(true);
 };
-const convertToUSD = (amount: number, currency: string) => {
-  if (currency === 'INR') {
-    return amount / 85; // Adjust exchange rate as needed
-  }
-  return amount; // already USD or other currency, just return
-};
+
 const showHotelTab = packageType === 'hotel-land';
 return (
     <Box className="trip-planner-page">
@@ -1054,8 +1044,8 @@ return (
                 <Box className="header-cell date-cell">Date</Box>
                 {/* Show hotel column only for hotel-land package */}
                 {packageType === 'hotel-land' && <Box className="header-cell">Hotel</Box>}
-                <Box className="header-cell">Transfer</Box>
-                <Box className="header-cell">Tours</Box>
+                {/* <Box className="header-cell">Transfer</Box> */}
+                {/* {/* <Box className="header-cell">Tours</Box> */}
                 <Box className="header-cell">Meals</Box>
               </Box>
               {plannerItems.map((plannerItem) => (
@@ -1135,9 +1125,8 @@ return (
             <Box className="total-section" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
               <Box className="total-row">
                 <Typography className="label">Net Total:</Typography>
-                <Typography className="value">
-                USD {convertToUSD(grandTotal, currency).toFixed(2)}
-                </Typography>
+                <Typography className="value">{currency} {grandTotal.toFixed(2)}</Typography>
+
               </Box>
               <Box className="total-row">
                 <Typography className="label">Add Margin:</Typography>

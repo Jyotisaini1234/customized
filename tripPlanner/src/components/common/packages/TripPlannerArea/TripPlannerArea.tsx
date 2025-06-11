@@ -57,6 +57,26 @@ const storedHotels = sessionStorage.getItem('tripPlannerHotels');
       navigate(-1);
 };
     
+// 👇 Add this block just above your first useEffect for hotel details
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hotelData = urlParams.get('hotelData');
+  if (hotelData) {
+    try {
+      const hotelDetails = JSON.parse(decodeURIComponent(hotelData));
+      if (hotelDetails.booking?.checkInDate) {
+        hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString();
+      }
+      if (hotelDetails.booking?.checkOutDate) {
+        hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
+      }
+      setHotelDetails(hotelDetails);
+      console.log("✅ Hotel details from URL:", hotelDetails);
+    } catch (e) {
+      console.error("❌ Failed to parse hotel data from URL", e);
+    }
+  }
+}, []);
 
 useEffect(() => {
   const storedEditData = sessionStorage.getItem('editLeadData');
