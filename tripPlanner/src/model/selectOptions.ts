@@ -24,7 +24,7 @@ export let citiesList = [
     ],
     'bookings': [
       { label: 'Quotation List', path: '/my-leads' },
-      { label: 'On Request Bookings', path: '/bookings/on-request' },
+      { label: 'Readymade Package Bookings', path: '/readymade-booking' },
       { label: 'Confirmed Bookings', path: '/confirmed-booking' },
       { label: 'Cancel Bookings', path: '/cancel-booking' }
     ]

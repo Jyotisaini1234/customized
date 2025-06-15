@@ -123,6 +123,9 @@ const handleSearch = () => {
   params.append('country', country);
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
+  if (searchParams.fromReadymadePackage) {
+    params.append('fromReadymadePackage', 'true');
+  }
   if (searchParams.specificDay) {
     params.append('specificDay', 'true');
     if (searchParams.specificDayId) {

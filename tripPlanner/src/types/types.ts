@@ -6,33 +6,31 @@ export interface HotelSummaryParams {
   checkOutDate: string;
   nights: number;
   rooms: Room[];
-  packageType?: string; // Optional for the Customize flow
-  filteredHotels?: any[]; // Optional filtered hotels from search
+  packageType?: string;
+  filteredHotels?: any[];
+  packageData?: any;
 }
 
 export interface Room {
   id: number;
   adults: number;
-  cwb: number; // Child with bed
-  cnb: number; // Child no bed
+  cwb: number;
+  cnb: number;
   infants: number;
 }
 
-// Props for HotelSearch component
 export interface HotelSearchProps {
   isModifying?: boolean;
   initialValues?: Partial<HotelSummaryParams>;
   onSearchComplete?: (params: HotelSummaryParams) => void;
 }
 
-// Props for Customize component
 export interface CustomizeSearchProps {
   isModifying?: boolean;
   initialValues?: Partial<HotelSummaryParams>;
   onSearchComplete?: (params: HotelSummaryParams) => void;
 }
 
-// Props for TripPlanner component
 export interface TripPlannerProps {
   location: string;
   nights: number;
@@ -180,7 +178,19 @@ export interface TripPlannerData {
   currency?: string;
   
 }
-
+export interface Activity {
+  vehicle: string;
+  type: string;
+  city:string;
+  id: string;
+  date: string;
+  duration: string;
+  description: string;
+  name: string;
+  price?: number;
+  currency?: string;
+  location?: string;
+}
 export interface ClientDetailsFormProps {
   open: boolean;
   onClose: () => void;
@@ -305,14 +315,7 @@ export interface HotelDetails {
   };
   nights?: number;
 }
-export interface Activity {
-  date: string;
-  duration: string;
-  description: string;
-  name: string;
-  price?: number;
-  currency?: string;
-}
+
 
 export interface TourDetails {
   tourName: string | undefined;
@@ -473,10 +476,6 @@ export interface LeadDetail {
     countryId?: number;
   }
 
-
-
-
-
 export interface Hotel {
   star: number;
   image: string;
@@ -526,14 +525,6 @@ export interface Passengers {
   adult: number;
   child: number;
   infant: number;
-}
-
-export interface Activity {
-  name: string;
-  type: string;
-  vehicle?: string;
-  ticketIncluded: boolean;
-  dropOff?: string;
 }
 
 export interface Transfer {
@@ -594,9 +585,6 @@ export interface TabPanelPropsLocal {
   value: number;
 }
 
-
-
-
 export interface PackagePDFGeneratorProps {
   packageData?: PackageData;
   selectedHotelOption?: {
@@ -619,4 +607,159 @@ export interface PackagePDFGeneratorProps {
     subtitle: string;
     title: string;
   };
+}
+
+export interface ItineraryItem {
+  day: number;
+  title: string;
+  details: string;
+  description: string;
+  date?: string;
+}
+export interface ReadymadeSearchProps {
+  isModifying?: boolean;
+  initialValues?: Partial<HotelSummaryParams>;
+  onSearchComplete?: (params: HotelSummaryParams) => void;
+  packageId?: string | null;
+}
+
+export interface ReadymadeData {
+  packageData: any;
+  packageId: string;
+  selectedHotelOption: string;
+  selectedSeason: string;
+}
+
+
+export interface ReadyMadeHotel {
+  specificDayId: any;
+  checkOutDate: any;
+  checkInDate: any;
+  id: string;
+  name: string;
+  destination: string;
+  nights: number;
+  price: number;
+  image?: string;
+  rating?: number;
+  uniqueId:number
+}
+
+export interface Transfer {
+  id: string;
+  from: string;
+  to: string;
+  type: string;
+  price?: number;
+}
+
+export interface PackageItinerary {
+  day: number;
+  date: string;
+  title: string;
+  price: number;
+  details: string;
+}
+
+export interface TourData {
+    tourDetails?: {
+      id?: string;
+      tourName?: string;
+      sightName?: string;
+      name?: string;
+      description?: string;
+      eventDuration?: string;
+      city?: string;
+      currency?: string;
+      price?: number;
+      tour?: {
+        tourName?: string;
+      };
+    };
+    tour?: TourData['tourDetails']; // Same structure as tourDetails
+    booking?: {
+      totalPrice?: number;
+      date?: string;
+      city?: string;
+      currency?: string;
+    };
+    specificDayId?: string;
+}
+
+
+
+export interface PackageItinerary {
+   id: string;
+    day: number;
+    date: string;
+    title: string;
+    price: number;
+    details: string;
+}
+
+export interface PackageHotel {
+    name: string;
+    destination: string;
+    star: number;
+    nights: number;
+    price: number;
+    currency: string;
+    mealPlan: string;
+    roomType: string;
+}
+
+export interface PackageData {
+    packageName: string;
+    hotelOption: Array<{
+        hotels: PackageHotel[];
+        perPersonCost: number;
+        totalPackageCost: number;
+    }>;
+    activities: Array<{
+        name: string;
+        type: string;
+        vehicle?: string;
+        ticketIncluded: boolean;
+        price?: number;
+    }>;
+    transfers: Array<{
+        route: string;
+        vehicle: string;
+        type: string;
+        price?: number;
+    }>;
+    itinerary: PackageItinerary[];
+}
+
+export interface SearchData {
+    totalRooms: number;
+    packageData?: {
+        packageDetails: PackageData;
+    };
+    checkInDate?: string;
+    checkOutDate?: string;
+    nights?: number;
+    totalNights?: number;
+    destinations?: string[];
+    guests?: {
+        adults: number;
+        cwb: number;
+        cnb: number;
+        infants: number;
+    };
+    room?: Array<{
+        adults: number;
+        cwb: number;
+        cnb: number;
+        infants: number;
+    }>;
+}
+
+export interface PlannerItem2 {
+    id: string;
+    date: Date;
+    hotel?: any;
+    tours?: any;
+    transfer?: any;
+    itinerary?: PackageItinerary;
 }

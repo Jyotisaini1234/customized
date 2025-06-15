@@ -9,6 +9,7 @@
   import { CustomizeSearchProps, HotelSummaryParams, OptionType } from "../../../../types/types.ts";
   import TripPlanner from "../TripPlanner/TripPlanner.tsx";
   import { country as countriesList  ,citiesList as citiesList} from "../../../../model/selectOptions.ts"; 
+import { enGB } from "date-fns/locale";
 
   const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initialValues = {}, onSearchComplete }) => {
     const location = useLocation();
@@ -227,7 +228,7 @@ return (
             <Grid container spacing={1} className='form-container'>
               <Grid item xs={12} md={6}>
                 <Paper sx={{ p: 2 }}>
-                  <Grid container spacing={2} className='select-form'>
+                <Grid container spacing={2} className='select-form'>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined" size="small" className='select-option-1'>
                     <Autocomplete  options={countriesList}  getOptionLabel={(option) => option.label}value={country}onChange={(_, newValue) => handleCountrySelect(newValue)} renderInput={(params) => (
@@ -251,7 +252,7 @@ return (
                     <Grid item xs={12} container spacing={2}>
                       <Grid item xs={12} sm={4}>
                         <Typography variant="body2" sx={{ mb: 0.5 }}>Check In</Typography>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enGB}>
                           <DatePicker
                             value={checkInDate}onChange={handleCheckInChange}minDate={new Date()}
                             slotProps={{textField: {size: "small",fullWidth: true,InputProps: { sx: { height: '40px' } }}}}/>
@@ -263,7 +264,7 @@ return (
                       </Grid>
                       <Grid item xs={12} sm={4}>
                         <Typography variant="body2" sx={{ mb: 0.5 }}>Check Out</Typography>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enGB}>
                           <DatePicker value={checkOutDate} onChange={handleCheckOutChange}
                             minDate={checkInDate ? addDays(checkInDate, 1) : addDays(new Date(), 1)}
                             slotProps={{textField: {size: "small",fullWidth: true,InputProps: { sx: { height: '40px' } }} }}/>

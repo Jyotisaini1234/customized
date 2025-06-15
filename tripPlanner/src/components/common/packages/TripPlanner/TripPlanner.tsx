@@ -645,8 +645,6 @@ const handleRemoveTour = (plannerItem) => {
     return updatedItems;
   });
 };
-
-
 const formatDate = (dateString: string) => {
     if (!dateString) return '';
     try {
@@ -741,11 +739,16 @@ useEffect(() => {
       setEditingClientData({
         ...parsedData,
         plannerItems: parsedData.plannerItems || [],
-        hotelDetails: parsedData.hotelDetails || []
+        hotelDetails: parsedData.hotelDetails || [],
+        isEditingExistingLead: true 
       });
       setOriginalLeadId(parsedData.leadId || parsedData.bookingRef || null);
       setCurrentSearchParams(parsedData.currentSearchParams || {});
-
+      setCurrentSearchParams({
+        ...parsedData.currentSearchParams,
+        isEditMode: true,
+        editingLeadId: parsedData.leadId
+      });
       setHotels(parsedData.hotelDetails || parsedData.hotels || []);
       setPlannerItems(parsedData.plannerItems || parsedData.tours || []);
     }
@@ -1044,9 +1047,7 @@ return (
                 <Box className="header-cell date-cell">Date</Box>
                 {/* Show hotel column only for hotel-land package */}
                 {packageType === 'hotel-land' && <Box className="header-cell">Hotel</Box>}
-                {/* <Box className="header-cell">Transfer</Box> */}
-                {/* {/* <Box className="header-cell">Tours</Box> */}
-                <Box className="header-cell">Meals</Box>
+                <Box className="header-cell">Tours</Box> 
               </Box>
               {plannerItems.map((plannerItem) => (
                 <Box key={plannerItem.id} className="table-row ">
@@ -1082,13 +1083,6 @@ return (
                     </Box>
                   )}
                   <Box className="cell">
-                    <Box display="flex" justifyContent="flex-end">
-                      <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'transfer')} aria-label="Add transfer" sx={{ color: '#777777', "& .MuiSvgIcon-root": { fill: 'grey' } }}>
-                        <AddCircleOutline className='add-btn'/>
-                      </IconButton>
-                    </Box>
-                  </Box>
-                  <Box className="cell">
                     {plannerItem.tours ? (
                       <Box className="selected-tour">
                         <Box className='tour-container'>
@@ -1111,13 +1105,6 @@ return (
                         </IconButton>
                       </Box>
                     )}
-                  </Box>
-                  <Box className="cell">
-                    <Box display="flex" justifyContent="flex-end">
-                      <IconButton className="add-button" onClick={() => handleAddItem(plannerItem.id, 'meals')} aria-label="Add meals" sx={{ color: '#777777', "& .MuiSvgIcon-root": { fill: 'grey' } }} >
-                        <AddCircleOutline className='add-btn' />
-                      </IconButton>
-                    </Box>
                   </Box>
                 </Box>
               ))}

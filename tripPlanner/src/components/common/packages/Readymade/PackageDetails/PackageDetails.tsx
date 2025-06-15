@@ -4,18 +4,11 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmailIcon from '@mui/icons-material/Email';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useGetPackageByIdQuery } from "../../../../../api/TourAPI.tsx";
-import { TabPanelPropsLocal } from "../../../../../types/types.ts";
+import { ItineraryItem, TabPanelPropsLocal } from "../../../../../types/types.ts";
 import './PackageDetails.scss';
 import { Box, CircularProgress, Container, Alert, Button, Typography, IconButton, Tabs, Tab, FormControl, RadioGroup, FormControlLabel, Radio, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Rating, Card, CardContent, Grid } from "@mui/material";
 import PackagePDFGenerator from "../PackagePDFGenerator/PackagePDFGenerator.tsx";
 
-interface ItineraryItem {
-  day: number;
-  title: string;
-  details: string;
-  description: string;
-  date?: string;
-}
 
 function TabPanel(props: TabPanelPropsLocal) {
   const { children, value, index, ...other } = props;
@@ -37,7 +30,7 @@ const PackageDetails: React.FC = () => {
   const { data: packageFromApi,  isLoading,error } = useGetPackageByIdQuery(id!, { skip: !!packageDataFromState || !id});
   const packageData = packageDataFromState || (packageFromApi?.status === 'success' ? packageFromApi.data : null);
   const [generatePdf, setGeneratePdf] = useState(false);
-
+  const { packageId } = useParams();
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
@@ -144,10 +137,26 @@ const PackageDetails: React.FC = () => {
   const selectedOption = selectedOptionIndex >= 0 ? packageDetails.hotelOption?.[selectedOptionIndex] : null;
   const calculateTotalCost = (option: any) => {
   const passengerCounts = packageDetails.passengers || { adult: 2, child: 0, infant: 0 };
-  return option.perPersonCost * passengerCounts.adult + 
-         option.cwbCost * passengerCounts.child + 
+  return option.perPersonCost * passengerCounts.adult +
+         option.cwbCost * passengerCounts.child +
          option.cnbCost * passengerCounts.infant;
 };
+const handleProceedToSearch = () => {
+  if (!selectedHotel || !packageData) {
+    alert("Please select a hotel option first!");
+    return;
+  }
+
+  navigate('/readymade-search', {
+    state: {
+      packageData: packageData,
+      packageId: id,
+      selectedHotelOption: selectedHotel,
+      selectedSeason: selectedSeason
+    }
+  });
+};
+
   return (
     <Box className="package-details">
       <Box className="package-container">
@@ -201,23 +210,20 @@ const PackageDetails: React.FC = () => {
           </Box>
 
         <TabPanel value={selectedTab} index={0}>
-            <Box className="content-area">
-            <Box className="proceed-section">
-              {selectedOption ? (
-                <PackagePDFGenerator
-                  packageData={packageData}
-                  selectedHotelOption={{
-                    ...selectedOption,
-                    totalPackageCost: calculateTotalCost(selectedOption)
-                  }}
-                  selectedOptionIndex={selectedOptionIndex}
-                  selectedSeason={selectedSeason} />
-              ) : (
-                <Button onClick={handleSelectAndProceed}  disabled={!selectedHotel}   className="proceed-button" > 
-                  Download PDF
-                </Button>
-              )}
-            </Box>
+        <Box className="content-area">
+        <Box className="proceed-section">{selectedOption ? ( <>
+      <Button  onClick={handleProceedToSearch} className="proceed-button" sx={{ ml: 2 }} >   Proceed to Search
+      </Button>
+    </>
+  ) : (
+    <Box sx={{ display: 'flex', gap: 2 }}>
+      <Button  onClick={handleProceedToSearch} disabled={!selectedHotel} className="proceed-button" >
+        Proceed to Search
+      </Button>
+    </Box>
+  )}
+</Box>
+
             {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
     <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
     <TableContainer component={Paper} className="hotel-table-container">

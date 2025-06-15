@@ -15,7 +15,7 @@ export const ROUTE_CONSTANTS = {
   HOME_PAGE: '/home-page',
   BAKU_PACKAGES: '/baku-packages',
   TOURS_TRANSFERS: 'http://localhost:3002/hotel/transfer-search',
-  BOOKINGS: '/bookings',
+  BOOKINGS: '/readymade-bookings',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',
   TRIP_PLANNER_AREA:'/trip-planner-area',
@@ -23,10 +23,12 @@ export const ROUTE_CONSTANTS = {
   MY_LEADS:'/my-leads',
   READYMADE_PACKAGE:'/readymade-package',
   PACKAGE_DETAILS: '/package-details/:id',
+  READYMADE_SEARCH:'/readymade-search',
+  READYMADE_SEARCH_PLANNER:'/readymade-planner',
   // User related routes
   USER_PROFILE: '/user',
   LOGOUT: '/',
-  FLY_DIVINE_TRAVELS: '/fly-divin-travels',
+  FLY_DIVINE_TRAVELS: '/fly-divine-travels',
   UI_TEAMS: '/u_i_teams'
 };
 
@@ -79,7 +81,7 @@ export const USER_NAV_ITEMS = [
   {
     path: ROUTE_CONSTANTS.FLY_DIVINE_TRAVELS,
     label: "Fly Divine Travels",
-    key: 'fly-divin-travels'
+    key: 'fly-divine-travels'
   },
   {
     path: ROUTE_CONSTANTS.UI_TEAMS,
