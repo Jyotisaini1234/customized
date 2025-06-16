@@ -211,7 +211,7 @@ const handleProceedToSearch = () => {
 
         <TabPanel value={selectedTab} index={0}>
         <Box className="content-area">
-        <Box className="proceed-section">{selectedOption ? ( <>
+        {/* <Box className="proceed-section">{selectedOption ? ( <>
       <Button  onClick={handleProceedToSearch} className="proceed-button" sx={{ ml: 2 }} >   Proceed to Search
       </Button>
     </>
@@ -222,8 +222,24 @@ const handleProceedToSearch = () => {
       </Button>
     </Box>
   )}
-</Box>
-
+</Box> */}
+  <Box className="proceed-section">
+              {selectedOption ? (
+                <PackagePDFGenerator
+                  packageData={packageData}
+                  selectedHotelOption={{
+                    ...selectedOption,
+                    totalPackageCost: calculateTotalCost(selectedOption)
+                  }}
+                  selectedOptionIndex={selectedOptionIndex}
+                  selectedSeason={selectedSeason} />
+              ) : (
+                <Button onClick={handleSelectAndProceed}  disabled={!selectedHotel}   className="proceed-button" > 
+                  Download PDF
+                </Button>
+              )}
+            </Box>
+     
             {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
     <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
     <TableContainer component={Paper} className="hotel-table-container">

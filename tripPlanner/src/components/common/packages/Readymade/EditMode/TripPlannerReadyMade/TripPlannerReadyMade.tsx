@@ -56,29 +56,6 @@ const [specificDayIdState, setSpecificDayId] = useState<string | null>(null);
     const displayNights = currentSearchParams.nights;
     const displayCheckInDate = new Date(currentSearchParams.checkInDate).toLocaleDateString();
     const displayCheckOutDate = new Date(currentSearchParams.checkOutDate).toLocaleDateString();
-    const cleanupDeletedItems = () => {
-        const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
-        const deletedActivities = JSON.parse(sessionStorage.getItem('deletedActivities') || '[]');
-        const deletedItineraries = JSON.parse(sessionStorage.getItem('deletedItineraries') || '[]');
-        if (deletedHotels.length > 0 || deletedActivities.length > 0 || deletedItineraries.length > 0) {
-            console.log('Cleaning up deleted items:', { deletedHotels, deletedActivities, deletedItineraries });
-            setHotels(prevHotels => 
-                prevHotels.filter(hotel => !deletedHotels.some((deleted: any) => 
-                deleted.id === hotel.id && deleted.specificDayId === hotel.specificDayId )));
-            setActivities(prevActivities => 
-                prevActivities.filter(activity => !deletedActivities.includes(activity.id)));
-            setPlannerItems(prevItems => 
-                prevItems.map(item => {
-                    const itineraryId = `itinerary-day-${item.id.replace('day-', '')}`;
-                    if (deletedItineraries.includes(itineraryId)) {
-                        return { ...item, itinerary: undefined };
-                    }
-                    return item;
-                })
-            );
-        }
-    };
-    
     const savePersistentTableData = (items: PlannerItem2[]) => {
         try {
             const verifiedTotal = calculateTotalWithPackageData(items, searchData?.packageData?.packageDetails);

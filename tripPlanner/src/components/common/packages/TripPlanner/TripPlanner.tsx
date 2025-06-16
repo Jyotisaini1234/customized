@@ -35,7 +35,6 @@ const [isLoading,setIsLoading]= useState(false)
 const [submitLead] = useSubmitLeadMutation();
 const [currency, setCurrency] = useState('');
 const searchParams = getSearchParams();
-
 const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
 const [hotels, setHotels] = useState<any[]>([]);
 const [showModifySearch, setShowModifySearch] = useState(false);
@@ -100,7 +99,8 @@ const generateInitialPlannerItems = () => {
       transfer: null,
       tours: null,
       meals: null,
-      eventDate:'',
+      eventDate: '',
+      dayNumber: ''
     });
     currentDate.setDate(currentDate.getDate() + 1);
   }
@@ -751,6 +751,25 @@ useEffect(() => {
       });
       setHotels(parsedData.hotelDetails || parsedData.hotels || []);
       setPlannerItems(parsedData.plannerItems || parsedData.tours || []);
+    }
+  }
+}, []);
+
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isEditMode = urlParams.get("editMode") === "true";
+  const specificDayId = urlParams.get("specificDayId");
+  const tourAdded = urlParams.get("tourAdded") === "true";
+const bookingRef = urlParams.get('bookingRef');
+console.log("TripPlanner URL Params (3000):", urlParams.toString());
+
+  if (isEditMode && tourAdded && specificDayId) {
+const tourDataStr = urlParams.get('tourData');
+if (tourDataStr) {
+  const tourData = JSON.parse(decodeURIComponent(tourDataStr));
+}
+   else {
+      console.warn("⚠️ tourData not found in sessionStorage");
     }
   }
 }, []);

@@ -195,7 +195,7 @@ const handleEditLead = (lead: Lead) => {
   sessionStorage.setItem('editLeadData', JSON.stringify(editLeadData));
   console.log('Edit data saved to sessionStorage:', editLeadData);
   
-  navigate('/trip-planner');
+  navigate(`/trip-planner?editMode=true&bookingRef=${editLeadData.bookingRef}`);
 };
 
 const getCorrectDestination = (lead) => {

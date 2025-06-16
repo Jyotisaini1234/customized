@@ -57,7 +57,6 @@ const storedHotels = sessionStorage.getItem('tripPlannerHotels');
       navigate(-1);
 };
     
-// 👇 Add this block just above your first useEffect for hotel details
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const hotelData = urlParams.get('hotelData');
@@ -123,54 +122,41 @@ const handleSearch = () => {
   params.append('country', country);
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
-  if (searchParams.fromReadymadePackage) {
+  if (searchParams.fromReadymadePackage === 'true' || searchParams.fromReadymadePackage === true) {
     params.append('fromReadymadePackage', 'true');
   }
-  if (searchParams.specificDay) {
-    params.append('specificDay', 'true');
-    if (searchParams.specificDayId) {
-      params.append('specificDayId', searchParams.specificDayId);
-    }
-    if (searchParams.dayNumber) {
-      params.append('dayNumber', searchParams.dayNumber);
-    }
-  }
-  if (searchParams.originalCheckInDate) {
-    params.append('originalCheckInDate', searchParams.originalCheckInDate);
-  }
-  if (searchParams.originalCheckOutDate) {
-    params.append('originalCheckOutDate', searchParams.originalCheckOutDate);
-  }
-  
-  params.append('applyToAllDays', searchParams.specificDay ? 'false' : String(applyToAllDays));
-  
-  if (searchParams.allDays) {
-    params.append('allDays', JSON.stringify(searchParams.allDays));
-  }
-  
+  const complexData = {
+    fromReadymadePackage: searchParams.fromReadymadePackage,
+    specificDay: searchParams.specificDay,
+    specificDayId: searchParams.specificDayId,
+    dayNumber: searchParams.dayNumber,
+    originalCheckInDate: searchParams.originalCheckInDate,
+    originalCheckOutDate: searchParams.originalCheckOutDate,
+    applyToAllDays: searchParams.specificDay ? false : applyToAllDays,
+    allDays: searchParams.allDays,
+    rooms: searchParams.rooms || []
+  };
+  sessionStorage.setItem('tripPlannerSearchData', JSON.stringify(complexData));
   let savedHotels = [];
   const storedHotels = sessionStorage.getItem('tripPlannerHotels');
   if (storedHotels) {
     try {
       savedHotels = JSON.parse(storedHotels);
-      params.append('savedHotels', encodeURIComponent(JSON.stringify(savedHotels)));
+      sessionStorage.setItem('savedHotelsForSearch', JSON.stringify(savedHotels));
     } catch (e) {
       console.error('Error parsing saved hotels', e);
     }
   }
-  
   const rooms = searchParams.rooms || [];
   const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalCWB = rooms.reduce((sum, room) => sum + room.cwb, 0);
   const totalCNB = rooms.reduce((sum, room) => sum + room.cnb, 0);
   const totalInfants = rooms.reduce((sum, room) => sum + room.infants, 0);
-  
   params.append('adults', String(totalAdults));
   params.append('cwb', String(totalCWB));
   params.append('cnb', String(totalCNB));
   params.append('infants', String(totalInfants));
-  params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
-  
+  params.append('totalRooms', String(rooms.length));
   window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
 };
 

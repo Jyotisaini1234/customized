@@ -46,6 +46,7 @@ export interface TripPlannerProps {
 
   
 export interface PlannerItem {
+  dayNumber: string;
   eventDate: string;
   dateObj: any;
   id: string;
