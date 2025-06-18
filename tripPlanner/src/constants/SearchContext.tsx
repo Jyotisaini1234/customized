@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { SearchContextType } from '../types/types';
+import { SearchContextType } from '../types/types.ts';
 
 
 

@@ -211,7 +211,7 @@ const handleProceedToSearch = () => {
 
         <TabPanel value={selectedTab} index={0}>
         <Box className="content-area">
-        {/* <Box className="proceed-section">{selectedOption ? ( <>
+        <Box className="proceed-section">{selectedOption ? ( <>
       <Button  onClick={handleProceedToSearch} className="proceed-button" sx={{ ml: 2 }} >   Proceed to Search
       </Button>
     </>
@@ -222,8 +222,8 @@ const handleProceedToSearch = () => {
       </Button>
     </Box>
   )}
-</Box> */}
-  <Box className="proceed-section">
+</Box>
+  {/* <Box className="proceed-section">
               {selectedOption ? (
                 <PackagePDFGenerator
                   packageData={packageData}
@@ -239,7 +239,7 @@ const handleProceedToSearch = () => {
                 </Button>
               )}
             </Box>
-     
+      */}
             {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
     <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
     <TableContainer component={Paper} className="hotel-table-container">
@@ -252,8 +252,8 @@ const handleProceedToSearch = () => {
             <TableCell className="table-header-cell" sx={{ width: '80px' }}>Star</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '80px' }}>Nights</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '120px' }}>Room</TableCell>
-            <TableCell className="table-header-cell" sx={{ width: '100px' }}>Adult</TableCell>
-            <TableCell className="table-header-cell" sx={{ width: '100px' }}>CWB</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>Adult 2</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>CWB 1</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '100px' }}>CNB</TableCell>
           </TableRow>
         </TableHead>
@@ -261,24 +261,17 @@ const handleProceedToSearch = () => {
           {option.hotels?.map((hotel: any, hotelIndex: number) => (
             <TableRow  key={hotelIndex}  className={`table-row ${selectedHotel === optionIndex.toString() ? 'selected-row' : ''}`}>
               {hotelIndex === 0 && (
-                <TableCell  className="table-cell" rowSpan={option.hotels.length}>
-                  <Radio checked={selectedHotel === optionIndex.toString()} onChange={() => {setSelectedHotel(optionIndex.toString());}}  value={optionIndex.toString()}  className="hotel-radio" size="small" />
-                </TableCell>
-              )}
-              
+              <TableCell  className="table-cell" rowSpan={option.hotels.length}> <Radio checked={selectedHotel === optionIndex.toString()} onChange={() => {setSelectedHotel(optionIndex.toString());}}  value={optionIndex.toString()}  className="hotel-radio" size="small" /> </TableCell>)}
               <TableCell className="table-cell">  {hotel.name} </TableCell>
               <TableCell className="table-cell" > {hotel.destination}</TableCell>
-              <TableCell className="table-cell"> <Rating   value={hotel.star || 0} readOnly size="small" className="hotel-rating" /> </TableCell>
+              <TableCell className="table-cell"> <Rating value={hotel.star || 0} readOnly size="small" className="hotel-rating" /> </TableCell>
               <TableCell className="table-cell">{hotel.nights} </TableCell>
               <TableCell className="table-cell" > {hotel.roomType} </TableCell>
               {hotelIndex === 0 && (
                 <>
-                  <TableCell  className="table-cell" rowSpan={option.hotels.length}  > {`USD ${option.perPersonCost}`}  </TableCell>
+                  <TableCell  className="table-cell" rowSpan={option.hotels.length}  > {`USD ${option.hotels.reduce((sum, hotel) => sum + (hotel.price || 0), 0)}`}  </TableCell>
                   <TableCell  className="table-cell"  rowSpan={option.hotels.length}  > {`USD ${option.cwbCost}`} </TableCell>
-                  <TableCell
-                    className="table-cell"
-                    rowSpan={option.hotels.length} >
-                    {`USD ${option.cnbCost}`}
+                  <TableCell className="table-cell"rowSpan={option.hotels.length} >{`USD ${option.cnbCost}`}
                   </TableCell>
                 </>
               )}

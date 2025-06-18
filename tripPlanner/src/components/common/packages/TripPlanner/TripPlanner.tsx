@@ -11,6 +11,8 @@ import TripDetails from '../TripDetails/TripDetails.tsx';
 import ClientDetailsForm from '../../BookingSection/ClientForm/ClientDetailsForm.tsx';
 import { useGetLeadByIdQuery, useSubmitLeadMutation, useUpdateLeadMutation } from '../../../../api/TourAPI.tsx';
 import { useDispatch } from 'react-redux';
+import TokenService from '../../../../pages/tokenService.ts';
+import TourTokenService from '../../../../pages/tokenService.ts';
 
 const TripPlanner: React.FC<TripPlannerProps> = ({nights, checkInDate, checkOutDate, onProceed}) => {
 const location = useLocation();
@@ -1028,7 +1030,25 @@ sessionStorage.setItem('editLeadData', JSON.stringify({
 const handleDownloadPDF = () => {
   setClientFormOpen(true);
 };
-
+const redirectToHotelSelection = () => {
+  const token = TokenService.getAccessToken();
+  const refreshToken = TokenService.getRefreshToken();
+  const username = TokenService.getUsername();
+  
+  if (token && refreshToken && username) {
+    // Cross-port redirect with authentication data
+    const hotelSelectionUrl = new URL('http://localhost:3002/hotel-search');
+    hotelSelectionUrl.searchParams.set('token', token);
+    hotelSelectionUrl.searchParams.set('refreshToken', refreshToken);
+    hotelSelectionUrl.searchParams.set('username', username);
+    hotelSelectionUrl.searchParams.set('timestamp', Date.now().toString());
+    
+    window.location.href = hotelSelectionUrl.toString();
+  } else {
+    // Redirect to login if no authentication
+    window.location.href = 'http://localhost:3002/hotel?redirect=' + encodeURIComponent('http://localhost:3002/hotel-search');
+  }
+};
 const showHotelTab = packageType === 'hotel-land';
 return (
     <Box className="trip-planner-page">

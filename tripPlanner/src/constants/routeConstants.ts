@@ -2,7 +2,7 @@ export const ROUTE_CONSTANTS = {
   // Public routes
   DEFAULT_PAGE: '/customize-package',
   ABOUT: '/about',
-  CONTACET: '/contact',
+  CONTACT: '/contact',
   CAREERS:'/careers',
   SUBSCRIBE: '/subscribe',
   LOGIN_HOME_PAGE: '/login',
@@ -11,10 +11,10 @@ export const ROUTE_CONSTANTS = {
   
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
-  HOTEL_PAGE: 'http://b2b.flydivinetravels.com/hotel/hotel-search',
+  HOTEL_PAGE: 'http://localhost:3002/hotel/hotel-search',
   HOME_PAGE: '/home-page',
   BAKU_PACKAGES: '/baku-packages',
-  TOURS_TRANSFERS: 'http://b2b.flydivinetravels.com/hotel/transfer-search',
+  TOURS_TRANSFERS: 'http://localhost:3002/hotel/transfer-search',
   BOOKINGS: '/readymade-bookings',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',
@@ -27,7 +27,7 @@ export const ROUTE_CONSTANTS = {
   READYMADE_SEARCH_PLANNER:'/readymade-planner',
   // User related routes
   USER_PROFILE: '/user',
-  LOGOUT: '/',
+  LOGOUT: 'http://localhost:3002/hotel',
   FLY_DIVINE_TRAVELS: '/fly-divine-travels',
   UI_TEAMS: '/u_i_teams'
 };
@@ -47,7 +47,7 @@ export const PUBLIC_NAV_ITEMS = [
     label: "Careers"
   },
   { 
-    path: ROUTE_CONSTANTS.CONTACET, 
+    path: ROUTE_CONSTANTS.CONTACT, 
     label: "Contact Us" 
   },
   { 

@@ -1,17 +1,40 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { BASE_URL } from '../utils/ApiConstants.ts';
 import { Lead } from '../types/types.ts';
+import MainAppTokenService from '../pages/tokenService.ts';
+
+const baseQueryWithAuth = fetchBaseQuery({
+  baseUrl: BASE_URL,
+  prepareHeaders: (headers) => {
+    const token = MainAppTokenService.getAccessToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
+const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
+  MainAppTokenService.updateActivity();
+  let result = await baseQueryWithAuth(args, api, extraOptions);
+
+  if (result.error && result.error.status === 401) {
+    console.log('Token expired, attempting to refresh...');
+    
+    const refreshed = await MainAppTokenService.validateToken();
+    if (refreshed) {
+      result = await baseQueryWithAuth(args, api, extraOptions);
+    } else {
+      MainAppTokenService.clearTokensAndRedirect();
+    }
+  }
+
+  return result;
+};
 
 export const tourApi = createApi({
   reducerPath: 'tourApi',
-  baseQuery: fetchBaseQuery({ 
-    baseUrl: BASE_URL,
-    prepareHeaders: (headers) => {
-      headers.set('Content-Type', 'application/json');
-      headers.set('Access-Control-Allow-Origin', '*');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['Bookings', 'Lead','Package'],
   endpoints: (builder) => ({
     getHotelsByCity: builder.query<any, { city: string; country: string }>({
@@ -86,13 +109,11 @@ export const tourApi = createApi({
       providesTags: ['Package'],
     }),
 
-    // Get ALL packages from database (no date filtering)
     getAllPackages: builder.query<any, void>({
       query: () => 'sightTour/all-packages',
       providesTags: ['Package'],
     }),
 
-    // Get package by ID
     getPackageById: builder.query<any, string>({
       query: (id) => `sightTour/package/${id}`,
       providesTags: (_result, error, id) => [{ type: 'Package', id }],

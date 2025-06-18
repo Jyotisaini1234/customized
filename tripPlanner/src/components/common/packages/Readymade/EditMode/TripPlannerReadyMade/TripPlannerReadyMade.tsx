@@ -35,7 +35,7 @@ const onCancel = () => {  navigate(-1); };
 const formatDate = (date: any) => { const d = new Date(date); if (isNaN(d.getTime())) return 'Invalid Date'; return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });};
 const formatYear = (date: any) => {const d = new Date(date);if (isNaN(d.getTime())) return 'Invalid Year'; return d.getFullYear().toString();};
 const [specificDayIdState, setSpecificDayId] = useState<string | null>(null);
-    const currentSearchParams = (() => { if (originalSearchParams) {return originalSearchParams;  }
+const currentSearchParams = (() => { if (originalSearchParams) {return originalSearchParams;  }
         if (searchData) {
             return {
                 city: searchData?.destinations?.[0] || searchData?.destinations || 'Batumi',
@@ -577,12 +577,13 @@ const [specificDayIdState, setSpecificDayId] = useState<string | null>(null);
         setGrandTotal(total);
         return total;
     };
-    const calculateTotal = (items: PlannerItem2[]) => { return calculateTotalWithPackageData(items, searchData?.packageData?.packageDetails);};
-    const handleTabChange = (event: React.SyntheticEvent, newValue: string) => { setActiveTab(newValue); };
+const calculateTotal = (items: PlannerItem2[]) => { return calculateTotalWithPackageData(items, searchData?.packageData?.packageDetails);};
+const handleTabChange = (event: React.SyntheticEvent, newValue: string) => { setActiveTab(newValue); };
 
-    const handleAddItem = (plannerItemId: string, type: string) => {
+const handleAddItem = (plannerItemId: string, type: string) => {
     const plannerItem = plannerItems.find(item => item.id === plannerItemId);
     if (!plannerItem) return;
+    
     if (type === 'tours') {
         const currentUrl = new URL(window.location.href);
         const fromReadymadePackage = currentUrl.searchParams.get('fromReadymadePackage') === 'true'
@@ -590,81 +591,53 @@ const [specificDayIdState, setSpecificDayId] = useState<string | null>(null);
             
         if (fromReadymadePackage) {
             const dayNumber = plannerItemId.replace('day-', '');
-            const checkInDate = currentUrl.searchParams.get('checkInDate')
-                || searchData?.checkInDate
-                || new Date().toISOString();
-            const city = currentUrl.searchParams.get('city')
-                || searchData?.destinations?.[0]
-                || 'Batumi';
-            const country = currentUrl.searchParams.get('country') || 'Georgia';
-            const rooms = searchData?.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }];
-            const adult = searchData?.guests?.adults || 2;
-            const infant = searchData?.guests?.infants || 0;
-            
+            const checkInDate = currentUrl.searchParams.get('checkInDate')   || searchData?.checkInDate || new Date().toISOString();
+            const city = currentUrl.searchParams.get('city')|| searchData?.destinations?.[0]|| searchData?.destinations || 'Batumi';
+            const country = currentUrl.searchParams.get('country')  || searchData?.destinations  || 'Georgia';
+            const rooms = searchData?.room || searchData?.room  || currentSearchParams.rooms || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }];
+            let adults, cwb, cnb, infants;
+            if (searchData?.guests) { adults = searchData.guests.adults || 2; cwb = searchData.guests.cwb || 0; cnb = searchData.guests.cnb || 0; infants = searchData.guests.infants || 0;
+            } else if (searchData?.guests?.adults !== undefined) { adults = searchData.guests.adults; cwb = searchData.guests.cwb || 0; cnb = searchData.guests.cnb || 0; infants = searchData.guests.infants || 0;
+            } else if (rooms && rooms.length > 0) { const firstRoom = rooms[0];adults = firstRoom.adults || 2;cwb = firstRoom.cwb || 0; cnb = firstRoom.cnb || 0; infants = firstRoom.infants || 0;} else { adults = currentSearchParams.adults || 2;  cwb = currentSearchParams.cwb || 0; cnb = currentSearchParams.cnb || 0; infants = currentSearchParams.infants || 0;  }
+            const totalPax = adults + cwb + cnb;
             const tourSelectionUrl = new URL('http://localhost:3002/hotel/home-page');
             tourSelectionUrl.searchParams.set('city', city);
-            tourSelectionUrl.searchParams.set('country', country);
-            tourSelectionUrl.searchParams.set('pax', adult.toString());
-            tourSelectionUrl.searchParams.set('adult', adult.toString());
-            tourSelectionUrl.searchParams.set('infant', infant.toString());
+            tourSelectionUrl.searchParams.set('country', 'Georgia');
+            tourSelectionUrl.searchParams.set('pax', totalPax.toString());
+            tourSelectionUrl.searchParams.set('adult', adults.toString());
+            tourSelectionUrl.searchParams.set('cwb', cwb.toString());
+            tourSelectionUrl.searchParams.set('cnb', cnb.toString());
+            tourSelectionUrl.searchParams.set('infant', infants.toString());
             tourSelectionUrl.searchParams.set('fromTripPlanner', 'true');
             tourSelectionUrl.searchParams.set('dayId', dayNumber);
             tourSelectionUrl.searchParams.set('checkInDate', checkInDate);
             tourSelectionUrl.searchParams.set('specificDayId', plannerItemId);
             tourSelectionUrl.searchParams.set('fromReadymadePackage', 'true');
-            
+            tourSelectionUrl.searchParams.set('rooms', encodeURIComponent(JSON.stringify(rooms)));
             sessionStorage.setItem('tourSelectionDayId', plannerItemId);
             sessionStorage.setItem('expectedDayId', plannerItemId);
-            
-            sessionStorage.setItem('preservedReadymadeData', JSON.stringify({
-                searchData: JSON.stringify(searchData),
-                plannerItems: JSON.stringify({
-                    plannerItems,
-                    hotels,
-                    // activities,
-                    transfers,
-                    grandTotal,
-                    timestamp: new Date().toISOString()
-                }),
-                originalSearchParams: JSON.stringify(originalSearchParams),
-                readymadeContext: JSON.stringify({
-                    plannerItems,
-                    originalSearchParams,
-                    selectedItemId: plannerItemId
-                })
-            }));
-            
-            console.log('🚀 Redirecting to tour selection for day:', plannerItemId);
+            const tourSelectionData = {
+                searchData: JSON.stringify({  ...searchData, rooms: rooms, guests: {adults: adults,  cwb: cwb,  cnb: cnb, infants: infants } }),
+                plannerItems: JSON.stringify({ plannerItems,hotels,  activities, transfers, grandTotal,timestamp: new Date().toISOString() }),
+                originalSearchParams: JSON.stringify({ ...originalSearchParams,  rooms: rooms, adults: adults, cwb: cwb,   cnb: cnb, infants: infants }),
+                readymadeContext: JSON.stringify({ plannerItems, originalSearchParams, selectedItemId: plannerItemId })};
+            sessionStorage.setItem('preservedReadymadeData', JSON.stringify(tourSelectionData));
             window.location.href = tourSelectionUrl.toString();
             return;
         }
-        const availableActivity = activities.find(activity =>
-            !plannerItems.some(item => item.tours?.id === activity.id));
-            
-        if (availableActivity) {
-            const updatedItems = plannerItems.map(item =>
-                item.id === plannerItemId ? {
-                    ...item,
-                    tours: availableActivity,
-                    itinerary: undefined
-                } : item
-            );
+        const availableActivity = activities.find(activity =>!plannerItems.some(item => item.tours?.id === activity.id));   
+        if (availableActivity) {const updatedItems = plannerItems.map(item => item.id === plannerItemId ? { ...item, tours: availableActivity, itinerary: undefined  } : item );
             setPlannerItems(updatedItems);
             calculateTotal(updatedItems);
             savePersistentTableData(updatedItems);
-        }
-    }
-    
-    console.log(` Add ${type} for:`, plannerItemId);
+        } }
+    console.log(`Add ${type} for:`, plannerItemId);
 };
-
 const handleRemoveTour = (plannerItem: PlannerItem2) => {
     const tourToRemove = plannerItem.tours;
     const itineraryToRemove = plannerItem.itinerary;
-    
     if (!tourToRemove && !itineraryToRemove) return;
-    
-    console.log('🗑️ Removing tour/itinerary from day:', plannerItem.id);
+    console.log('Removing tour/itinerary from day:', plannerItem.id);
     const updatedItems = plannerItems.map(item =>
         item.id === plannerItem.id ? { 
             ...item, 
@@ -672,12 +645,11 @@ const handleRemoveTour = (plannerItem: PlannerItem2) => {
             itinerary: tourToRemove ? item.itinerary : undefined 
         } : item
     );
-    
     setPlannerItems(updatedItems);
     sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
     savePersistentTableData(updatedItems);
     const newTotal = calculateTotalWithPackageData(updatedItems, searchData?.packageData?.packageDetails);
-    console.log('💰 New total after removal:', newTotal);
+    console.log('New total after removal:', newTotal);
     if (tourToRemove?.id) {
         const updatedActivities = activities.filter(activity => activity.id !== tourToRemove.id);
         setActivities(updatedActivities);
@@ -842,32 +814,53 @@ useEffect(() => {
     try { const parsedData = JSON.parse(decodeURIComponent(encoded)); setSelectedTourData(parsedData); console.log("Tour data received:", parsedData);} 
     catch (err) {  console.error("Invalid tour data", err);} }
     }, []);
+
 const handleHotelSelection2 = (itemId: string) => {
     const plannerItem = plannerItems.find(item => item.id === itemId);
     if (!plannerItem) return;
+    
     const itemDate = new Date(plannerItem.date);
     const dayHasHotel = plannerItems.find(item => item.id === itemId && item.hotel);
-    if (dayHasHotel) {console.log("This day already has a hotel assigned");return;}
+    
+    if (dayHasHotel) {
+        console.log("This day already has a hotel assigned");
+        return;
+    }
+    
+    // Get the day number for position mapping
+    const dayNumber = parseInt(itemId.replace('day-', '')) - 1; // Convert to 0-based index
+    
+    // Check if there was a hotel at this position before
+    const hotelPositionMapping = JSON.parse(sessionStorage.getItem('hotelPositionMapping') || '{}');
+    const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
+    
+    // Find if there was a deleted hotel at this position
+    const deletedHotelAtPosition = deletedHotels.find(deleted => deleted.position === dayNumber);
+    
     const checkInDate = new Date(itemDate);
     const checkOutDate = new Date(itemDate);
     checkOutDate.setDate(checkOutDate.getDate() + 1);
+    
     const fallbackSearchParams = {
         checkInDate: searchData?.checkInDate || new Date().toISOString(),
         checkOutDate: searchData?.checkOutDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         nights: searchData?.nights || searchData?.totalNights || 1,
-        city:  searchData?.destinations?.[0] || 'Batumi',
+        city: searchData?.destinations?.[0] || 'Batumi',
         country: 'Georgia',
-        adults:searchData?.guests?.adults || 2,
+        adults: searchData?.guests?.adults || 2,
         cwb: searchData?.guests?.cwb || 0,
-        cnb:  searchData?.guests?.cnb || 0,
-        infants:  searchData?.guests?.infants || 0,
+        cnb: searchData?.guests?.cnb || 0,
+        infants: searchData?.guests?.infants || 0,
         rooms: searchData?.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }],
-        room: searchData?.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }]};
+        room: searchData?.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }]
+    };
+    
     const baseSearchParams = originalSearchParams || fallbackSearchParams;
     const originalCheckInDate = baseSearchParams.checkInDate || fallbackSearchParams.checkInDate;
     const originalCheckOutDate = baseSearchParams.checkOutDate || fallbackSearchParams.checkOutDate;
     const tripCheckOutDate = new Date(originalCheckOutDate);
     const isLastNight = checkOutDate.toDateString() === tripCheckOutDate.toDateString();
+    
     const hotelSearchParams = {
         ...baseSearchParams,
         checkInDate: checkInDate.toISOString(),
@@ -884,20 +877,32 @@ const handleHotelSelection2 = (itemId: string) => {
         rooms: baseSearchParams.rooms || fallbackSearchParams.rooms,
         city: baseSearchParams.city || fallbackSearchParams.city,
         plannerItems: plannerItems,
+        preservePosition: true, // Flag to indicate position should be preserved
+        dayPosition: dayNumber, // Pass the day position
         Description: '',
     };
+    
     if (isLastNight) {
         const extraDay = new Date(checkOutDate);
         const additionalSearchParams = {
             ...hotelSearchParams,
             checkInDate: extraDay.toISOString(),
-            checkOutDate: new Date(extraDay.setDate(extraDay.getDate() + 1)).toISOString()};
-    sessionStorage.setItem('lastNightHotelParams', JSON.stringify(additionalSearchParams));}
+            checkOutDate: new Date(extraDay.setDate(extraDay.getDate() + 1)).toISOString()
+        };
+        sessionStorage.setItem('lastNightHotelParams', JSON.stringify(additionalSearchParams));
+    }
+    
     sessionStorage.setItem('tripPlannerParams', JSON.stringify(baseSearchParams));
     sessionStorage.setItem('hotelSearchParams', JSON.stringify(hotelSearchParams));
     sessionStorage.setItem('readymadePackageContext', JSON.stringify({
-    plannerItems: plannerItems, originalSearchParams: baseSearchParams, selectedItemId: itemId
-})); navigate('/trip-planner-area', {state: hotelSearchParams });
+        plannerItems: plannerItems,
+        originalSearchParams: baseSearchParams,
+        selectedItemId: itemId,
+        dayPosition: dayNumber
+    }));
+    
+    console.log(`🏨 Opening hotel selection for day ${itemId} at position ${dayNumber}`);
+    navigate('/trip-planner-area', { state: hotelSearchParams });
 };
 useEffect(() => { console.log('Current state values:', { searchData: searchData, originalSearchParams: originalSearchParams,hasValidData: hasValidData, plannerItemsLength: plannerItems.length});
 }, [searchData, originalSearchParams, hasValidData, plannerItems.length]);

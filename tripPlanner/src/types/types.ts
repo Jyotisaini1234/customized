@@ -713,6 +713,8 @@ export interface PackageData {
     packageName: string;
     hotelOption: Array<{
         hotels: PackageHotel[];
+        cnbCost:number;
+        cwbCost:number
         perPersonCost: number;
         totalPackageCost: number;
     }>;
@@ -733,6 +735,35 @@ export interface PackageData {
 }
 
 export interface SearchData {
+  pricing?: {
+    totalPrice: number;
+    breakdown: {
+      adults: {
+        count: number;
+        pricePerPerson: number;
+        totalPrice: number;
+      };
+      cwb: {
+        count: number;
+        pricePerPerson: number;
+        totalPrice: number;
+      };
+      cnb: {
+        count: number;
+        pricePerPerson: number;
+        totalPrice: number;
+      };
+      infants: {
+        count: number;
+        pricePerPerson: number;
+        totalPrice: number;
+      };
+      rooms:{
+        count:string;
+        multiplier:string;
+      }
+    };
+  };
     totalRooms: number;
     packageData?: {
         packageDetails: PackageData;
@@ -764,3 +795,68 @@ export interface PlannerItem2 {
     transfer?: any;
     itinerary?: PackageItinerary;
 }
+
+export interface TokenResponse {
+  token: string;
+  refreshToken: string;
+  message?: string;
+  refreshed?: boolean;
+}
+
+
+
+export interface Room {
+  adults: number;
+  cwb: number;
+  cnb: number;
+  infants: number;
+}
+
+export const calculateTotals = (rooms: Room[]) => {
+  return rooms.reduce((totals, room) => ({
+    totalAdults: totals.totalAdults + room.adults,
+    totalCwb: totals.totalCwb + room.cwb,
+    totalCnb: totals.totalCnb + room.cnb,
+    totalInfants: totals.totalInfants + room.infants,
+    totalGuests: totals.totalGuests + room.adults + room.cwb + room.cnb + room.infants
+  }), {
+    totalAdults: 0,
+    totalCwb: 0,
+    totalCnb: 0,
+    totalInfants: 0,
+    totalGuests: 0
+  });
+};
+
+export const calculatePricing = (rooms: Room[], searchData?: SearchData) => {
+  const totals = calculateTotals(rooms);
+  const basePrice = searchData?.pricing?.breakdown?.adults?.pricePerPerson || 0;
+  const baseAdultCount = 2;
+
+  const additionalAdults = Math.max(0, totals.totalAdults - baseAdultCount);
+  const additionalAdultPrice = additionalAdults * (searchData?.pricing?.breakdown?.adults?.pricePerPerson || basePrice * 0.5);
+
+  const baseAdultPrice = basePrice;
+
+  const cwbPrice = totals.totalCwb * (searchData?.pricing?.breakdown?.cwb?.pricePerPerson || basePrice * 0.7);
+  const cnbPrice = totals.totalCnb * (searchData?.pricing?.breakdown?.cnb?.pricePerPerson || basePrice * 0.3);
+
+  const additionalRooms = Math.max(0, rooms.length - 1);
+  const additionalRoomPrice = additionalRooms * (basePrice * 0.8);
+
+  const infantPrice = 0;
+
+  const totalPrice = baseAdultPrice + additionalAdultPrice + cwbPrice + cnbPrice + additionalRoomPrice + infantPrice;
+
+  return {
+    basePrice: baseAdultPrice,
+    additionalAdultPrice,
+    cwbPrice,
+    cnbPrice,
+    additionalRoomPrice,
+    infantPrice,
+    totalPrice
+  };
+};
+
+

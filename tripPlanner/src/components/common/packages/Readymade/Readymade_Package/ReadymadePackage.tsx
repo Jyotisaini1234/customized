@@ -30,6 +30,7 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
 
   const handleViewDetails = (packageData: PackageData) => {
     console.log('Navigating to package details:', packageData);
+    sessionStorage.clear();
     navigate(`/package-details/${packageData.id}`, {
       state: { packageData }
     });
@@ -119,29 +120,6 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
               const firstHotelOption = packageDetails.hotelOption?.[0] || null;
 const mainHotel = firstHotelOption?.hotels?.[0] || null;
 
-const totalNights = packageDetails.itinerary?.length ? 
-                  packageDetails.itinerary.length - 1 : 
-                  mainHotel?.nights || 0;
-
-const packageCost = firstHotelOption?.totalPackageCost || 
-                  firstHotelOption?.perPersonCost || 0;
-
-const destination = packageDetails.destinations?.[0] || 
-                  mainHotel?.destination ||
-                  'Unknown';
-
-const cheapestOption = packageDetails.hotelOption?.reduce((min, current) => 
-  current.totalPackageCost < min.totalPackageCost ? current : min
-) || null;
-const allHotelOptions = packageDetails.hotelOption || [];
-const allHotels = allHotelOptions.flatMap(option => option.hotels || []);
-const allPackageCosts = packageDetails.hotelOption?.map(option => ({
-  totalCost: option.totalPackageCost,
-  perPersonCost: option.perPersonCost,
-  cnbCost: option.cnbCost,
-  cwbCost: option.cwbCost
-})) || [];
-              
 return (
 <Grid item xs={12} sm={6} md={3} key={pkg.id}>
   <Card sx={{height: '100%', display: 'flex',  flexDirection: 'column', position: 'relative',   '&:hover': {  transform: 'translateY(-0.25rem)',  transition: 'transform 0.3s ease',   boxShadow: 3   }   }} >
@@ -152,7 +130,7 @@ return (
       {mainHotel && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{mainHotel.name} </Typography> )}
         <Box sx={{ mt: 'auto' }}>
-        <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > USD {packageDetails.hotelOption?.[0]?.perPersonCost?.toLocaleString()}
+        <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > USD {packageDetails.hotelOption?.[0]?.totalPackageCost?.toLocaleString()}
         </Typography>
         <Typography variant="body2"  sx={{color: '#f44336', fontWeight: 'bold', mb: 2  }}  > Regular</Typography>
         <Button className="view" fullWidth  onClick={() => handleViewDetails(pkg)} >  View Details </Button>

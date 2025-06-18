@@ -127,36 +127,71 @@ const ReadyMadeSearch: React.FC = () => {
       totalGuests: 0
     });
   };
-
-  const calculatePricing = () => {
+ const calculatePricing = () => {
     const totals = calculateTotals();
     const basePrice = packageData?.pricing?.basePrice || 0;
-    const additionalAdults = Math.max(0, totals.totalAdults - 2);
+  
+    const totalAdultCount = totals.totalAdults;
+    const baseAdultCount = 2;
+    const additionalAdults = Math.max(0, totalAdultCount - baseAdultCount);
+  
     const additionalAdultPrice = additionalAdults * (packageData?.pricing?.additionalAdultPrice || basePrice * 0.5);
+    const baseAdultPrice = basePrice;
+  
     const cwbPrice = totals.totalCwb * (packageData?.pricing?.cwbPrice || basePrice * 0.7);
     const cnbPrice = totals.totalCnb * (packageData?.pricing?.cnbPrice || basePrice * 0.3);
+  
     const additionalRooms = Math.max(0, rooms.length - 1);
     const additionalRoomPrice = additionalRooms * (packageData?.pricing?.additionalRoomPrice || basePrice * 0.8);
+  
     const infantPrice = 0;
-    const totalPrice = basePrice + additionalAdultPrice + cwbPrice + cnbPrice + additionalRoomPrice + infantPrice;
+  
+    const totalPrice = baseAdultPrice + additionalAdultPrice + cwbPrice + cnbPrice + additionalRoomPrice + infantPrice;
+  
     return {
-      basePrice,
+      basePrice: baseAdultPrice,
       additionalAdultPrice,
       cwbPrice,
       cnbPrice,
       additionalRoomPrice,
       infantPrice,
-      totalPrice
+      totalPrice,
+      breakdown: {
+        adults: {
+          count: totalAdultCount,
+          baseIncluded: baseAdultCount,
+          additionalCount: additionalAdults,
+          pricePerPerson: basePrice,
+          total: baseAdultPrice + additionalAdultPrice
+        },
+        cwb: {
+          count: totals.totalCwb,
+          pricePerPerson: basePrice * 0.7,
+          total: cwbPrice
+        },
+        cnb: {
+          count: totals.totalCnb,
+          pricePerPerson: basePrice * 0.3,
+          total: cnbPrice
+        },
+        infants: {
+          count: totals.totalInfants,
+          total: infantPrice
+        },
+        rooms: {
+          count: rooms.length,
+          additional: additionalRooms,
+          pricePerRoom: basePrice * 0.8,
+          total: additionalRoomPrice
+        }
+      }
     };
   };
-
   const handleBack = () => { navigate(-1);};
-  
   const handleSearch = async () => {
     setLoading(true);
     const totals = calculateTotals();
     const pricing = calculatePricing();
-    
     const searchParams = {
       packageId: searchData?.packageId,
       selectedHotelOption: searchData?.selectedHotelOption,
@@ -174,13 +209,11 @@ const ReadyMadeSearch: React.FC = () => {
         totalCnb: totals.totalCnb,
         totalInfants: totals.totalInfants,
         totalGuests: totals.totalGuests,
-        // Add individual fields for compatibility
         adults: totals.totalAdults,
         cwb: totals.totalCwb,
         cnb: totals.totalCnb,
         infants: totals.totalInfants
       },
-      // Add room details in multiple formats for better compatibility
       roomDetails: rooms.map((room, index) => ({
         roomNumber: index + 1,
         adults: room.adults,
@@ -189,7 +222,6 @@ const ReadyMadeSearch: React.FC = () => {
         infants: room.infants,
         totalGuestsInRoom: room.adults + room.cwb + room.cnb + room.infants
       })),
-      // Add guest breakdown for easy access
       guestBreakdown: {
         totalAdults: totals.totalAdults,
         totalChildren: totals.totalCwb + totals.totalCnb,
@@ -201,7 +233,6 @@ const ReadyMadeSearch: React.FC = () => {
       },
       pricing: pricing,
       packageType,
-      // Add compatibility fields
       adults: totals.totalAdults,
       cwb: totals.totalCwb,
       cnb: totals.totalCnb,
@@ -221,7 +252,6 @@ const ReadyMadeSearch: React.FC = () => {
             hotelOption: [{
               hotels: hotels.map((hotel: any) => ({
                 ...hotel,
-                // Ensure hotel data includes guest requirements
                 requiredRooms: rooms.length,
                 guestCapacity: totals.totalGuests,
                 roomConfiguration: rooms
@@ -230,7 +260,6 @@ const ReadyMadeSearch: React.FC = () => {
           }
         },
         destinations: packageDetails?.destinations || [],
-        // Ensure all user selections are preserved
         userSelections: {
           totalRooms: rooms.length,
           roomConfiguration: rooms,
@@ -243,20 +272,8 @@ const ReadyMadeSearch: React.FC = () => {
           pricing: pricing
         }
       };
-
-      // Store the search data in sessionStorage for the next page
       sessionStorage.setItem('readymadeSearchData', JSON.stringify(tripPlannerData));
       sessionStorage.setItem('originalReadymadeSearchData', JSON.stringify(tripPlannerData));
-      
-      console.log('Search completed, navigating to TripPlanner with comprehensive data:', {
-        totalGuests: totals.totalGuests,
-        totalRooms: rooms.length,
-        roomBreakdown: rooms,
-        guestBreakdown: totals,
-        hotelCapacityCheck: hotels.length > 0 ? hotels[0] : 'No hotels',
-        searchParams: searchParams
-      });
-
       navigate('/readymade-planner', {
         state: tripPlannerData 
       });

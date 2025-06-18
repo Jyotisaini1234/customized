@@ -5,7 +5,9 @@ import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/route
 import { Box, IconButton } from '@mui/material';
 import { dropdownMenus } from '../../../../model/selectOptions.ts';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
+import { AWS_INSTANCE ,LOCALHOST} from '../../../../utils/ApiConstants.ts';
+import MainAppTokenService from '../../../../pages/tokenService.ts';
+
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
 }
@@ -60,16 +62,8 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
       }
     }
   };
-
   const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    document.cookie.split(";").forEach((c) => {
-    document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
-    window.location.href = `${AWS_INSTANCE}/hotel`;
+    MainAppTokenService.clearTokensAndRedirect();
   };
 
   const toggleMenu = () => {
@@ -132,3 +126,4 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   );
 };
 export default PrimaryNavbar;
+
