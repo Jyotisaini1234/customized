@@ -191,6 +191,12 @@ export interface Activity {
   price?: number;
   currency?: string;
   location?: string;
+  assignedDayId?: string;
+  isAdditional?: boolean;
+  isUpdated?: boolean;
+  isDeleted?: boolean;
+  isAssigned?: boolean;
+  source?: string;
 }
 export interface ClientDetailsFormProps {
   open: boolean;
@@ -529,12 +535,14 @@ export interface Passengers {
 }
 
 export interface Transfer {
+  name: any;
   route: string;
   vehicle: string;
   type: string;
 }
 
 export interface Itinerary {
+  price: number;
   day: number;
   date: string;
   title: string;
@@ -644,6 +652,14 @@ export interface ReadyMadeHotel {
   image?: string;
   rating?: number;
   uniqueId:number
+  roomType?: string;
+  mealPlan?: string;
+  isPackageHotel?: boolean;
+  isAdditional?: boolean;
+  isUpdated?: boolean;
+  isDeleted?: boolean;
+  isAssigned?: boolean;
+  source?: string;
 }
 
 export interface Transfer {
@@ -652,13 +668,25 @@ export interface Transfer {
   to: string;
   type: string;
   price?: number;
+  vehicleType?: string;
+  isPackageTransfer?: boolean;
+  isDeleted?: boolean;
+  isAssigned?: boolean;
+  source?: string;
 }
 
 export interface PackageItinerary {
+  isPackageItinerary: boolean;
+  isUpdated: boolean;
+  activities: any[];
+  description: string;
   day: number;
   date: string;
   title: string;
+  source:String;
   price: number;
+  dayId:string ;
+  isAssigned:boolean;
   details: string;
 }
 
@@ -788,6 +816,7 @@ export interface SearchData {
 }
 
 export interface PlannerItem2 {
+    dateObj: string | number | Date;
     id: string;
     date: Date;
     hotel?: any;
@@ -803,8 +832,6 @@ export interface TokenResponse {
   refreshed?: boolean;
 }
 
-
-
 export interface Room {
   adults: number;
   cwb: number;
@@ -812,51 +839,104 @@ export interface Room {
   infants: number;
 }
 
-export const calculateTotals = (rooms: Room[]) => {
-  return rooms.reduce((totals, room) => ({
-    totalAdults: totals.totalAdults + room.adults,
-    totalCwb: totals.totalCwb + room.cwb,
-    totalCnb: totals.totalCnb + room.cnb,
-    totalInfants: totals.totalInfants + room.infants,
-    totalGuests: totals.totalGuests + room.adults + room.cwb + room.cnb + room.infants
-  }), {
-    totalAdults: 0,
-    totalCwb: 0,
-    totalCnb: 0,
-    totalInfants: 0,
-    totalGuests: 0
-  });
-};
-
-export const calculatePricing = (rooms: Room[], searchData?: SearchData) => {
-  const totals = calculateTotals(rooms);
-  const basePrice = searchData?.pricing?.breakdown?.adults?.pricePerPerson || 0;
-  const baseAdultCount = 2;
-
-  const additionalAdults = Math.max(0, totals.totalAdults - baseAdultCount);
-  const additionalAdultPrice = additionalAdults * (searchData?.pricing?.breakdown?.adults?.pricePerPerson || basePrice * 0.5);
-
-  const baseAdultPrice = basePrice;
-
-  const cwbPrice = totals.totalCwb * (searchData?.pricing?.breakdown?.cwb?.pricePerPerson || basePrice * 0.7);
-  const cnbPrice = totals.totalCnb * (searchData?.pricing?.breakdown?.cnb?.pricePerPerson || basePrice * 0.3);
-
-  const additionalRooms = Math.max(0, rooms.length - 1);
-  const additionalRoomPrice = additionalRooms * (basePrice * 0.8);
-
-  const infantPrice = 0;
-
-  const totalPrice = baseAdultPrice + additionalAdultPrice + cwbPrice + cnbPrice + additionalRoomPrice + infantPrice;
-
-  return {
-    basePrice: baseAdultPrice,
-    additionalAdultPrice,
-    cwbPrice,
-    cnbPrice,
-    additionalRoomPrice,
-    infantPrice,
-    totalPrice
+export interface TripPlannerDBData {
+  tripId?: string;
+  userId?: string;
+  tripDetails: {
+    destination: string;
+    country: string;
+    checkInDate: string;
+    checkOutDate: string;
+    nights: number;
+    totalDays: number;
+    adults: number;
+    children: number;
+    infants: number;
+    rooms: any[];
+    packageType: string;
+    currency: string;
   };
-};
+  
+  pricing: {
+    grandTotal: number;
+    marginTotal: string;
+    breakdown: {
+      hotelsCost: number;
+      activitiesCost: number;
+      transfersCost: number;
+      itineraryCost: number;
+    };
+  };
+  
+  plannerItems: {
+    dayId: string;
+    date: string;
+    dayNumber: number;
+    hotel?: {
+      id: string;
+      name: string;
+      destination: string;
+      nights: number;
+      price: number;
+      rating: number;
+      checkInDate?: string;
+      checkOutDate?: string;
+      roomType?: string;
+      mealPlan?: string;
+      isPackageHotel: boolean;
+      isAdditional: boolean;
+      isUpdated: boolean;
+      uniqueId?: number;
+      specificDayId?: string;
+      source: string;
+    };
+    tours?: {
+      id: string;
+      name: string;
+      price: number;
+      description: string;
+      duration: string;
+      city: string;
+      assignedDayId: string;
+      isAdditional: boolean;
+      isUpdated: boolean;
+      currency: string;
+      type: string;
+      source: string;
+    };
+    transfer?: {
+      id: string;
+      name: string;
+      route: string;
+      price: number;
+      from: string;
+      to: string;
+      vehicleType?: string;
+      type: string;
+      isPackageTransfer: boolean;
+      source: string;
+    };
+    itinerary?: {
+      id: string;
+      title: string;
+      description: string;
+      details: string;
+      price: number;
+      activities: any[];
+      isUpdated: boolean;
+      isPackageItinerary: boolean;
+      day: number;
+      source: string;
+    };
+  }[];
 
-
+  packageData?: {
+    packageName: string;
+    originalPackageData: any;
+  };
+  
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+  };
+}

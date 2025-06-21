@@ -112,7 +112,7 @@ const ReadyMadeSearch: React.FC = () => {
     ));
   };
 
-  const calculateTotals = () => {
+const calculateTotals = () => {
     return rooms.reduce((totals, room) => ({
       totalAdults: totals.totalAdults + room.adults,
       totalCwb: totals.totalCwb + room.cwb,
@@ -127,66 +127,89 @@ const ReadyMadeSearch: React.FC = () => {
       totalGuests: 0
     });
   };
- const calculatePricing = () => {
-    const totals = calculateTotals();
-    const basePrice = packageData?.pricing?.basePrice || 0;
-  
-    const totalAdultCount = totals.totalAdults;
-    const baseAdultCount = 2;
-    const additionalAdults = Math.max(0, totalAdultCount - baseAdultCount);
-  
-    const additionalAdultPrice = additionalAdults * (packageData?.pricing?.additionalAdultPrice || basePrice * 0.5);
-    const baseAdultPrice = basePrice;
-  
-    const cwbPrice = totals.totalCwb * (packageData?.pricing?.cwbPrice || basePrice * 0.7);
-    const cnbPrice = totals.totalCnb * (packageData?.pricing?.cnbPrice || basePrice * 0.3);
-  
-    const additionalRooms = Math.max(0, rooms.length - 1);
-    const additionalRoomPrice = additionalRooms * (packageData?.pricing?.additionalRoomPrice || basePrice * 0.8);
-  
-    const infantPrice = 0;
-  
-    const totalPrice = baseAdultPrice + additionalAdultPrice + cwbPrice + cnbPrice + additionalRoomPrice + infantPrice;
-  
-    return {
-      basePrice: baseAdultPrice,
-      additionalAdultPrice,
-      cwbPrice,
-      cnbPrice,
-      additionalRoomPrice,
-      infantPrice,
-      totalPrice,
-      breakdown: {
-        adults: {
-          count: totalAdultCount,
-          baseIncluded: baseAdultCount,
-          additionalCount: additionalAdults,
-          pricePerPerson: basePrice,
-          total: baseAdultPrice + additionalAdultPrice
-        },
-        cwb: {
-          count: totals.totalCwb,
-          pricePerPerson: basePrice * 0.7,
-          total: cwbPrice
-        },
-        cnb: {
-          count: totals.totalCnb,
-          pricePerPerson: basePrice * 0.3,
-          total: cnbPrice
-        },
-        infants: {
-          count: totals.totalInfants,
-          total: infantPrice
-        },
-        rooms: {
-          count: rooms.length,
-          additional: additionalRooms,
-          pricePerRoom: basePrice * 0.8,
-          total: additionalRoomPrice
-        }
+
+const calculatePricing = () => {
+  const totals = calculateTotals();
+  const selectedHotelOption = packageDetails?.hotelOption?.[selectedOptionIndex];
+  const basePackageCost = selectedHotelOption?.totalPackageCost || 0;
+  let totalPrice = basePackageCost;
+  const additionalRooms = Math.max(0, rooms.length - 1);
+  const additionalRoomPrice = additionalRooms * basePackageCost;
+  totalPrice += additionalRoomPrice;
+  const baseAdultCount = 2;
+  const totalAdultCount = totals.totalAdults;
+  const additionalAdults = Math.max(0, totalAdultCount - baseAdultCount);
+  const additionalAdultPrice = additionalAdults * (packageData?.pricing?.additionalAdultPrice || basePackageCost * 0.5);
+  totalPrice += additionalAdultPrice;
+  const cwbPricePerChild = selectedHotelOption?.cwbCost || 0;
+  const cwbPrice = totals.totalCwb * cwbPricePerChild;
+  totalPrice += cwbPrice;
+  const cnbPricePerChild = selectedHotelOption?.cnbCost || 0;
+  const cnbPrice = totals.totalCnb * cnbPricePerChild;
+  totalPrice += cnbPrice;
+  const infantPrice = 0;
+  console.log('Pricing Calculation Debug:', {
+    selectedHotelOption,
+    basePackageCost,
+    totalAdultCount,
+    additionalAdults,
+    additionalAdultPrice,
+    cwbCount: totals.totalCwb,
+    cwbPricePerChild,
+    cwbPrice,
+    cnbCount: totals.totalCnb,
+    cnbPricePerChild,
+    cnbPrice,
+    additionalRooms,
+    additionalRoomPrice,
+    totalPrice,
+    note: "Base package already includes activities - no separate calculation needed"
+  });
+
+  return {
+    basePrice: basePackageCost,
+    additionalAdultPrice,
+    cwbPrice,
+    cnbPrice,
+    additionalRoomPrice,
+    infantPrice,
+    totalPrice,
+    breakdown: {
+      basePackage: {
+        cost: basePackageCost,
+        includes: "2 Adults + Activities + Hotels" // Updated description
+      },
+      adults: {
+        count: totalAdultCount,
+        baseIncluded: baseAdultCount,
+        additionalCount: additionalAdults,
+        pricePerPerson: packageData?.pricing?.additionalAdultPrice || basePackageCost * 0.5,
+        total: additionalAdultPrice
+      },
+      cwb: {
+        count: totals.totalCwb,
+        pricePerPerson: cwbPricePerChild,
+        total: cwbPrice
+      },
+      cnb: {
+        count: totals.totalCnb,
+        pricePerPerson: cnbPricePerChild,
+        total: cnbPrice
+      },
+      infants: {
+        count: totals.totalInfants,
+        total: infantPrice
+      },
+      rooms: {
+        count: rooms.length,
+        additional: additionalRooms,
+        pricePerRoom: basePackageCost,
+        total: additionalRoomPrice
       }
-    };
+    }
   };
+};
+
   const handleBack = () => { navigate(-1);};
   const handleSearch = async () => {
     setLoading(true);
@@ -295,9 +318,7 @@ const ReadyMadeSearch: React.FC = () => {
 
   const destinations = selectedHotelOption?.hotels?.map((hotel: any) => hotel.destination) || [];
   const uniqueDestinations = [...new Set(destinations)];
-  const packageTitle = packageDetails.packageName || packageDetails.title || 'Package Search';
   const totals = calculateTotals();
-  const pricing = calculatePricing();
 
   return (
     <Box className="customize-search-page">

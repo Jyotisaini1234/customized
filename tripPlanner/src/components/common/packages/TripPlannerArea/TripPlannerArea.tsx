@@ -1,53 +1,32 @@
-  import React, { useState, useEffect } from 'react';
-  import { useLocation, useNavigate } from 'react-router-dom';
-  import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
-  import './TripPlannerArea.scss';
-  import { AreaOption, Areas } from '../../../../types/types.ts';
-  import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
-  import {  citiesList as cityOptions,country} from "../../../../model/selectOptions.ts"; 
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
+import './TripPlannerArea.scss';
+import { AreaOption, Areas } from '../../../../types/types.ts';
+import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
+import {  citiesList as cityOptions,country} from "../../../../model/selectOptions.ts"; 
 
-  const TripPlannerArea: React.FC = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { state } = location;
-    const searchParams = location.state || {};
-    const [areas, setAreas] = useState<AreaOption[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [hotelDetails, setHotelDetails] = useState(null);
-    const [city, setCity] = useState<string>(searchParams.city || '');
-    const [country, setCountry] = useState<string>(searchParams.country);
-    const [adultsCount, setAdultsCount] = useState<number>(searchParams.rooms?.[0]?.adults || 2);
-    const [cwbCount, setCwbCount] = useState<number>(searchParams.rooms?.[0]?.cwb || 0);
-    const [cnbCount, setCnbCount] = useState<number>(searchParams.rooms?.[0]?.cnb || 0);
-    const [infantsCount, setInfantsCount] = useState<number>(searchParams.rooms?.[0]?.infants || 0);
-    const [applyToAllDays, setApplyToAllDays] = useState<boolean>(searchParams.applyToAllDays || false);
-    const [selectedCity, setSelectedCity] = useState<string>(searchParams.city || '');
-    const [searchedCity, setSearchedCity] = useState("");
-    const [nights, setNights] = useState<number | string>(searchParams.nights || 1);
-    useEffect(() => {
-      if (state && (state.hotel || state.tripPlan)) {
-          setHotelDetails(state);
-          if (state.tripPlan) {
-          console.log('Hotel added from trip planner:', state);}}
-          else {
-          const storedDetails = sessionStorage.getItem('selectedHotelDetails');
-          if (storedDetails) {
-          const parsedDetails = JSON.parse(storedDetails);
-          setHotelDetails(parsedDetails);
-          if (parsedDetails.tripPlan) {
-          console.log('Retrieved trip plan hotel from storage:', parsedDetails); }} }
-    }, [state]);
-
-useEffect(() => {
-    console.log('Search params received:', searchParams); 
-    console.log('Current city value:', city);
-    if (city) {setLoading(true);
-    console.log(`Loading areas for city: ${city}`);
-    setTimeout(() => {setAreas(Areas);setLoading(false);}, 500); } 
-    else if (searchParams.city) {setCity(searchParams.city);} 
-    else {console.error('No city provided in search parameters'); }
-}, [city, searchParams]);
-
+const TripPlannerArea: React.FC = () => {
+const location = useLocation();
+const navigate = useNavigate();
+const { state } = location;
+const searchParams = location.state || {};
+const [areas, setAreas] = useState<AreaOption[]>([]);
+const [loading, setLoading] = useState<boolean>(false);
+const [hotelDetails, setHotelDetails] = useState(null);
+const [city, setCity] = useState<string>(searchParams.city || '');
+const [country, setCountry] = useState<string>(searchParams.country);
+const [applyToAllDays, setApplyToAllDays] = useState<boolean>(searchParams.applyToAllDays || false);
+const [selectedCity, setSelectedCity] = useState<string>(searchParams.city || '');
+const [selectedCountry, setSelectedCountry] = useState<string>(searchParams.country || '');
+const [searchedCity, setSearchedCity] = useState("");
+const [nights, setNights] = useState<number | string>(searchParams.nights || 1);
+const totalFromRooms = (field: 'adults' | 'cwb' | 'cnb' | 'infants') => {if (Array.isArray(searchParams.rooms)) {return searchParams.rooms.reduce((sum, room) => sum + (room[field] || 0), 0);}return 0;};
+const [adultsCount, setAdultsCount] = useState<number>(totalFromRooms('adults') || 2);
+const [cwbCount, setCwbCount] = useState<number>(totalFromRooms('cwb') || 0);
+const [cnbCount, setCnbCount] = useState<number>(totalFromRooms('cnb') || 0);
+const [infantsCount, setInfantsCount] = useState<number>(totalFromRooms('infants') || 0);
+    
 const handleClose = () => {
 let savedHotels = [];
 const storedHotels = sessionStorage.getItem('tripPlannerHotels');
@@ -56,62 +35,11 @@ const storedHotels = sessionStorage.getItem('tripPlannerHotels');
     catch (e) {console.error('Error parsing saved hotels', e);}}
       navigate(-1);
 };
-    
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const hotelData = urlParams.get('hotelData');
-  if (hotelData) {
-    try {
-      const hotelDetails = JSON.parse(decodeURIComponent(hotelData));
-      if (hotelDetails.booking?.checkInDate) {
-        hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString();
-      }
-      if (hotelDetails.booking?.checkOutDate) {
-        hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
-      }
-      setHotelDetails(hotelDetails);
-      console.log("✅ Hotel details from URL:", hotelDetails);
-    } catch (e) {
-      console.error("❌ Failed to parse hotel data from URL", e);
-    }
-  }
-}, []);
-
-useEffect(() => {
-  const storedEditData = sessionStorage.getItem('editLeadData');
-  if (storedEditData) {
-    try {
-      const parsedData = JSON.parse(storedEditData);
-      console.log("🔍 Loading edit data in TripPlannerArea:", parsedData);
-      
-      if (parsedData.isEditMode && parsedData.currentSearchParams) {
-        const searchParams = parsedData.currentSearchParams;
-        
-        setCity(searchParams.city || '');
-        setSelectedCity(searchParams.city || '');
-        setCountry(searchParams.country || parsedData.country || '');
-        setNights(searchParams.nights || 1);
-        
-        if (searchParams.rooms && searchParams.rooms.length > 0) {
-          const firstRoom = searchParams.rooms[0];
-          setAdultsCount(firstRoom.adults || 2);
-          setCwbCount(firstRoom.cwb || 0);
-          setCnbCount(firstRoom.cnb || 0);
-          setInfantsCount(firstRoom.infants || 0);
-        }
-        
-        console.log("✅ Edit data loaded - Country:", searchParams.country, "City:", searchParams.city);
-      }
-    } catch (error) {
-      console.error("❌ Error parsing edit data in TripPlannerArea:", error);
-    }
-  }
-}, []);
-
 const handleSearch = () => {
   const params = new URLSearchParams();
   const checkInDate = searchParams.checkInDate || new Date().toISOString();
   const currentCity = selectedCity || city;
+  const currentCountry = selectedCountry || country;
   const nightsNumber = parseInt(nights as string, 10) || 1;
   params.append('checkInDate', checkInDate);
   const checkOutDateObj = new Date(new Date(checkInDate));
@@ -119,7 +47,7 @@ const handleSearch = () => {
   const checkOutDate = checkOutDateObj.toISOString();
   params.append('checkOutDate', checkOutDate);
   params.append('city', currentCity);
-  params.append('country', country);
+  params.append('country', currentCountry || 'Georgia' || 'Azerbaijan');
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
   if (searchParams.fromReadymadePackage === 'true' || searchParams.fromReadymadePackage === true) {
@@ -160,6 +88,14 @@ const handleSearch = () => {
   window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
 };
 
+const getRoomDisplayText = () => {
+  const roomCount = searchParams.rooms?.length || 1;
+  if (roomCount > 1) {
+    return `Total Guests (${roomCount} Rooms)`;
+  }
+  return "Room 1";
+};
+
 const formatDate = (dateStr) => {
   try {return new Date(dateStr).toLocaleDateString();}
   catch (e) {return dateStr || '';}
@@ -198,7 +134,6 @@ const getCheckOutDate = () => {
         return tripEndDate.toLocaleDateString();
       }
     }
-    
     return checkOutObj.toLocaleDateString();
   } catch (e) {
     console.error("Error calculating check-out date:", e);
@@ -220,8 +155,8 @@ return (
                   <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined" size="small" className="form-control">
                     <Select value={country || searchParams.country || ''} disabled className="select-input">
-                      <MenuItem value={country || searchParams.country || ''}>
-                        {country || searchParams.country || 'Select countries'}
+                    <MenuItem value={ searchParams.countrie || ''}>
+                        { searchParams.countrie || 'Select countries'}
                       </MenuItem>
                     </Select>
                   </FormControl>
@@ -253,36 +188,30 @@ return (
                     <TextField value={getCheckOutDate()} fullWidth  size="small" variant="outlined"   className="date-input" disabled />
                   </Grid>
                   <Grid item xs={12}>
-                    <Box className="room-details">
-                      <Typography variant="body1" fontWeight="medium" className="room-title">  Room 1 </Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={3}>
-                          <Typography variant="body2" className="occupancy-label">Adult/s<br/>+12 yrs</Typography>
-                          <TextField
-                            value={adultsCount}
-                            onChange={(e) => setAdultsCount(parseInt(e.target.value) || 2)}
-                            fullWidth size="small" type="number" 
-                            variant="outlined" className="occupancy-input"  InputProps={{ inputProps: { min: 1, max: 6 } }}  />
-                        </Grid>
-                        <Grid item xs={3}>
-                          <Typography variant="body2" className="occupancy-label">CWB<br/>&lt;12 yrs  </Typography>
-                          <TextField  
-                            value={cwbCount}  
-                            onChange={(e) => setCwbCount(parseInt(e.target.value) || 0)} fullWidth  size="small" variant="outlined"
-                            className="occupancy-input" type="number" InputProps={{ inputProps: { min: 0 } }} />
-                        </Grid>
-                        <Grid item xs={3}>
-                          <Typography variant="body2" className="occupancy-label">
-                            Infant/s<br/>&lt;2 yrs
-                          </Typography>
-                          <TextField 
-                            value={infantsCount} onChange={(e) => setInfantsCount(parseInt(e.target.value) || 0)}
-                            fullWidth  size="small" variant="outlined"   className="occupancy-input" type="number"
-                            InputProps={{ inputProps: { min: 0 } }}/>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  </Grid>
+
+                    <Grid item xs={12}>
+          <Box className="room-details">
+              <Typography variant="body1" fontWeight="medium" className="room-title">  {getRoomDisplayText()}</Typography>
+            <Grid container spacing={2}>
+            <Grid item xs={3}>
+              <Typography variant="body2" className="occupancy-label">Adult/s<br/>+12 yrs </Typography>
+              <TextField value={adultsCount} onChange={(e) => setAdultsCount(parseInt(e.target.value) || 0)} fullWidth size="small"   type="number"  variant="outlined"   className="occupancy-input"  InputProps={{ inputProps: { min: 1, max: 20 } }} />
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="body2" className="occupancy-label"> CWB<br/>&lt;12 yrs   </Typography>
+              <TextField value={cwbCount} onChange={(e) => setCwbCount(parseInt(e.target.value) || 0)} fullWidth size="small" variant="outlined"className="occupancy-input"  type="number"  InputProps={{ inputProps: { min: 0, max: 20 } }}  />
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="body2" className="occupancy-label">  CNB<br/>2-12 yrs </Typography>
+              <TextField value={cnbCount}   onChange={(e) => setCnbCount(parseInt(e.target.value) || 0)}  fullWidth   size="small"  variant="outlined"className="occupancy-input"  type="number"  InputProps={{ inputProps: { min: 0, max: 20 } }}  />
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="body2" className="occupancy-label">  Infant/s<br/>&lt;2 yrs </Typography>
+              <TextField  value={infantsCount} onChange={(e) => setInfantsCount(parseInt(e.target.value) || 0)} fullWidth   size="small"  variant="outlined"    className="occupancy-input"  type="number"InputProps={{ inputProps: { min: 0, max: 20 } }} />
+            </Grid>
+            </Grid>
+            </Box></Grid>
+            </Grid>
                   <Grid item xs={12}>
                     <Box display="flex" justifyContent="flex-end" className="button-container">
                       <Button variant="contained" color="error" onClick={handleSearch} className="search-button"> Search </Button>

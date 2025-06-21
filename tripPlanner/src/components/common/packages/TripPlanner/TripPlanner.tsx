@@ -28,9 +28,9 @@ const getSearchParams = () => {
     return {
       checkInDate: checkInDate,
       checkOutDate: checkOutDate,
-      nights: nights || 1, // Ensure nights has a default value
+      nights: nights || 1,
       city: '',
-      packageType: 'hotel-land' // Default to hotel-land package
+      packageType: 'hotel-land'
     };
 };
 const [isLoading,setIsLoading]= useState(false)
@@ -51,11 +51,7 @@ const [showThankYou, setShowThankYou] = useState(false);
 const [isEditMode, setIsEditMode] = useState(false);
 const [originalLeadId, setOriginalLeadId] = useState<string | null>(null);
 const [editingClientData, setEditingClientData] = useState<any>(null);
-const [editDataVersion, setEditDataVersion] = useState(0);
-
-const onCancel = () => {
-  navigate('/customize-package');
-};
+const onCancel = () => {navigate('/customize-package');};
 const calculateNights = (startDate: Date | null, endDate: Date | null) => {
   if (startDate && endDate) {
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -112,18 +108,10 @@ const generateInitialPlannerItems = () => {
 const [plannerItems, setPlannerItems] = useState<PlannerItem[]>(generateInitialPlannerItems());
 const handleMarginChange = (event) => {
   const inputValue = event.target.value;
-  // Allow empty string or valid numbers
   if (inputValue === '' || !isNaN(parseFloat(inputValue))) {
     setMarginTotal(inputValue);
   }
 };
-
-useEffect(() => {
-    const searchParams = location.state || {};
-    if (Object.keys(searchParams).length > 0) {
-      sessionStorage.setItem('tripPlannerParams', JSON.stringify(searchParams));
-      setCurrentSearchParams(searchParams); }
-  }, [location.state]);
 
 /////save hotels
 useEffect(() => {
@@ -139,17 +127,11 @@ useEffect(() => {
 }, []);
 
 const handleHotelSelection = (itemId) => {
-  
   const plannerItem = plannerItems.find(item => item.id === itemId);
   if (!plannerItem) return;
   const itemDate = new Date(plannerItem.dateObj);
-  const dayHasHotel = plannerItems.find(item =>
-    item.id === itemId && item.hotel !== null
-  );
-  if (dayHasHotel) {
-    console.log("This day already has a hotel assigned");
-    return;
-  }
+  const dayHasHotel = plannerItems.find(item => item.id === itemId && item.hotel !== null );
+  if (dayHasHotel) { return; }
   const checkInDate = new Date(itemDate);
   const checkOutDate = new Date(itemDate);
   checkOutDate.setDate(checkOutDate.getDate() + 1);
@@ -183,7 +165,6 @@ const handleHotelSelection = (itemId) => {
     state: hotelSearchParams
   });
 };
-
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const hotelData = urlParams.get('hotelData');
@@ -234,7 +215,6 @@ useEffect(() => {
     }
   }
 }, [plannerItems, currentSearchParams.nights]);
-
 
 useEffect(() => {
   if (hotels.length > 0) {
@@ -334,22 +314,12 @@ useEffect(() => {
 
 const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' | 'meals') => {
   const plannerItem = plannerItems.find(item => item.id === itemId);
-  if (!plannerItem) {
-    console.error(`Could not find planner item with id ${itemId}`);
-    return;
-  }
-  const itemDate = plannerItem.dateObj instanceof Date 
-  ? plannerItem.dateObj 
-  : new Date(plannerItem.dateObj);
-  if (isNaN(itemDate.getTime())) {
-    console.error(`Invalid date object for planner item ${itemId}`);
-    return;
-  }
-  
+  if (!plannerItem) {return;}
+  const itemDate = plannerItem.dateObj instanceof Date ? plannerItem.dateObj  : new Date(plannerItem.dateObj);
+  if (isNaN(itemDate.getTime())) {return;}
   sessionStorage.setItem('tripPlannerParams', JSON.stringify(currentSearchParams));
   sessionStorage.setItem('tripPlannerItems', JSON.stringify(plannerItems));
   sessionStorage.setItem('tripPlannerHotels', JSON.stringify(hotels));
-  
   let selectedArea = '';
   let selectedCity = currentSearchParams.city;
   let selectedCountry = currentSearchParams.country || 'Azerbaijan';
@@ -357,35 +327,9 @@ const handleAddItem = (itemId: string, itemType: 'hotel' | 'transfer' | 'tours' 
     selectedArea = hotels[0].hotel.area;
   } else {
     const storedParams = sessionStorage.getItem('selectedHotelArea');
-    if (storedParams) {
-      selectedArea = storedParams;
-    }
-  }
-
-  if (itemType === 'hotel') {
-    const checkoutDate = new Date(itemDate);
-    checkoutDate.setDate(checkoutDate.getDate() + 1);
-    const tripEndDate = new Date(currentSearchParams.checkOutDate);
-    const isLastDay = checkoutDate.getTime() >= tripEndDate.getTime();
-    navigate('/trip-planner-area', {
-      state: {
-        ...currentSearchParams,
-        dayId: itemId.split('-')[1],
-        fromTripPlanner: true,
-        checkInDate: itemDate.toISOString(),
-        checkOutDate: checkoutDate.toISOString(),
-        nights: 1,
-        specificDay: false,
-        specificDayId: itemId,
-        applyToAllDays: false,
-        isLastDay: isLastDay,
-        city: selectedCity,
-        country: selectedCountry
-      }
-    });
-  } else if (itemType === 'tours') {
+    if (storedParams) {selectedArea = storedParams;}}
+  if (itemType === 'tours') {
     const { totalPax, adults, infants } = calculatePassengersBreakdown(currentSearchParams.rooms);
-
     const params = new URLSearchParams();
     params.append('city', selectedCity);
     params.append('country', selectedCountry);
@@ -425,7 +369,6 @@ const calculatePassengersBreakdown = (rooms) => {
     infants += room.infant || 0;});
   const totalPax = adults + infants;
   return {totalPax,adults,infants};};
-
 
 useEffect(() => {
   if (hotels.length > 0) {
@@ -553,15 +496,12 @@ useEffect(() => {
   setGrandTotal(total);
 }, [hotels, plannerItems]);
 
-
 const handleRemoveHotel = (plannerItem) => {
   if (!plannerItem.hotel || !plannerItem.hotel.details) return;
-  
   const hotelUniqueId = plannerItem.hotel.details.uniqueId;
   const hotelDetails = plannerItem.hotel.details;
   const totalHotelPrice = hotelDetails.booking?.totalPrice || 0;
-  
-  console.log("🗑️ Removing hotel with uniqueId:", hotelUniqueId);
+  console.log("Removing hotel with uniqueId:", hotelUniqueId);
   const newPlannerItems = plannerItems.map(item => {
     if (item.hotel?.details?.uniqueId === hotelUniqueId) {
       return {
@@ -571,32 +511,20 @@ const handleRemoveHotel = (plannerItem) => {
     }
     return item;
   });
-  
   setPlannerItems(newPlannerItems);
-
   const updatedHotels = hotels.filter(hotel => hotel.uniqueId !== hotelUniqueId);
   setHotels(updatedHotels);
   sessionStorage.setItem("tripPlannerHotels", JSON.stringify(updatedHotels));
-
-  const newHotelTotal = updatedHotels.reduce((sum, hotel) => {
-    return sum + parseFloat(hotel.booking?.totalPrice || 0);
-  }, 0);
-  
-  const tourTotal = plannerItems.reduce((sum, item) => {
-    return sum + parseFloat(item.tours?.price || item.tours?.details?.booking?.totalPrice || 0);
-  }, 0);
-  
+  const newHotelTotal = updatedHotels.reduce((sum, hotel) => { return sum + parseFloat(hotel.booking?.totalPrice || 0);}, 0);
+  const tourTotal = plannerItems.reduce((sum, item) => {return sum + parseFloat(item.tours?.price || item.tours?.details?.booking?.totalPrice || 0);}, 0);
   const newGrandTotal = newHotelTotal + tourTotal;
   setGrandTotal(newGrandTotal);
-  
-  console.log("💰 Recalculated totals - Hotels:", newHotelTotal, "Tours:", tourTotal, "Grand Total:", newGrandTotal);
   if (isEditMode) {
     const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
     editData.hotelDetails = updatedHotels;
     editData.plannerItems = newPlannerItems;
     editData.grandTotal = newGrandTotal;
     sessionStorage.setItem('editLeadData', JSON.stringify(editData));
-    console.log("🔄 Session storage updated after hotel removal");
   }
   if (selectedHotel?.uniqueId === hotelUniqueId) {
     setSelectedHotel(updatedHotels.length > 0 ? updatedHotels[0] : null);
@@ -652,40 +580,23 @@ const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        if (dateString.includes('-')) {
-          const [day, rest] = dateString.split('-');
-          return `${day}-${rest.split(' ')[0]}`;}
-        return dateString; }
+      if (dateString.includes('-')) {
+      const [day, rest] = dateString.split('-');
+      return `${day}-${rest.split(' ')[0]}`;}
+      return dateString; }
       return date.toLocaleDateString('en-US', {day: '2-digit', month: 'short'});
-    } catch (e) {
-      return dateString;}
-  };
+    } catch (e) { return dateString;}};
 const formatYear = (dateString: string) => {
     if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
+    try { const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        if (dateString.includes(' ')) {
-          return dateString.split(' ')[1];
-        }
-        return '';
-      }
-      return date.getFullYear().toString();
-    } catch (e) {
-      return '';
-    }
-  };
+      if (dateString.includes(' ')) {return dateString.split(' ')[1]; }return ''; }
+      return date.getFullYear().toString();  } catch (e) { return '';}};
 const formatHeaderDate = (dateString: string | undefined) => {
     if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      
-      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-    } catch (e) {
-      return '';
-    }
-};
+    try {const date = new Date(dateString);
+    if (isNaN(date.getTime())) return ''; return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    } catch (e) {return ''; }};
 const displayCheckInDate = formatHeaderDate(currentSearchParams?.checkInDate) ;
 const displayCheckOutDate = formatHeaderDate(currentSearchParams?.checkOutDate);
 const displayNights = currentSearchParams?.nights || nights || '1';
@@ -702,8 +613,7 @@ const handleSearchComplete = (updatedParams: any) => {
         setHotels(prevHotels => prevHotels.filter(hotel => {
           if (hotel.specificDayId) {
             const hotelDate = new Date(hotel.booking?.checkInDate);
-            return hotelDate >= newStartDate && hotelDate < newEndDate;
-          }
+            return hotelDate >= newStartDate && hotelDate < newEndDate; }
           const hotelCheckIn = new Date(hotel.booking?.checkInDate);
           const hotelCheckOut = new Date(hotel.booking?.checkOutDate);
           return hotelCheckIn < newEndDate && hotelCheckOut > newStartDate;
@@ -715,8 +625,9 @@ const handleSearchComplete = (updatedParams: any) => {
 const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hotel') => {
   setActiveTab(newValue);
 };
+
 useEffect(() => {
-  const storedClientData = sessionStorage.getItem('editingClientData'); // Fix: add the key
+  const storedClientData = sessionStorage.getItem('editingClientData');
   if (storedClientData) {
     try {
       const clientData = JSON.parse(storedClientData);
@@ -727,51 +638,55 @@ useEffect(() => {
       console.error('Error parsing editing client data:', error);
     }
   }
-}, []);
-
-
-useEffect(() => {
   const storedEditData = sessionStorage.getItem('editLeadData');
   if (storedEditData) {
-    const parsedData = JSON.parse(storedEditData);
-    console.log("🔍 Loading edit data:", parsedData);
+    try {
+      const parsedData = JSON.parse(storedEditData);
+      console.log("Loading edit data:", parsedData);
 
-    if (parsedData.isEditMode) {
-      setIsEditMode(true);
-      setEditingClientData({
-        ...parsedData,
-        plannerItems: parsedData.plannerItems || [],
-        hotelDetails: parsedData.hotelDetails || [],
-        isEditingExistingLead: true 
-      });
-      setOriginalLeadId(parsedData.leadId || parsedData.bookingRef || null);
-      setCurrentSearchParams(parsedData.currentSearchParams || {});
-      setCurrentSearchParams({
-        ...parsedData.currentSearchParams,
-        isEditMode: true,
-        editingLeadId: parsedData.leadId
-      });
-      setHotels(parsedData.hotelDetails || parsedData.hotels || []);
-      setPlannerItems(parsedData.plannerItems || parsedData.tours || []);
+      if (parsedData.isEditMode) {
+        setIsEditMode(true);
+        setEditingClientData({
+          ...parsedData,
+          plannerItems: parsedData.plannerItems || [],
+          hotelDetails: parsedData.hotelDetails || [],
+          isEditingExistingLead: true 
+        });
+        setOriginalLeadId(parsedData.leadId || parsedData.bookingRef || null);
+
+        setCurrentSearchParams({
+          ...parsedData.currentSearchParams,
+          isEditMode: true,
+          editingLeadId: parsedData.leadId
+        });
+
+        setHotels(parsedData.hotelDetails || parsedData.hotels || []);
+        setPlannerItems(parsedData.plannerItems || parsedData.tours || []);
+      }
+    } catch (e) {
+      console.error("Error parsing editLeadData:", e);
     }
   }
-}, []);
 
-useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
-  const isEditMode = urlParams.get("editMode") === "true";
+  const isEditModeFromURL = urlParams.get("editMode") === "true";
   const specificDayId = urlParams.get("specificDayId");
   const tourAdded = urlParams.get("tourAdded") === "true";
-const bookingRef = urlParams.get('bookingRef');
-console.log("TripPlanner URL Params (3000):", urlParams.toString());
+  const bookingRef = urlParams.get('bookingRef');
 
-  if (isEditMode && tourAdded && specificDayId) {
-const tourDataStr = urlParams.get('tourData');
-if (tourDataStr) {
-  const tourData = JSON.parse(decodeURIComponent(tourDataStr));
-}
-   else {
-      console.warn("⚠️ tourData not found in sessionStorage");
+  console.log("TripPlanner URL Params:", urlParams.toString());
+
+  if (isEditModeFromURL && tourAdded && specificDayId) {
+    const tourDataStr = urlParams.get('tourData');
+    if (tourDataStr) {
+      try {
+        const tourData = JSON.parse(decodeURIComponent(tourDataStr));
+        console.log("Tour added from URL:", tourData);
+      } catch (err) {
+        console.error("Failed to parse tourData from URL", err);
+      }
+    } else {
+      console.warn("tourData not found in URL");
     }
   }
 }, []);
@@ -782,55 +697,27 @@ const handleClientFormSubmit = async (clientData) => {
   const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
   if (plannerItems?.length > 0) {
     sessionStorage.setItem('editLeadData', JSON.stringify({
-      ...editData,
-      plannerItems
-    }));
-  }
-  const editingClientData = JSON.parse(sessionStorage.getItem('editingClientData') || '{}');
-
-const mergedHotels = [
-  ...(editData.hotelDetails || editData.hotels || []),
-  ...(hotels || [])
-];
-
-const mergedPlannerItems = [
-  ...(editData.plannerItems || []),
-  ...(plannerItems || [])
-];
-
-sessionStorage.setItem('editLeadData', JSON.stringify({
-  ...editData,
-  hotels: mergedHotels,
-  plannerItems: mergedPlannerItems
-}));
-
+      ...editData, plannerItems
+    }));}
+const editingClientData = JSON.parse(sessionStorage.getItem('editingClientData') || '{}');
+const mergedHotels = [ ...(editData.hotelDetails || editData.hotels || []), ...(hotels || [])];
+const mergedPlannerItems = [...(editData.plannerItems || []),...(plannerItems || [])];
+sessionStorage.setItem('editLeadData', JSON.stringify({...editData,hotels: mergedHotels,plannerItems: mergedPlannerItems}));
   const calculateRoomCounts = () => {
     let totalRooms = 0;
     let adult = 0;
     let cnb = 0;
     let cwb = 0;
-
     if (currentSearchParams?.rooms && Array.isArray(currentSearchParams.rooms)) {
-      currentSearchParams.rooms.forEach(room => {
-        totalRooms += 1;
-        adult += room.adults || 0;
-        cnb += room.cnb || 0;
-        cwb += room.cwb || 0;
+      currentSearchParams.rooms.forEach(room => {  totalRooms += 1; adult += room.adults || 0; cnb += room.cnb || 0;cwb += room.cwb || 0;
       });
-    } else {
-      totalRooms = editData.totalRooms || 1;
-      adult = editData.adult || 2;
-      cnb = editData.cnb || 0;
-      cwb = editData.cwb || 0;
-    }
-
+    } else { totalRooms = editData.totalRooms || 1;adult = editData.adult || 2;cnb = editData.cnb || 0; cwb = editData.cwb || 0; }
     return { totalRooms, adult, cnb, cwb };
   };
 
   const calculateTotalPersons = () => {
     if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
-      return editData.totalPersons || 2;
-    }
+      return editData.totalPersons || 2; }
     return currentSearchParams.rooms.reduce((total, room) => {
       const adults = room.adults || 0;
       const cwb = room.cwb || 0;
@@ -845,10 +732,6 @@ sessionStorage.setItem('editLeadData', JSON.stringify({
   const finalBookingRef = isEditMode ? (originalLeadId || editingClientData?.id || editingClientData?._id || editData.leadId) : bookingRef;
   const selectedCity = currentSearchParams.city || editData.currentSearchParams?.city;
   const selectedCountry = currentSearchParams.country || editData.currentSearchParams?.country;
-  // const finalHotels = Array.isArray(hotels) && hotels.length > 0 ? hotels : editData.hotelDetails || [];
-  // const finalPlannerItems = Array.isArray(plannerItems) && plannerItems.length > 0
-  // ? plannerItems
-  // : editData.plannerItems || [];
   const finalHotels = mergedHotels;
   const finalPlannerItems = mergedPlannerItems;
   
@@ -1006,11 +889,9 @@ sessionStorage.setItem('editLeadData', JSON.stringify({
       })));
       console.log("Saving merged hotels:", mergedHotels);
       console.log("Saving merged plannerItems:", mergedPlannerItems);
-
       await updateLead({ id: finalBookingRef, lead: newLead }).unwrap();
       console.log(' Successfully updated lead');
       alert('Lead updated successfully!');
-      
       sessionStorage.removeItem('editLeadData');
       sessionStorage.removeItem('editingClientData');
       window.open(`/tour-package-pdf?bookingRef=${finalBookingRef}`, '_blank');
@@ -1030,25 +911,7 @@ sessionStorage.setItem('editLeadData', JSON.stringify({
 const handleDownloadPDF = () => {
   setClientFormOpen(true);
 };
-const redirectToHotelSelection = () => {
-  const token = TokenService.getAccessToken();
-  const refreshToken = TokenService.getRefreshToken();
-  const username = TokenService.getUsername();
-  
-  if (token && refreshToken && username) {
-    // Cross-port redirect with authentication data
-    const hotelSelectionUrl = new URL('http://localhost:3002/hotel-search');
-    hotelSelectionUrl.searchParams.set('token', token);
-    hotelSelectionUrl.searchParams.set('refreshToken', refreshToken);
-    hotelSelectionUrl.searchParams.set('username', username);
-    hotelSelectionUrl.searchParams.set('timestamp', Date.now().toString());
-    
-    window.location.href = hotelSelectionUrl.toString();
-  } else {
-    // Redirect to login if no authentication
-    window.location.href = 'http://localhost:3002/hotel?redirect=' + encodeURIComponent('http://localhost:3002/hotel-search');
-  }
-};
+
 const showHotelTab = packageType === 'hotel-land';
 return (
     <Box className="trip-planner-page">
@@ -1210,7 +1073,7 @@ return (
         hotelName={''} currency={0} currentSearchParams={''} 
         hotels={''} plannerItems={''} hotelDetails={[]} tourActivities={[]} 
         activities={[]} persons={''}
-        selectedHotels={hotels} // Pass current hotel selections
+        selectedHotels={hotels}
         selectedPlannerItems={plannerItems}
         />)}
     </Box>

@@ -118,6 +118,22 @@ export const tourApi = createApi({
       query: (id) => `sightTour/package/${id}`,
       providesTags: (_result, error, id) => [{ type: 'Package', id }],
     }),
+    submitPackageData: builder.mutation<any, any>({
+      query: (tripPlannerData) => ({
+        url: '/sightTour/packageData',
+        method: 'POST',
+        body: tripPlannerData,
+      }),
+      invalidatesTags: ['Package'],
+    }),
+    getAllPackageData: builder.query<any[], void>({
+      query: () => ({
+        url: '/sightTour/packageData',
+        method: 'GET',
+      }),
+      providesTags: ['Package'],
+    }),
+    
   }),
 });
 
@@ -131,4 +147,6 @@ export const {
   useGetPackageByIdQuery,
   useSearchPackagesQuery,
   useGetAllPackagesQuery,
+  useSubmitPackageDataMutation,
+  useGetAllPackageDataQuery
 } = tourApi;

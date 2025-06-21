@@ -130,7 +130,9 @@ return (
       {mainHotel && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{mainHotel.name} </Typography> )}
         <Box sx={{ mt: 'auto' }}>
-        <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > USD {packageDetails.hotelOption?.[0]?.totalPackageCost?.toLocaleString()}
+        <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > USD {((
+          packageDetails.hotelOption?.[0]?.totalPackageCost ?? 0) +(packageDetails.itinerary?.reduce((sum, day) => sum + (day.price ?? 0), 0) ?? 0)).toLocaleString()}
+
         </Typography>
         <Typography variant="body2"  sx={{color: '#f44336', fontWeight: 'bold', mb: 2  }}  > Regular</Typography>
         <Button className="view" fullWidth  onClick={() => handleViewDetails(pkg)} >  View Details </Button>

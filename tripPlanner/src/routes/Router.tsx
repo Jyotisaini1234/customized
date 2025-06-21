@@ -13,16 +13,20 @@ import ReadyMadeSearch from '../components/common/packages/Readymade/EditMode/Re
 import TripPlannerReadyMade from '../components/common/packages/Readymade/EditMode/TripPlannerReadyMade/TripPlannerReadyMade.tsx';
 import { useActivityTracker } from '../hooks/useActivityTracker.ts';
 import ProtectedRoute from '../pages/ProtectedRoute.tsx';
+import ConfirmedBooking from '../components/common/BookingSection/ConfirmedBooking/ConfirmedBooking.tsx';
 
 
 const Router: React.FC = () => {
   useActivityTracker();
   return (
     <Routes>
-      <Route path="/" element={<ProtectedRoute><MainLayout /> </ProtectedRoute>}>
+            <Route path="/" element={<MainLayout />}>
+
+      {/* <Route path="/" element={<ProtectedRoute><MainLayout /> </ProtectedRoute>}> */}
         <Route path={ROUTE_CONSTANTS.READYMADE_PACKAGE} element={<ReadymadePackage />} />
         <Route path={ROUTE_CONSTANTS.CUSTOMIZE_PACKAGE} element={<Customize />} />
         <Route path={ROUTE_CONSTANTS.PACKAGE_DETAILS} element={<PackageDetails />} />
+        <Route path={ROUTE_CONSTANTS.BOOKINGS} element={<ConfirmedBooking />} />
         <Route path={ROUTE_CONSTANTS.READYMADE_SEARCH_PLANNER} element={<TripPlannerReadyMade />} />
         <Route path={ROUTE_CONSTANTS.READYMADE_SEARCH} element={<ReadyMadeSearch />} />
         <Route path={ROUTE_CONSTANTS.TRIP_PLANNER_AREA} element={<TripPlannerArea />} />

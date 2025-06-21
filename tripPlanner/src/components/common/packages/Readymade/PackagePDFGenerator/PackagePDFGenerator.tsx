@@ -1,322 +1,568 @@
 import React, { useState, useRef } from 'react';
-import {Button,Box,Typography,CircularProgress, } from '@mui/material';
+import { Button, Box, Typography, CircularProgress } from '@mui/material';
 import { Download as DownloadIcon } from '@mui/icons-material';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { PackagePDFGeneratorProps } from '../../../../../types/types.ts';
 import './PackagePDFGenerator.scss';
+import { Hotel2, HotelOption, PackageHotel, PackageItinerary } from '../../../../../types/types';
 
-const PackagePDFGenerator: React.FC<PackagePDFGeneratorProps> = ({packageData,selectedHotelOption, selectedOptionIndex = 0,}) => {
-const [isGenerating, setIsGenerating] = useState<boolean>(false);
-const pdfRef = useRef<HTMLDivElement>(null);
-if (!packageData?.packageDetails) {
-return ( <Button disabled className="pdf-generator__button">Package data not available</Button>
-);
-}
-const { packageDetails } = packageData;
-const formatDate = (dateString: string): string => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {day: '2-digit',month: '2-digit', year: 'numeric' });};
+const PackagePDFGenerator = ({ packageData }) => {
+  const [loading, setLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const pdfRef = useRef<HTMLDivElement>(null);
+
+  if (!packageData) {
+    return (
+      <Button disabled className="pdf-generator__button">
+        Trip data not available
+      </Button>
+    );
+  }
+
+  const getPackageName = (packageData) => {
+    if (packageData.packageData?.packageName) {
+        return packageData.packageData.packageName;
+    }
+    if (packageData.trip_details?.destination) {
+        return `${packageData.trip_details.destination} Package`;
+    }
+    return 'Package Name Not Found';
+  };
+
+  const getPackageDestination = (packageData) => {
+    if (packageData.packageData?.originalPackageData?.destinations && 
+        Array.isArray(packageData.packageData.originalPackageData.destinations)) {
+        return packageData.packageData.originalPackageData.destinations.join(', ');
+    }
+    if (packageData.originalPackageData.destinations) {
+        return packageData.originalPackageData.destinations;
+    }
+    return 'Destination Not Found';
+  };
+
+  const getPackageCountry = (packageData) => {
+    if (packageData.tripDetails?.country) {
+        return packageData.tripDetails.country;
+    }
+    if (packageData.trip_details?.country) {
+        return packageData.trip_details.country;
+    }
+    return 'Country Not Found';
+  };
+
+const getPackageTotalAmount = (packageData) => {
+    if (packageData.pricing?.grandTotal) {
+      return packageData.pricing.grandTotal; // ✅ ye line tabhi chalegi jab pricing.grandTotal ho
+    }
+    // fallback
+    if (packageData.totalAmount) return packageData.totalAmount;
+    if (packageData.price) return packageData.price;
+    return 0;
+  };
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  };
+
+  const generateQuotationNumber = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `QT${timestamp}${random}`;
+  };
+
+const getPackageAdults = (packageData) => {
+    if (packageData.rooms?.adults) {
+        return packageData.rooms.adults;
+    }
     
-const generateQuotationNumber = (): string => {
-const timestamp = Date.now().toString().slice(-6);
-const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-return `QT${timestamp}${random}`;};
-const truncateText = (text: string, maxLength: number = 25): string => {
-        if (!text) return '';
-        return text.length > maxLength ? `${text.substring(0, maxLength - 3)}...` : text;};
-const getValidityText = (): string => {
-        if (packageDetails.validity?.startDate && packageDetails.validity?.endDate) {
-        return `${formatDate(packageDetails.validity.startDate)} till ${formatDate(packageDetails.validity.endDate)}`;}
-        return 'Validity dates not available';
+    return 2;
+};
+
+const transformData = () => {
+    const { trip_details, planner_items, pricing } = packageData;
+    
+    const hotelOptions: HotelOption[] = [];
+    const hotelMap = new Map();
+    
+    if (planner_items && Array.isArray(planner_items)) {
+      planner_items.forEach(item => {
+        if (item.hotel) {
+          const hotelKey = `${item.hotel.name}-${item.hotel.destination}`;
+          if (!hotelMap.has(hotelKey)) {
+            hotelMap.set(hotelKey, {
+              name: item.hotel.name,
+              destination: item.hotel.destination,
+              nights: item.hotel.nights,
+              price: item.hotel.price,
+              rating: item.hotel.rating,
+              roomType: item.hotel.roomType || 'Standard Room',
+              mealPlan: item.hotel.mealPlan || 'BB',
+              stayDates: [trip_details?.checkInDate, trip_details?.checkOutDate]
+            });
+          }
+        }
+      });
+    }
+
+    const hotels = Array.from(hotelMap.values());
+    
+    const grandTotal = getPackageTotalAmount(packageData);
+    const totalAdults = getPackageAdults(packageData); // Updated this line
+    const perPersonCost = totalAdults > 0 ? grandTotal / totalAdults : 0;
+
+    console.log('Debug - Grand Total:', grandTotal);
+    console.log('Debug - Total Adults:', totalAdults);
+    console.log('Debug - Per Person Cost:', perPersonCost);
+
+    hotelOptions.push({
+        hotels: hotels,
+        totalPackageCost: grandTotal,
+        perPersonCost: perPersonCost,
+        cnbCost: 0,
+        cwbCost: 0
+      });
+      
+    const activities: any[] = [];
+    if (planner_items && Array.isArray(planner_items)) {
+      planner_items.forEach(item => {
+        if (item.itinerary && 
+            item.itinerary.title !== 'Arrival in Tbilisi' && 
+            item.itinerary.title !== 'Departure from Batumi (via Tbilisi Airport)' &&
+            !item.tours) {
+          activities.push({
+            name: item.itinerary.title,
+            type: 'Private',
+            vehicle: 'PVT Sedan (2 Seater)'
+          });
+        }
+      });
+    }
+
+    const transfers: any[] = [];
+    if (planner_items && Array.isArray(planner_items)) {
+      planner_items.forEach(item => {
+        if (item.transfer) {
+          transfers.push({
+            route: item.transfer.route,
+            type: item.transfer.type,
+            vehicle: item.transfer.type === 'SIC' ? 'Train' : 'Sedan (2 Seater)'
+          });
+        }
+      });
+    }
+    const itinerary = planner_items && Array.isArray(planner_items) ? planner_items.map(item => {
+        let title = item.itinerary?.title || item.tours?.name || 'Untitled Day';
+        let details = item.itinerary?.details || '';
+      
+        if (item.tours?.description) {
+          details += item.tours.description;
+        }
+      
+        return {
+          day: item.dayNumber,
+          date: item.date,
+          title: title,
+          details: details
+        };
+      }) : [];
+      
+    return {
+      packageDetails: {
+        packageName: getPackageName(packageData),
+        destinations: [getPackageDestination(packageData)],
+        country: getPackageCountry(packageData),
+        travelDates: {
+          start: trip_details?.checkInDate,
+          end: trip_details?.checkOutDate
+        },
+        passengers: {
+          adult: totalAdults, // Updated this line
+          child: trip_details?.children || 0,
+          infant: trip_details?.infants || 0
+        },
+        totalNights: trip_details?.nights,
+        validity: packageData?.originalPackageData?.validity || {
+          startDate: '2025-01-01',
+          endDate: '2025-12-31'
+        },
+        activities: activities,
+        transfers: transfers,
+        itinerary: itinerary,
+        inclusions: packageData?.originalPackageData?.inclusions || [
+        'Breakfast included on all days in the hotel',
+        'Accommodation, tours, and tickets as mentioned in the package'
+        ],
+        exclusions: packageData?.originalPackageData?.exclusions || [
+
+        ' GST (5%) & TCS (5%) excluded.',
+        'Passport fees, immunization costs, city taxes, and local departure taxes.',
+        'Optional enhancements like room/flight upgrades, local camera/video fees.',
+        'Additional sightseeing, activities, or experiences outside the itinerary.',
+        'Early check-in or late check-out (unless specified).',
+        'Flights, excess baggage charges, tips, and other personal expenses (Unless mentioned)',
+        ],
+        importantNotes: packageData?.originalPackageData?.importantNotes || [
+            'This is just a quote and no reservations have been held yet or booking has not proceeded yet.',
+            'The rooms & rates are subject to availability at the time of booking / confirmation.',
+            'Hotel, sightseeing, meals, and transfer rates might change without prior notice until & unless the tour has been booked',
+            'or confirmed from your end.',
+            'The Change In Dates Will Attract Re-quote.',
+            'Normal Hotel Check-In Time Is From 14.00 hours Onwards. & Check-Out Time Is At 12.00 Hrs.',
+            'The Above Cost Does Not Include Any Kind Of surcharge, If applicable, During The Given Travel Period.',
+            'Quotation Might Change Due To Currencies RoE Fluctuation During Confirmation & Booking Process. (For',
+            'INternational Tours)',
+            'We Are Not Responsible For Any Loss Of Your Valuables Like Mobiles, Bags, Jewellery & Money.',
+        ],
+        cancellationPolicy: packageData?.originalPackageData?.cancellationPolicy
+    },
+    hotelOptions: hotelOptions,
+    grandTotal: grandTotal
     };
-const getVehicleCount = (type: string, vehicle: string): string => {
-        if (type === 'Ticket Only' || type === 'SIC' || vehicle === 'Train') {return '';}
-        return '1';};
-const packageTitle = packageDetails.packageName || 'Tour Package';
-const firstHotel = selectedHotelOption?.hotels?.[0];
-const totalNights = firstHotel?.nights || 0;
-const quotationNo = generateQuotationNumber();
-const startDate = packageDetails.travelDates?.start || '';
-const endDate = packageDetails.travelDates?.end || '';
-const destinations = packageDetails.destinations || [];
-const primaryDestination = destinations[0] || firstHotel?.destination || '';
-const passengerCounts = {
-        adult: packageDetails.passengers?.adult || 0,
-        child: packageDetails.passengers?.child || 0,
-        infant: packageDetails.passengers?.infant || 0};
-const totalPackageCost = selectedHotelOption?.totalPackageCost ||
-        (selectedHotelOption?.perPersonCost || 0) * passengerCounts.adult;
-const activities = packageDetails.activities || [];
-const transfers = packageDetails.transfers || [];
-const inclusions = packageDetails.inclusions || [];
-const exclusions = packageDetails.exclusions || [];
-const notes = packageDetails.importantNotes || [];
-const itineraryData = packageDetails.itinerary || [];
-const generatePDF = async (): Promise<void> => {
-        if (!pdfRef.current) return;
-        setIsGenerating(true);
-        try {
-pdfRef.current.style.position = 'absolute';
-pdfRef.current.style.top = '-10000px';
-pdfRef.current.style.left = '-10000px';
-pdfRef.current.style.visibility = 'visible';
-pdfRef.current.style.opacity = '1';
-pdfRef.current.style.height = 'auto';
-pdfRef.current.style.overflow = 'visible';
-pdfRef.current.style.width = '200mm';
-pdfRef.current.style.minHeight = '297mm';
-pdfRef.current.style.zIndex = '-1000';
-await new Promise(resolve => setTimeout(resolve, 200));
-const A4_WIDTH_PX = 794;
-const A4_HEIGHT_PX = 1123;
-const canvas = await html2canvas(pdfRef.current, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
-width: A4_WIDTH_PX, height: Math.max(pdfRef.current.scrollHeight, A4_HEIGHT_PX), logging: false,  imageTimeout: 0,  removeContainer: true,});
-pdfRef.current.style.position = 'absolute';
-pdfRef.current.style.top = '-10000px';
-pdfRef.current.style.left = '-10000px';
-pdfRef.current.style.visibility = 'hidden';
-pdfRef.current.style.opacity = '0';
-pdfRef.current.style.zIndex = '-9999';
-const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm',format: 'a4'});
-const pdfWidth = 200;
-const pdfHeight = 297;
-const margin = 10;
-const contentWidth = pdfWidth - (margin * 2);
-const contentHeight = pdfHeight - (margin * 2);
-const imgData = canvas.toDataURL('image/jpeg', 0.8);
-const imgWidth = canvas.width;
-const imgHeight = canvas.height;
-const ratio = contentWidth / (imgWidth * 0.264583);
-const scaledHeight = imgHeight * 0.264583 * ratio;
-if (scaledHeight <= contentHeight) { pdf.addImage(imgData, 'JPEG', margin, margin, contentWidth, scaledHeight);
-} else {  const pageHeight = contentHeight;
-            let yOffset = 0;
-            let pageNum = 0;
-            while (yOffset < scaledHeight) {
-            if (pageNum > 0) {
-                pdf.addPage();}
-const sourceY = (yOffset / scaledHeight) * imgHeight;
-const sourceHeight = Math.min((pageHeight / scaledHeight) * imgHeight, imgHeight - sourceY);
-const pageCanvas = document.createElement('canvas');
-pageCanvas.width = imgWidth;
-pageCanvas.height = sourceHeight;
-const pageCtx = pageCanvas.getContext('2d');
-if (pageCtx) {
-pageCtx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
-const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.8);
-const actualHeight = Math.min(pageHeight, scaledHeight - yOffset);
-pdf.addImage(pageImgData, 'JPEG', margin, margin, contentWidth, actualHeight); }
-yOffset += pageHeight; pageNum++;} }
-const filename = `${packageTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Quotation.pdf`; pdf.save(filename);} catch (error) {
-console.error('PDF generation failed:', error);
-alert('PDF generation failed. Please try again.');
-} finally {setIsGenerating(false); } };
+};
+
+  const getVehicleCount = (type: string, vehicle: string) => {
+    if (type === 'Ticket Only' || type === 'SIC' || vehicle === 'Train') {
+      return '';
+    }
+    return '1';
+  };
+
+  const transformedData = transformData();
+  const { packageDetails } = transformedData;
+  const selectedHotelOption = transformedData.hotelOptions[0];
+
+  const quotationNo = generateQuotationNumber();
+  const packageTitle = packageDetails.packageName;
+  const destinations = packageDetails.destinations;
+  const country = packageDetails.country;
+  const startDate = packageDetails.travelDates.start;
+  const endDate = packageDetails.travelDates.end;
+  const passengerCounts = packageDetails.passengers;
+  const totalNights = packageDetails.totalNights;
+  const grandTotal = transformedData.grandTotal;
+
+
+
+  const getValidityText = () => {
+    if (packageDetails.validity?.startDate && packageDetails.validity?.endDate) {
+      return `${formatDate(packageDetails.validity.startDate)} till ${formatDate(packageDetails.validity.endDate)}`;
+    }
+    return 'Validity dates not available';
+  };
+
+  const generatePDF = async () => {
+    if (!pdfRef.current) return;
+    setIsGenerating(true);
     
-return (
-        <Box className="pdf-generator">
-        <Button startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />} onClick={generatePDF} disabled={isGenerating} className="pdf-generator__button"> {isGenerating ? 'Generating PDF...' : 'Download PDF'} </Button>
-    
-        <Box ref={pdfRef} className="pdf-content">
-            {/* Header Section */}
-            <Box className="pdf-header">
-            <Box className="quotation-title">QUOTATION</Box>
-            <Box className="package-title">{packageTitle}</Box>
-            
-            <Box className="company-info">
-                <Box className="company-name">FLY DIVINE</Box>
-                <Box className="company-type">TRAVELS</Box>
+    try {
+      pdfRef.current.style.position = 'absolute';
+      pdfRef.current.style.top = '-10000px';
+      pdfRef.current.style.left = '-10000px';
+      pdfRef.current.style.visibility = 'visible';
+      pdfRef.current.style.opacity = '1';
+      pdfRef.current.style.height = 'auto';
+      pdfRef.current.style.overflow = 'visible';
+      pdfRef.current.style.width = '200mm';
+      pdfRef.current.style.minHeight = '300mm';
+      pdfRef.current.style.zIndex = '-1000';
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const A4_WIDTH_PX = 794;
+      const A4_HEIGHT_PX = 1123;
+
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: A4_WIDTH_PX,
+        height: Math.max(pdfRef.current.scrollHeight, A4_HEIGHT_PX),
+        logging: false,
+        imageTimeout: 0,
+        removeContainer: true,
+      });
+
+    pdfRef.current.style.position = 'absolute';
+    pdfRef.current.style.top = '-10000px';
+    pdfRef.current.style.left = '-10000px';
+    pdfRef.current.style.visibility = 'hidden';
+    pdfRef.current.style.opacity = '0';
+    pdfRef.current.style.zIndex = '-9999';
+
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    const pdfWidth = 200;
+    const pdfHeight = 300;
+    const margin = 10;
+      const contentWidth = pdfWidth - (margin * 2);
+      const contentHeight = pdfHeight - (margin * 2);
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = contentWidth / (imgWidth * 0.264583);
+      const scaledHeight = imgHeight * 0.264583 * ratio;
+
+if (scaledHeight <= contentHeight) {
+        pdf.addImage(imgData, 'JPEG', margin, margin, contentWidth, scaledHeight);} else {
+        const pageHeight = contentHeight;
+        let yOffset = 0;
+        let pageNum = 0;
+
+        while (yOffset < scaledHeight) {
+          if (pageNum > 0) {
+            pdf.addPage();
+          }
+
+          const sourceY = (yOffset / scaledHeight) * imgHeight;
+          const sourceHeight = Math.min((pageHeight / scaledHeight) * imgHeight, imgHeight - sourceY);
+
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = imgWidth;
+          pageCanvas.height = sourceHeight;
+          const pageCtx = pageCanvas.getContext('2d');
+
+          if (pageCtx) {
+            pageCtx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
+            const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.8);
+            const actualHeight = Math.min(pageHeight, scaledHeight - yOffset);
+            pdf.addImage(pageImgData, 'JPEG', margin, margin, contentWidth, actualHeight);
+          }
+
+          yOffset += pageHeight;
+          pageNum++;
+        }
+      }
+
+      const filename = `${packageTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Quotation.pdf`;
+      pdf.save(filename);
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('PDF generation failed. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <Box className="pdf-generator">
+      <Button sx={{bgcolor:'#0369a1', color:'white'}}
+        startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
+        onClick={generatePDF}
+        disabled={isGenerating}
+        className="pdf-generator__button" >{isGenerating ? 'Generating PDF...' : 'Download PDF'}</Button>
+
+      <Box ref={pdfRef} className="pdf-content">
+        <Box className="pdf-header">
+          <Box className="quotation-title">QUOTATION</Box>
+          <Box className="package-title">{packageTitle}</Box>
+          
+          <Box className="company-info">
+            <Box className="company-name">FLY DIVINE</Box>
+            <Box className="company-type">TRAVELS</Box>
+          </Box>
+
+          <Box className="quotation-info">
+            <Box className="left-info">
+              <Box><strong>Quotation No:</strong> #{quotationNo}</Box>
+              <Box><strong>Date:</strong> {formatDate(new Date().toISOString())}</Box>
             </Box>
-    
-            <Box className="quotation-info">
-                <Box className="left-info">
-                <Box><strong>Quotation No:</strong> #{quotationNo}</Box>
-                <Box><strong>Date:</strong> {packageDetails.quotationDate ? formatDate(packageDetails.quotationDate) : formatDate(new Date().toISOString())}</Box>
-                </Box>
-                <Box className="right-info">
-                <Box><strong>Destination:</strong> {destinations.join(', ') || primaryDestination}</Box>
-                <Box><strong>Validity:</strong> {getValidityText()}</Box>
-                </Box>
+            <Box className="right-info">
+              <Box><strong>Destination:</strong> {destinations.join(', ')}</Box>
+              <Box><strong>Country:</strong> {country}</Box>
+              <Box><strong>Validity:</strong> {getValidityText()}</Box>
             </Box>
-    
-            <Box className="customer-info">   <div><strong>To:</strong> Test 1</div> </Box>
-    
-            <Box className="travel-details">
-                <Box className="travel-grid-header">
-                <Box>Travel Date</Box>
-                <Box>No. of Adult</Box>
-                <Box>No. of Child</Box>
-                <Box>No. of Infant</Box>
-                </Box>
-                <Box className="travel-grid-content">
-                <Box> {startDate && endDate ? `${formatDate(startDate)} To ${formatDate(endDate)}` : 'Travel dates not specified'}</Box>
-            <Box>{passengerCounts.adult}</Box>
-            <Box>{passengerCounts.child}</Box>
-            <Box>{passengerCounts.infant}</Box>
-                </Box>
+          </Box>
+
+          <Box className="customer-info">
+            <div><strong>To:</strong> Test 1</div>
+          </Box>
+
+          <Box className="travel-details">
+            <Box className="travel-grid-header">
+              {/* <Box>Travel Date</Box> */}
+              <Box>No. of Adult</Box>
+              <Box>No. of Child</Box>
+              <Box>No. of Infant</Box>
+              <Box>Total Nights</Box>
             </Box>
-    
-            <Box className="currency-notice">
-                QUOTATION COSTS ARE PROVIDED IN [USD]
+            <Box className="travel-grid-content">
+              <Box>{passengerCounts.adult || 0}</Box>
+              <Box>{passengerCounts.child || 0}</Box>
+              <Box>{passengerCounts.infant || 0}</Box>
+              <Box>{totalNights || 0}</Box>
             </Box>
-            </Box>
-    
-            {/* Hotel Tables Section */}
-            {selectedHotelOption?.hotels && selectedHotelOption.hotels.length > 0 && (
-            <Box className="hotel-section">
-                <table className="hotel-table">
-                <thead>
-                    <tr>
-                    <th>HOTEL NAME</th>
-                    <th>DESTINATION</th>
-                    <th>ROOM TYPE</th>
-                    <th>MEAL PLAN</th>
-                    <th>ROOMS</th>
-                    <th>STAY1</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {selectedHotelOption.hotels.map((hotel, index) => (
-                    <tr key={index}>
-                        <td>
-                        {hotel.name || 'Hotel name not available'}
-                        <div className="hotel-rating">4 Star</div>
-                        </td>
-                        <td>{hotel.destination || ''} - {hotel.nights || 0} Night</td>
-                        <td>{hotel.roomType || 'Standard Room'}</td>
-                        <td>{hotel.mealPlan || 'BB'}</td>
-                        <td>DBL 1</td>
-                        <td>
-                        {hotel.stayDates && hotel.stayDates.length >= 2
-                            ? `${formatDate(hotel.stayDates[0])} To ${formatDate(hotel.stayDates[hotel.stayDates.length - 1])}`
-                            : startDate && endDate
-                            ? `${formatDate(startDate)} To ${formatDate(endDate)}`
-                            : 'Stay dates not available' }
-                        </td>
-                    </tr>
-                    ))}
-                    <tr className="total-row">
-                    <td colSpan={5}>{selectedHotelOption.hotels.length} DBL Room :</td>
-                    <td>Per Person USD {selectedHotelOption.perPersonCost || 0}/-</td>
-                    </tr>
-                </tbody>
-                </table>
-                
-                <div className="package-cost-banner">TOTAL PACKAGE COST FOR HOTEL OPTION {selectedOptionIndex + 1} : USD {totalPackageCost}
-                </div>
-            </Box>
-            )}
-    
-            {/* Activities Section */}
-            {activities.length > 0 && (
-            <Box className="activities-section">
-                <table className="activities-table">
-                <thead>
-                    <tr>
-                    <th>SIGHTSEEING / ACTIVITY</th>
-                    <th>TYPE</th>
-                    <th>VEHICLE</th>
-                    <th>NO. OF VEHICLE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {activities.map((activity, index) => (
-                    <tr key={index}>
-                        <td>{truncateText(activity.name || '')}</td>
-                        <td>{activity.type || ''}</td>
-                        <td>{activity.vehicle || ''}</td>
-                        <td>{getVehicleCount(activity.type || '', activity.vehicle || '')}</td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            </Box>
-            )}
-    
-            {/* Transfers Section */}
-            {transfers.length > 0 && (
-            <Box className="transfers-section">
-                <table className="transfers-table">
-                <thead>
-                    <tr>
-                    <th>TRANSFER</th>
-                    <th>TYPE</th>
-                    <th>VEHICLE</th>
-                    <th>NO. OF VEHICLE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {transfers.map((transfer, index) => (
-                    <tr key={index}>
-                        <td>{truncateText(transfer.route || '')}</td>
-                        <td>{transfer.type || ''}</td>
-                        <td>{transfer.vehicle || ''}</td>
-                        <td>{getVehicleCount(transfer.type || '', transfer.vehicle || '')}</td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            </Box>
-            )}
-    
-            {/* Itinerary Section */}
-            {itineraryData.length > 0 && (
-            <Box className="itinerary-section">
-                <Box className="section-title">DAY WISE ITINERARY DETAILS</Box>
-                {itineraryData.map((dayData, index) => (
-                <Box key={index} className="day-item">
-                    <Box className="day-header">Day {dayData.day} {dayData.date ? `(${formatDate(dayData.date)})` : ''} : {dayData.title}</Box>
-                    <Box className="day-details">{dayData.details} </Box>
-                </Box>
+          </Box>
+
+          <Box className="currency-notice">
+            QUOTATION COSTS ARE PROVIDED [USD]
+          </Box>
+        </Box>
+
+        {selectedHotelOption?.hotels && selectedHotelOption.hotels.length > 0 && (
+          <Box className="hotel-section">
+            <table className="hotel-table">
+              <thead>
+                <tr>
+                  <th>HOTEL NAME</th>
+                  <th>DESTINATION</th>
+                  <th>ROOM TYPE</th>
+                  <th>MEAL PLAN</th>
+                  <th>ROOMS</th>
+                  <th>Night</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedHotelOption.hotels.map((hotel: any, index: number) => (
+                  <tr key={index}>
+                    <td> {hotel.name }<div className="hotel-rating">{hotel.rating} Star</div> </td>
+                    <td>{hotel.destination }</td>
+                    <td>{hotel.roomType || 'Standard Room'}</td>
+                    <td>{hotel.mealPlan || 'BB'}</td>
+                    <td>DBL 1</td>
+                    <td> {hotel.nights || 0}  </td>
+                  </tr>
                 ))}
-            </Box>
-            )}
-    
-            {/* Inclusions Section */}
-            {inclusions.length > 0 && (
-            <Box className="inclusions-section">
-                <Box className="section-header">Inclusion</Box>
-                <ul>{inclusions.map((inclusion, index) => ( <li key={index}>{inclusion}</li> ))} </ul>
-            </Box>
-            )}
-    
-            {/* Exclusions Section */}
-            {exclusions.length > 0 && (
-            <Box className="exclusions-section">
-                <Box className="section-header">Exclusion</Box>
-                <ul>{exclusions.map((exclusion, index) => (
-                    <li key={index}>{exclusion}</li>))}
-                </ul>
-            </Box>
-            )}
-    
-            {/* Important Notes Section */}
-            {notes.length > 0 && (
-            <Box className="notes-section">
-                <Box className="section-header">Important Notes</Box>
-                <ul>{notes.map((note, index) => (
-                    <li key={index}>{note}</li> ))}
-                </ul></Box>
-            )}
-    
-            {packageDetails.cancellationPolicy && (
-            <Box className="cancellation-section">
-                <Box className="section-header">Cancellation Policy</Box>
-                <ul>
-                <li><strong>Cancellations received 30 days prior to arrival date:</strong> {packageDetails.cancellationPolicy.before30Days || '10% of the total package amount'}</li>
-                <li><strong>Cancellations received less than 30 days from arrival date:</strong> {packageDetails.cancellationPolicy.before21Days || '25% of the total package amount'}</li>
-                <li><strong>Cancellations received less than 21 days from arrival date:</strong> {packageDetails.cancellationPolicy.before15Days || '50% of the total package amount'}</li>
-                <li><strong>Cancellations received less than 15 days from arrival date:</strong> 100% of the total package amount</li>
-                {packageDetails.cancellationPolicy.notes && (
-                    <li className="policy-notes">{packageDetails.cancellationPolicy.notes}</li> )}
-                </ul>
-            </Box>
-            )}
-        </Box>
-        </Box>
-);
+                <tr className="total-row">
+                  <td colSpan={5}>1 DBL Room :</td>
+                  <td>Per Person USD {(selectedHotelOption.perPersonCost || 0).toFixed(2)}/-</td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div className="package-cost-banner">
+              TOTAL PACKAGE COST FOR HOTEL OPTION 1 : USD {(grandTotal || 0).toFixed(2)}
+            </div>
+          </Box>
+        )}
+
+        {packageDetails.activities && packageDetails.activities.length > 0 && (
+          <Box className="activities-section">
+            <table className="activities-table">
+              <thead>
+                <tr>
+                  <th>SIGHTSEEING / ACTIVITY</th>
+                  <th>TYPE</th>
+                  <th>VEHICLE</th>
+                  <th>NO. OF VEHICLE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {packageDetails.activities.map((activity: any, index: number) => (
+                  <tr key={index}>
+                    <td>{activity.name || ''}</td>
+                    <td>{activity.type || ''}</td>
+                    <td>{activity.vehicle || ''}</td>
+                    <td>{getVehicleCount(activity.type || '', activity.vehicle || '')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Box>
+        )}
+
+        {packageDetails.transfers && packageDetails.transfers.length > 0 && (
+          <Box className="transfers-section">
+            <table className="transfers-table">
+              <thead>
+                <tr>
+                  <th>TRANSFER</th>
+                  <th>TYPE</th>
+                  <th>VEHICLE</th>
+                  <th>NO. OF VEHICLE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {packageDetails.transfers.map((transfer: any, index: number) => (
+                  <tr key={index}>
+                    <td>{transfer.route || ''}</td>
+                    <td>{transfer.type || ''}</td>
+                    <td>{transfer.vehicle || ''}</td>
+                    <td>{getVehicleCount(transfer.type || '', transfer.vehicle || '')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Box>
+        )}
+
+        {packageDetails.itinerary && packageDetails.itinerary.length > 0 && (
+          <Box className="itinerary-section">
+            <Box className="section-title">DAY WISE ITINERARY DETAILS</Box>
+            {packageDetails.itinerary.map((dayData: any, index: number) => (
+              <Box key={index} className="day-item">
+                <Box className="day-header">
+                Day {dayData.day} {dayData.date ? `(${formatDate(dayData.date)})` : ''} : {dayData.title}
+                </Box>
+                <Box className="day-details">{dayData.details}</Box>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {packageDetails.inclusions && packageDetails.inclusions.length > 0 && (
+          <Box className="inclusions-section">
+            <Box className="section-header">Inclusion</Box>
+            <ul>
+              {packageDetails.inclusions.map((inclusion: string, index: number) => (
+                <li key={index}>{inclusion}</li>
+              ))}
+            </ul>
+          </Box>
+        )}
+
+        {packageDetails.exclusions && packageDetails.exclusions.length > 0 && (
+          <Box className="exclusions-section">
+            <Box className="section-header">Exclusion</Box>
+            <ul>
+              {packageDetails.exclusions.map((exclusion: string, index: number) => (
+                <li key={index}>{exclusion}</li>
+              ))}
+            </ul>
+          </Box>
+        )}
+
+        {packageDetails.importantNotes && packageDetails.importantNotes.length > 0 && (
+          <Box className="notes-section">
+            <Box className="section-header">Important Notes</Box>
+            <ul>
+              {packageDetails.importantNotes.map((note: string, index: number) => (
+                <li key={index}>{note}</li>
+              ))}
+            </ul>
+          </Box>
+        )}
+
+        {packageDetails.cancellationPolicy && (
+          <Box className="cancellation-section">
+            <Box className="section-header">Cancellation Policy</Box>
+            <ul>
+              <li><strong>Cancellations received 30 days prior to arrival date:</strong> {packageDetails.cancellationPolicy.before30Days || '10%'} of the total package amount</li>
+              <li><strong>Cancellations received less than 21 days from arrival date:</strong> {packageDetails.cancellationPolicy.before21Days || '50%'} of the total package amount</li>
+              <li><strong>Cancellations received less than 15 days from arrival date:</strong> {packageDetails.cancellationPolicy.before15Days || '100%'} of the total package amount</li>
+              {packageDetails.cancellationPolicy.nonRefundablePeriods && (
+                <li><strong>Non-refundable periods:</strong> {packageDetails.cancellationPolicy.nonRefundablePeriods}</li>
+              )}
+              {packageDetails.cancellationPolicy.notes && (
+                <li className="policy-notes"><strong>Note:</strong> {packageDetails.cancellationPolicy.notes}</li>
+              )}
+            </ul>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
 };
 
 export default PackagePDFGenerator;
-

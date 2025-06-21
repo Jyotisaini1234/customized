@@ -15,7 +15,7 @@ export const ROUTE_CONSTANTS = {
   HOME_PAGE: '/home-page',
   BAKU_PACKAGES: '/baku-packages',
   TOURS_TRANSFERS: 'http://localhost:3002/hotel/transfer-search',
-  BOOKINGS: '/readymade-bookings',
+  BOOKINGS: '/readymade-booking',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',
   TRIP_PLANNER_AREA:'/trip-planner-area',
@@ -27,7 +27,7 @@ export const ROUTE_CONSTANTS = {
   READYMADE_SEARCH_PLANNER:'/readymade-planner',
   // User related routes
   USER_PROFILE: '/user',
-  LOGOUT: 'http://localhost:3002/hotel',
+  LOGOUT: 'http://b2b.flydivinetravels.com/hotel',
   FLY_DIVINE_TRAVELS: '/fly-divine-travels',
   UI_TEAMS: '/u_i_teams'
 };

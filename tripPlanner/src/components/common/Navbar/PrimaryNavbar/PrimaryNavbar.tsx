@@ -64,6 +64,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   };
   const handleLogout = () => {
     MainAppTokenService.clearTokensAndRedirect();
+    window.location.href = 'http://localhost:3002/hotel';
   };
 
   const toggleMenu = () => {
