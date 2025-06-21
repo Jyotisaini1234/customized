@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { BASE_URL } from '../utils/ApiConstants.ts';
+import { BASE_URL_BACKEND } from '../utils/ApiConstants.ts';
 import { Lead } from '../types/types.ts';
 
 export const tourApi = createApi({
   reducerPath: 'tourApi',
   baseQuery: fetchBaseQuery({ 
-    baseUrl: BASE_URL,
+    baseUrl: BASE_URL_BACKEND,
     prepareHeaders: (headers) => {
       headers.set('Content-Type', 'application/json');
       headers.set('Access-Control-Allow-Origin', '*');

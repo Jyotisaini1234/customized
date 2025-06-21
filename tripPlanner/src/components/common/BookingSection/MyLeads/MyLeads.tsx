@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Chip, Link, Button } from '@mui/material';
 import { tourApi, useGetLeadByIdQuery, useGetLeadsQuery } from '../../../../api/TourAPI.tsx';
 import './MyLeads.scss';
@@ -24,6 +24,10 @@ const getStatusChip = (status: string) => {
     return <Chip label="confirm" color="warning" />;
   }
 };
+
+useEffect(() => {
+  sessionStorage.setItem('src', 'B.E.');
+},[])
 
 const handleLeadDetails = (lead: any) => {
   setSelectedLead(lead);
@@ -194,8 +198,10 @@ const handleEditLead = (lead: Lead) => {
   }));
   sessionStorage.setItem('editLeadData', JSON.stringify(editLeadData));
   console.log('Edit data saved to sessionStorage:', editLeadData);
-  
-  navigate('/trip-planner');
+  sessionStorage.setItem('src', 'lead');
+  navigate({
+    pathname: '/trip-planner'
+  });
 };
 
 const getCorrectDestination = (lead) => {

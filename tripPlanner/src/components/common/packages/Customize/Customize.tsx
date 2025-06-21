@@ -192,8 +192,8 @@
         filteredHotels
       };
       if (!isModifying) {
-        sessionStorage.removeItem('tripPlannerHotels');
-        sessionStorage.removeItem('tripPlannerItems');
+        // sessionStorage.removeItem('tripPlannerHotels');
+        // sessionStorage.removeItem('tripPlannerItems');
       }
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(params));
       if (isModifying && onSearchComplete) {
