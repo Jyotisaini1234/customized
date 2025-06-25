@@ -1,11 +1,17 @@
-
+export interface RoomState {
+  id: number;
+  adults: number;
+  cwb: number;
+  cnb: number;
+  infants: number;
+}
 export interface HotelSummaryParams {
   country: string;
   city: string;
   checkInDate: string;
   checkOutDate: string;
   nights: number;
-  rooms: Room[];
+  rooms: RoomState[];
   packageType?: string;
   filteredHotels?: any[];
   packageData?: any;
@@ -33,10 +39,17 @@ export interface CustomizeSearchProps {
 
 export interface TripPlannerProps {
   location: string;
+  city: string;
   nights: number;
   checkInDate: string;
   checkOutDate: string;
-  rooms?: Room[];
+  rooms: {
+    id: number;
+    adults: number;
+    cwb: number; // Child with bed
+    cnb: number; // Child no bed
+    infants: number;
+  }[];
   country?: string;
   packageType?: string;
   filteredHotels?: any[];
@@ -196,7 +209,6 @@ export interface Activity {
   isUpdated?: boolean;
   isDeleted?: boolean;
   isAssigned?: boolean;
-  source?: string;
 }
 export interface ClientDetailsFormProps {
   open: boolean;
@@ -659,7 +671,6 @@ export interface ReadyMadeHotel {
   isUpdated?: boolean;
   isDeleted?: boolean;
   isAssigned?: boolean;
-  source?: string;
 }
 
 export interface Transfer {
@@ -672,7 +683,6 @@ export interface Transfer {
   isPackageTransfer?: boolean;
   isDeleted?: boolean;
   isAssigned?: boolean;
-  source?: string;
 }
 
 export interface PackageItinerary {
@@ -683,7 +693,6 @@ export interface PackageItinerary {
   day: number;
   date: string;
   title: string;
-  source:String;
   price: number;
   dayId:string ;
   isAssigned:boolean;
@@ -888,7 +897,6 @@ export interface TripPlannerDBData {
       isUpdated: boolean;
       uniqueId?: number;
       specificDayId?: string;
-      source: string;
     };
     tours?: {
       id: string;
@@ -902,7 +910,6 @@ export interface TripPlannerDBData {
       isUpdated: boolean;
       currency: string;
       type: string;
-      source: string;
     };
     transfer?: {
       id: string;
@@ -914,7 +921,6 @@ export interface TripPlannerDBData {
       vehicleType?: string;
       type: string;
       isPackageTransfer: boolean;
-      source: string;
     };
     itinerary?: {
       id: string;
@@ -926,7 +932,6 @@ export interface TripPlannerDBData {
       isUpdated: boolean;
       isPackageItinerary: boolean;
       day: number;
-      source: string;
     };
   }[];
 

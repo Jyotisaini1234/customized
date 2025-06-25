@@ -64,7 +64,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   };
   const handleLogout = () => {
     MainAppTokenService.clearTokensAndRedirect();
-    window.location.href = 'http://localhost:3002/hotel';
+    window.location.href = 'http://b2b.flydivinetravels.com/hotel';
   };
 
   const toggleMenu = () => {

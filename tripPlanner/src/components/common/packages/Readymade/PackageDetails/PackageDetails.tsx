@@ -223,24 +223,8 @@ const handleProceedToSearch = () => {
     </Box>
   )}
 </Box>
-  {/* <Box className="proceed-section">
-              {selectedOption ? (
-                <PackagePDFGenerator
-                  packageData={packageData}
-                  selectedHotelOption={{
-                    ...selectedOption,
-                    totalPackageCost: calculateTotalCost(selectedOption)
-                  }}
-                  selectedOptionIndex={selectedOptionIndex}
-                  selectedSeason={selectedSeason} />
-              ) : (
-                <Button onClick={handleSelectAndProceed}  disabled={!selectedHotel}   className="proceed-button" > 
-                  Download PDF
-                </Button>
-              )}
-            </Box>
-      */}
-            {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
+
+    {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
     <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
     <TableContainer component={Paper} className="hotel-table-container">
       <Table className="hotel-table">

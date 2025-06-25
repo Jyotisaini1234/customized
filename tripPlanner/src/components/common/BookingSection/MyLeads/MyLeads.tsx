@@ -15,7 +15,6 @@ const [detailsOpen, setDetailsOpen] = useState<boolean>(false);
 const navigate = useNavigate();
 const handleInvoiceDownload = useLeadInvoiceDownload();
 const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-const dispatch = useDispatch();
 
 const getStatusChip = (status: string) => {
   if (status === 'confirmed') {
@@ -92,10 +91,6 @@ const handleEditLead = (lead: Lead) => {
         currency: hotel.currency || selectedLead.currency || 'USD',
         totalRooms: hotel.totalRooms || hotel.completeBookingData?.totalRooms || 1
       },
-      room: {
-        roomCategory: hotel.roomType || hotel.completeRoomData?.roomCategory || 'Standard',
-        mealPlan: hotel.mealPlan || hotel.completeRoomData?.mealPlan || 'None'
-      },
       city: hotel.city || selectedLead.destinations || '',
       specificDayId: hotel.specificDayId || null
     })),
@@ -105,7 +100,7 @@ const handleEditLead = (lead: Lead) => {
       date: item.date || '',
       dateObj: item.dateObj || item.date || '',
       tours: item.tours ? {
-        id: item.tours.id || `tour_${index}_${Date.now()}`,
+        id: item.id ,
         name: item.tours.name || 'Tour',
         description: item.tours.description || '',
         duration: item.tours.duration || 'N/A',
@@ -113,58 +108,8 @@ const handleEditLead = (lead: Lead) => {
         price: parseFloat(item.tours.price || 0),
         city: item.tours.city || selectedLead.destinations || '',
         activities: Array.isArray(item.tours.activities) ? item.tours.activities : [],
-        details: {
-          tour: {
-            id: item.tours.id || `tour_${index}_${Date.now()}`,
-            tourName: item.tours.name,
-            name: item.tours.name,
-            description: item.tours.description || '',
-            duration: item.tours.duration || '',
-            city: item.tours.city || '',
-            currency: item.tours.currency || selectedLead.currency,
-            price: parseFloat(item.tours.price || 0),
-            activities: Array.isArray(item.tours.activities) ? item.tours.activities : []
-          },
-          booking: {
-            selectedActivities: Object.fromEntries(
-              (item.tours.activities || []).map((activity, i) => [
-                activity.name || activity.id || `activity_${i}`, true
-              ])
-            ),
-            activityDetails: item.tours.activities || [],
-            totalPrice: parseFloat(item.tours.price || 0),
-            currency: item.tours.currency || selectedLead.currency
-          }
-        },
-        completeToursData: {
-          ...item.tours,
-          originalPrice: parseFloat(item.tours.price || 0),
-          originalCurrency: item.tours.currency || selectedLead.currency
-        }
       } : null,
-
-      transfer: item.transfer ? {
-        ...item.transfer,
-        city: item.transfer.city || selectedLead.destinations || '',
-        price: parseFloat(item.transfer.price || 0)
-      } : null,
-
-      meals: item.meals ? {
-        ...item.meals,
-        city: item.meals.city || selectedLead.destinations || '',
-        price: parseFloat(item.meals.price || 0)
-      } : null,
-
-      hotel: item.hotel || null,
-
-      completeItemData: {
-        ...item,
-        originalTourPrice: item.tours?.price || 0,
-        originalTransferPrice: item.transfer?.price || 0,
-        originalMealsPrice: item.meals?.price || 0
-      }
     })),
-
     totalAmount: selectedLead.totalAmount || 0,
     pendingAmount: selectedLead.pendingAmount || 0,
     paidAmount: selectedLead.paidAmount || 0,
@@ -180,21 +125,9 @@ const handleEditLead = (lead: Lead) => {
     cnb: selectedLead.cnb || 0,
     cwb: selectedLead.cwb || 0
   };
-
-  sessionStorage.setItem('editingClientData', JSON.stringify({
-    id: leadId,
-    originalLeadId: leadId,
-    bookingNo: selectedLead.bookingNo || selectedLead.referenceId,
-    clientName: selectedLead.clientName,
-    creationDate: selectedLead.creationDate,
-    bookingTime: selectedLead.bookingTime || selectedLead.creationDate,
-    paidAmount: selectedLead.paidAmount || 0,
-    totalAmount: selectedLead.totalAmount || 0,
-    pendingAmount: selectedLead.pendingAmount || 0
-  }));
+  sessionStorage.setItem('editingClientData', JSON.stringify({ id: leadId,originalLeadId: leadId,bookingNo: selectedLead.bookingNo || selectedLead.referenceId, clientName: selectedLead.clientName,creationDate: selectedLead.creationDate, bookingTime: selectedLead.bookingTime || selectedLead.creationDate,paidAmount: selectedLead.paidAmount || 0,totalAmount: selectedLead.totalAmount || 0,pendingAmount: selectedLead.pendingAmount || 0}));
   sessionStorage.setItem('editLeadData', JSON.stringify(editLeadData));
   console.log('Edit data saved to sessionStorage:', editLeadData);
-  
   navigate(`/trip-planner?editMode=true&bookingRef=${editLeadData.bookingRef}`);
 };
 

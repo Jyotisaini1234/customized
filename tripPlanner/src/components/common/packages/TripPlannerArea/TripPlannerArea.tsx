@@ -80,11 +80,14 @@ const handleSearch = () => {
   const totalCWB = rooms.reduce((sum, room) => sum + room.cwb, 0);
   const totalCNB = rooms.reduce((sum, room) => sum + room.cnb, 0);
   const totalInfants = rooms.reduce((sum, room) => sum + room.infants, 0);
+  const roomDetails = rooms.map((room, index) => {
+  const roomNum = index + 1;return `Room ${roomNum} - A${room.adults} CWB${room.cwb} CNB${room.cnb} I${room.infants}`;}).join('; ');
   params.append('adults', String(totalAdults));
   params.append('cwb', String(totalCWB));
   params.append('cnb', String(totalCNB));
   params.append('infants', String(totalInfants));
   params.append('totalRooms', String(rooms.length));
+  params.append('roomDetails', roomDetails);
   window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
 };
 
@@ -155,8 +158,8 @@ return (
                   <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined" size="small" className="form-control">
                     <Select value={country || searchParams.country || ''} disabled className="select-input">
-                    <MenuItem value={ searchParams.countrie || ''}>
-                        { searchParams.countrie || 'Select countries'}
+                    <MenuItem value={ searchParams.country || ''}>
+                    {searchParams.country || 'Select country'}
                       </MenuItem>
                     </Select>
                   </FormControl>
