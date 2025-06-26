@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Chip, Link, Button } from '@mui/material';
 import { tourApi, useGetLeadByIdQuery, useGetLeadsQuery } from '../../../../api/TourAPI.tsx';
 import './MyLeads.scss';
@@ -24,6 +24,10 @@ const getStatusChip = (status: string) => {
   }
 };
 
+useEffect(() => {
+  sessionStorage.setItem('src', 'B.E.');
+},[])
+
 const handleLeadDetails = (lead: any) => {
   setSelectedLead(lead);
   setDetailsOpen(true);
@@ -34,6 +38,7 @@ const handleCloseDetails = () => {
 };
 
 const handleEditLead = (lead: Lead) => {
+  sessionStorage.clear();
   const leadId =lead.id;
   const selectedLead = leads.find((l) => (l._id || l.id) === leadId);
   if (!selectedLead) {
@@ -119,17 +124,16 @@ const handleEditLead = (lead: Lead) => {
     currency: selectedLead.currency,
     creationDate: selectedLead.creationDate || new Date().toISOString(),
     bookingTime: selectedLead.bookingTime || selectedLead.creationDate || new Date().toISOString(),
-    nights,
-    totalRooms: selectedLead.totalRooms || 1,
-    adult: selectedLead.adult || totalPersons,
-    cnb: selectedLead.cnb || 0,
-    cwb: selectedLead.cwb || 0
   };
   sessionStorage.setItem('editingClientData', JSON.stringify({ id: leadId,originalLeadId: leadId,bookingNo: selectedLead.bookingNo || selectedLead.referenceId, clientName: selectedLead.clientName,creationDate: selectedLead.creationDate, bookingTime: selectedLead.bookingTime || selectedLead.creationDate,paidAmount: selectedLead.paidAmount || 0,totalAmount: selectedLead.totalAmount || 0,pendingAmount: selectedLead.pendingAmount || 0}));
   sessionStorage.setItem('editLeadData', JSON.stringify(editLeadData));
   console.log('Edit data saved to sessionStorage:', editLeadData);
-  navigate(`/trip-planner?editMode=true&bookingRef=${editLeadData.bookingRef}`);
+  sessionStorage.setItem('src', 'lead');
+  navigate({
+    pathname: '/trip-planner'
+  });
 };
+
 
 const getCorrectDestination = (lead) => {
   if (lead.currentSearchParams && lead.currentSearchParams.city) {
@@ -224,4 +228,3 @@ return (
   };
 
 export default MyLeads;
-

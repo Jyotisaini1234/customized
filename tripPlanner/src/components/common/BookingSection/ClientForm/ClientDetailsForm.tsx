@@ -91,14 +91,11 @@ useEffect(() => {
     const marginValue = typeof marginTotal === 'string' ? parseFloat(marginTotal) || 0 : marginTotal;
     const totalAmount = grandTotal + marginValue;
     const finalId = isEditModeState ? currentBookingRef : (bookingRef || currentBookingRef);
-    
     if (!finalId) {
       alert('Invalid booking reference. Please try again.');
       return;
     }
-    
     const currencyValue = typeof currency === 'number' ? currency.toString() : (currency || 'USD');
-    
     const leadData: Partial<Lead> = {
       id: finalId,
       clientName: clientData.name.trim(),
@@ -112,7 +109,6 @@ useEffect(() => {
       lastUpdated: new Date().toISOString(),
       currency: currencyValue
     };
-    
     if (isEditModeState) {
       const editingDataStr = sessionStorage.getItem('editingClientData');
       if (editingDataStr) {
@@ -126,35 +122,23 @@ useEffect(() => {
         }
       }
     }
-    
-    console.log("📌 Final operation details:");
-    console.log("📌 ID:", finalId);
-    console.log("📌 Is Edit Mode:", isEditModeState);
-    console.log("📌 Lead Data:", leadData);
-    
     try {
       if (isEditModeState) {
-        console.log("🔄 Updating lead...");
         await updateLead({ id: finalId, lead: leadData }).unwrap();
-        console.log("✅ Lead updated successfully");
       } else {
-        console.log("➕ Creating new lead...");
         await submitLead(leadData).unwrap();
-        console.log("✅ Lead created successfully");
+        console.log("Lead created successfully");
       }
-      
-      // Clear session storage
       sessionStorage.removeItem('editLeadData');
       sessionStorage.removeItem('editingClientData');
-      
-      // Call onSubmit callback
-      onSubmit(clientData);
+      onSubmit({ ...clientData, hotels,plannerItems, marginTotal, grandTotal, bookingRef: finalId, travelDate, currency: 'USD', bookingStatus, destination: clientData.destination });
       
     } catch (error) {
-      console.error('❌ Error in lead operation:', error);
+      console.error('Error in lead operation:', error);
       alert(isEditModeState ? 'Failed to update lead.' : 'Failed to create lead.');
     }
   };
+  
   const submitButtonText = isEditModeState ? 'Update & Download' : 'Submit & Download';
 
   return (
@@ -193,5 +177,3 @@ useEffect(() => {
 };
 
 export default ClientDetailsForm;
-
-

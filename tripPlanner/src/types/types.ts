@@ -38,6 +38,7 @@ export interface CustomizeSearchProps {
 }
 
 export interface TripPlannerProps {
+  initialClientData?: any;
   location: string;
   city: string;
   nights: number;

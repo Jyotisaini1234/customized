@@ -157,6 +157,7 @@ import { enGB } from "date-fns/locale";
     };
 
     const handleSearch = () => {
+      sessionStorage.clear();
       sessionStorage.removeItem('editLeadData');
       sessionStorage.removeItem('editingClientData');
       if (!country || !city || !checkInDate || !checkOutDate) {
@@ -193,8 +194,8 @@ import { enGB } from "date-fns/locale";
         filteredHotels
       };
       if (!isModifying) {
-        sessionStorage.removeItem('tripPlannerHotels');
-        sessionStorage.removeItem('tripPlannerItems');
+        // sessionStorage.removeItem('tripPlannerHotels');
+        // sessionStorage.removeItem('tripPlannerItems');
       }
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(params));
       if (isModifying && onSearchComplete) {
@@ -333,8 +334,8 @@ return (
                   <img src="https://assets.micontenthub.com/traveloffers/travel-tips/baku_OIPJAbO-S.jpg"  alt="Trans Studio baku" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
                 </Box>
               </Grid>
-            </Grid></>): (<TripPlanner location={city?.label || ""}  nights={Number(nights)}  checkInDate={checkInDate ? checkInDate.toISOString() : new Date().toISOString()} 
-                          checkOutDate={checkOutDate ? checkOutDate.toISOString() : new Date().toISOString()} onCancel={() => console.log("Cancel clicked")} onProceed={() => console.log("Proceed clicked")}/> )}
+            </Grid></>): (<TripPlanner location={city?.label || ""} nights={Number(nights)} checkInDate={checkInDate ? checkInDate.toISOString() : new Date().toISOString()}
+        checkOutDate={checkOutDate ? checkOutDate.toISOString() : new Date().toISOString()} onCancel={() => console.log("Cancel clicked")} onProceed={() => console.log("Proceed clicked")} city={""} rooms={[]}/> )}
         </Container>
   </Box>
   );

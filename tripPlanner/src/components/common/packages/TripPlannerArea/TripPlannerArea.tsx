@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
-import './TripPlannerArea.scss';
-import { AreaOption, Areas } from '../../../../types/types.ts';
-import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
-import {  citiesList as cityOptions,country} from "../../../../model/selectOptions.ts"; 
+  import React, { useState, useEffect } from 'react';
+  import { useLocation, useNavigate } from 'react-router-dom';
+  import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
+  import './TripPlannerArea.scss';
+  import { AreaOption, Areas } from '../../../../types/types.ts';
+  import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
+  import {  citiesList as cityOptions,country} from "../../../../model/selectOptions.ts"; 
 
 const TripPlannerArea: React.FC = () => {
 const location = useLocation();
@@ -53,18 +53,13 @@ const handleSearch = () => {
   if (searchParams.fromReadymadePackage === 'true' || searchParams.fromReadymadePackage === true) {
     params.append('fromReadymadePackage', 'true');
   }
-  const complexData = {
-    fromReadymadePackage: searchParams.fromReadymadePackage,
-    specificDay: searchParams.specificDay,
-    specificDayId: searchParams.specificDayId,
-    dayNumber: searchParams.dayNumber,
-    originalCheckInDate: searchParams.originalCheckInDate,
-    originalCheckOutDate: searchParams.originalCheckOutDate,
-    applyToAllDays: searchParams.specificDay ? false : applyToAllDays,
-    allDays: searchParams.allDays,
-    rooms: searchParams.rooms || []
-  };
-  sessionStorage.setItem('tripPlannerSearchData', JSON.stringify(complexData));
+  // ✅ Append booking ID if coming from edit lead
+const editLeadData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
+const leadId = editLeadData.leadId || searchParams.leadId || null;
+if (leadId) {
+  params.append('bookingRef', leadId); // or use 'leadId' as param key if consistent
+}
+
   let savedHotels = [];
   const storedHotels = sessionStorage.getItem('tripPlannerHotels');
   if (storedHotels) {
@@ -91,13 +86,6 @@ const handleSearch = () => {
   window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
 };
 
-const getRoomDisplayText = () => {
-  const roomCount = searchParams.rooms?.length || 1;
-  if (roomCount > 1) {
-    return `Total Guests (${roomCount} Rooms)`;
-  }
-  return "Room 1";
-};
 
 const formatDate = (dateStr) => {
   try {return new Date(dateStr).toLocaleDateString();}
