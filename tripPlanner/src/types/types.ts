@@ -34,6 +34,7 @@ export interface CustomizeSearchProps {
 
 // Props for TripPlanner component
 export interface TripPlannerProps {
+  initialClientData?: any;
   location: string;
   nights: number;
   checkInDate: string;

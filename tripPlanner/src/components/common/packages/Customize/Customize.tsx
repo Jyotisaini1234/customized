@@ -156,6 +156,7 @@
     };
 
     const handleSearch = () => {
+      sessionStorage.clear();
       sessionStorage.removeItem('editLeadData');
       sessionStorage.removeItem('editingClientData');
       if (!country || !city || !checkInDate || !checkOutDate) {

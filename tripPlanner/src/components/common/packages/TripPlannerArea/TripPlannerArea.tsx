@@ -24,29 +24,6 @@
     const [selectedCity, setSelectedCity] = useState<string>(searchParams.city || '');
     const [searchedCity, setSearchedCity] = useState("");
     const [nights, setNights] = useState<number | string>(searchParams.nights || 1);
-    useEffect(() => {
-      if (state && (state.hotel || state.tripPlan)) {
-          setHotelDetails(state);
-          if (state.tripPlan) {
-          console.log('Hotel added from trip planner:', state);}}
-          else {
-          const storedDetails = sessionStorage.getItem('selectedHotelDetails');
-          if (storedDetails) {
-          const parsedDetails = JSON.parse(storedDetails);
-          setHotelDetails(parsedDetails);
-          if (parsedDetails.tripPlan) {
-          console.log('Retrieved trip plan hotel from storage:', parsedDetails); }} }
-    }, [state]);
-
-useEffect(() => {
-    console.log('Search params received:', searchParams); 
-    console.log('Current city value:', city);
-    if (city) {setLoading(true);
-    console.log(`Loading areas for city: ${city}`);
-    setTimeout(() => {setAreas(Areas);setLoading(false);}, 500); } 
-    else if (searchParams.city) {setCity(searchParams.city);} 
-    else {console.error('No city provided in search parameters'); }
-}, [city, searchParams]);
 
 const handleClose = () => {
 let savedHotels = [];
@@ -56,58 +33,6 @@ const storedHotels = sessionStorage.getItem('tripPlannerHotels');
     catch (e) {console.error('Error parsing saved hotels', e);}}
       navigate(-1);
 };
-    
-// 👇 Add this block just above your first useEffect for hotel details
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const hotelData = urlParams.get('hotelData');
-  if (hotelData) {
-    try {
-      const hotelDetails = JSON.parse(decodeURIComponent(hotelData));
-      if (hotelDetails.booking?.checkInDate) {
-        hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString();
-      }
-      if (hotelDetails.booking?.checkOutDate) {
-        hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
-      }
-      setHotelDetails(hotelDetails);
-      console.log("✅ Hotel details from URL:", hotelDetails);
-    } catch (e) {
-      console.error("❌ Failed to parse hotel data from URL", e);
-    }
-  }
-}, []);
-
-useEffect(() => {
-  const storedEditData = sessionStorage.getItem('editLeadData');
-  if (storedEditData) {
-    try {
-      const parsedData = JSON.parse(storedEditData);
-      console.log("🔍 Loading edit data in TripPlannerArea:", parsedData);
-      
-      if (parsedData.isEditMode && parsedData.currentSearchParams) {
-        const searchParams = parsedData.currentSearchParams;
-        
-        setCity(searchParams.city || '');
-        setSelectedCity(searchParams.city || '');
-        setCountry(searchParams.country || parsedData.country || '');
-        setNights(searchParams.nights || 1);
-        
-        if (searchParams.rooms && searchParams.rooms.length > 0) {
-          const firstRoom = searchParams.rooms[0];
-          setAdultsCount(firstRoom.adults || 2);
-          setCwbCount(firstRoom.cwb || 0);
-          setCnbCount(firstRoom.cnb || 0);
-          setInfantsCount(firstRoom.infants || 0);
-        }
-        
-        console.log("✅ Edit data loaded - Country:", searchParams.country, "City:", searchParams.city);
-      }
-    } catch (error) {
-      console.error("❌ Error parsing edit data in TripPlannerArea:", error);
-    }
-  }
-}, []);
 
 const handleSearch = () => {
   const params = new URLSearchParams();
@@ -144,7 +69,13 @@ const handleSearch = () => {
   if (searchParams.allDays) {
     params.append('allDays', JSON.stringify(searchParams.allDays));
   }
-  
+  // ✅ Append booking ID if coming from edit lead
+const editLeadData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
+const leadId = editLeadData.leadId || searchParams.leadId || null;
+if (leadId) {
+  params.append('bookingRef', leadId); // or use 'leadId' as param key if consistent
+}
+
   let savedHotels = [];
   const storedHotels = sessionStorage.getItem('tripPlannerHotels');
   if (storedHotels) {
@@ -170,6 +101,8 @@ const handleSearch = () => {
   
   window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
 };
+
+
 
 const formatDate = (dateStr) => {
   try {return new Date(dateStr).toLocaleDateString();}
