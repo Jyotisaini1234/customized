@@ -5,7 +5,7 @@ import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/route
 import { Box, IconButton } from '@mui/material';
 import { dropdownMenus } from '../../../../model/selectOptions.ts';
 import { Menu as MenuIcon } from '@mui/icons-material';
-import { AWS_INSTANCE ,LOCALHOST} from '../../../../utils/ApiConstants.ts';
+import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
 import MainAppTokenService from '../../../../pages/tokenService.ts';
 
 interface PrimaryNavbarProps {
@@ -64,7 +64,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   };
   const handleLogout = () => {
     MainAppTokenService.clearTokensAndRedirect();
-    window.location.href = 'http://b2b.flydivinetravels.com/hotel';
+    window.location.href = AWS_INSTANCE;
   };
 
   const toggleMenu = () => {

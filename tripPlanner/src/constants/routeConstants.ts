@@ -11,10 +11,10 @@ export const ROUTE_CONSTANTS = {
   
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
-  HOTEL_PAGE: 'http://localhost:3002/hotel/hotel-search',
+  HOTEL_PAGE: 'http://b2b.flydivinetravels.com/hotel/hotel-search',
   HOME_PAGE: '/home-page',
   BAKU_PACKAGES: '/baku-packages',
-  TOURS_TRANSFERS: 'http://localhost:3002/hotel/transfer-search',
+  TOURS_TRANSFERS: 'http://b2b.flydivinetravels.com/hotel/transfer-search',
   BOOKINGS: '/readymade-booking',
   CUSTOMIZE:'/customize-search',
   CUSTOMIZE_PACKAGE:'/customize-package',

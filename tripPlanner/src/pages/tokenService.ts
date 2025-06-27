@@ -88,7 +88,7 @@ class MainAppTokenService {
     localStorage.removeItem(this.USERNAME_KEY);
     localStorage.removeItem(this.LAST_ACTIVITY_KEY);
     const currentUrl = encodeURIComponent(window.location.href);
-    window.location.href = `http://localhost:3002/hotel`;
+    window.location.href = `http://b2b.flydivinetravels.com/hotel`;
   }
 
   extractTokensFromUrl(): { success: boolean; tokens?: any } {

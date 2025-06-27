@@ -600,7 +600,7 @@ const handleAddItem = (plannerItemId: string, type: string) => {
             } else if (searchData?.guests?.adults !== undefined) { adults = searchData.guests.adults; cwb = searchData.guests.cwb || 0; cnb = searchData.guests.cnb || 0; infants = searchData.guests.infants || 0;
             } else if (rooms && rooms.length > 0) { const firstRoom = rooms[0];adults = firstRoom.adults || 2;cwb = firstRoom.cwb || 0; cnb = firstRoom.cnb || 0; infants = firstRoom.infants || 0;} else { adults = currentSearchParams.adults || 2;  cwb = currentSearchParams.cwb || 0; cnb = currentSearchParams.cnb || 0; infants = currentSearchParams.infants || 0;  }
             const totalPax = adults + cwb + cnb;
-            const tourSelectionUrl = new URL('http://localhost:3002/hotel/home-page');
+            const tourSelectionUrl = new URL('http://b2b.flydivinetravels.com/hotel/home-page');
             tourSelectionUrl.searchParams.set('city', city);
             tourSelectionUrl.searchParams.set('country', 'Georgia');
             tourSelectionUrl.searchParams.set('pax', totalPax.toString());

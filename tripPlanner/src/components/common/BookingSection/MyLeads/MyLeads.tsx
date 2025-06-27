@@ -39,24 +39,40 @@ const handleCloseDetails = () => {
 
 const handleEditLead = (lead: Lead) => {
   sessionStorage.clear();
-  const leadId =lead.id;
+  const leadId = lead.id;
   const selectedLead = leads.find((l) => (l._id || l.id) === leadId);
   if (!selectedLead) {
     alert(' Lead not found. Please refresh the list.');
     return;
   }
+  
   const checkInDate = new Date(selectedLead.travelDate);
   const nights = parseInt(selectedLead.nights || '1');
   const checkOutDate = new Date(checkInDate.getTime() + nights * 24 * 60 * 60 * 1000);
   const totalPersons = parseInt(selectedLead.totalPersons || '1');
-  const rooms = selectedLead.searchParams?.rooms || [
-    {
-      adults: selectedLead.adult || totalPersons || 2,
-      cwb: selectedLead.cwb || 0,
-      cnb: selectedLead.cnb || 0,
-      infants: 0
-    }
-  ];
+  
+  const rooms = selectedLead.totalRooms ? 
+    selectedLead.totalRooms.map((room, index) => ({
+      id: index + 1,
+      adults: room.adults || 2,
+      cwb: room.cwb || 0,
+      cnb: room.cnb || 0,
+      infants: room.infants || 0
+    })) : 
+    selectedLead.searchParams?.rooms || [
+      {
+        id: 1,
+        adults: selectedLead.adult || totalPersons || 2,
+        cwb: selectedLead.cwb || 0,
+        cnb: selectedLead.cnb || 0,
+        infants: 0
+      }
+    ];
+  const roomsDataString = JSON.stringify(rooms);
+  const roomsDataEncoded = decodeURIComponent(roomsDataString);
+  
+  console.log('Rooms Data:', rooms);
+  console.log('Encoded Rooms Data:', roomsDataEncoded);
 
   const editLeadData = {
     leadId,
@@ -74,6 +90,7 @@ const handleEditLead = (lead: Lead) => {
       checkOutDate: checkOutDate.toISOString().split('T')[0],
       nights,
       rooms,
+      roomsData: roomsDataEncoded,
       totalPersons
     },
     hotelDetails: (selectedLead.hotelDetails || []).map((hotel, index) => ({
@@ -105,7 +122,7 @@ const handleEditLead = (lead: Lead) => {
       date: item.date || '',
       dateObj: item.dateObj || item.date || '',
       tours: item.tours ? {
-        id: item.id ,
+        id: item.id,
         name: item.tours.name || 'Tour',
         description: item.tours.description || '',
         duration: item.tours.duration || 'N/A',
@@ -125,15 +142,27 @@ const handleEditLead = (lead: Lead) => {
     creationDate: selectedLead.creationDate || new Date().toISOString(),
     bookingTime: selectedLead.bookingTime || selectedLead.creationDate || new Date().toISOString(),
   };
-  sessionStorage.setItem('editingClientData', JSON.stringify({ id: leadId,originalLeadId: leadId,bookingNo: selectedLead.bookingNo || selectedLead.referenceId, clientName: selectedLead.clientName,creationDate: selectedLead.creationDate, bookingTime: selectedLead.bookingTime || selectedLead.creationDate,paidAmount: selectedLead.paidAmount || 0,totalAmount: selectedLead.totalAmount || 0,pendingAmount: selectedLead.pendingAmount || 0}));
+  
+  sessionStorage.setItem('editingClientData', JSON.stringify({ 
+    id: leadId,
+    originalLeadId: leadId,
+    bookingNo: selectedLead.bookingNo || selectedLead.referenceId, 
+    clientName: selectedLead.clientName,
+    creationDate: selectedLead.creationDate, 
+    bookingTime: selectedLead.bookingTime || selectedLead.creationDate,
+    paidAmount: selectedLead.paidAmount || 0,
+    totalAmount: selectedLead.totalAmount || 0,
+    pendingAmount: selectedLead.pendingAmount || 0
+  }));
+  
   sessionStorage.setItem('editLeadData', JSON.stringify(editLeadData));
   console.log('Edit data saved to sessionStorage:', editLeadData);
   sessionStorage.setItem('src', 'lead');
+  
   navigate({
     pathname: '/trip-planner'
   });
 };
-
 
 const getCorrectDestination = (lead) => {
   if (lead.currentSearchParams && lead.currentSearchParams.city) {

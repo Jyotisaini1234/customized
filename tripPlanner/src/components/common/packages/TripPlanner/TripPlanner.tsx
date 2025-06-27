@@ -23,6 +23,8 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
     return { checkInDate: checkInDate, checkOutDate: checkOutDate, nights: nights || 1,city: '', packageType: 'hotel-land'}; };
   const [submitLead] = useSubmitLeadMutation();
   const [currency, setCurrency] = useState('');
+
+
   const searchParams = getSearchParams();
   const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
   const [hotels, setHotels] = useState<any[]>([]);
@@ -84,8 +86,8 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
   const handleMarginChange = (event) => { const inputValue = event.target.value;if (inputValue === '' || !isNaN(parseFloat(inputValue))) {setMarginTotal(inputValue); }};
 
 
-  /////save hotels
-  useEffect(() => {
+
+useEffect(() => {
     const savedHotels = sessionStorage.getItem('tripPlannerHotels');
     if (savedHotels) {
       try {
@@ -93,11 +95,28 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
         if (Array.isArray(parsedHotels) && parsedHotels.length > 0) {
           console.log("Loaded hotels from session storage:", parsedHotels);
           setHotels(parsedHotels);
-        }} catch (e) {
-        console.error('Error parsing saved hotels', e);}}
+        }
+      } catch (e) {
+        console.error('Error parsing saved hotels', e);
+      }
+    }
+    const src = sessionStorage.getItem('src');
+    if (src === 'editLead' || src === 'lead') {
+      const updatingHotelData = sessionStorage.getItem('updatingHotelData');
+      if (updatingHotelData) {
+        try {
+          const sessionHotels = JSON.parse(updatingHotelData);
+          if (Array.isArray(sessionHotels) && sessionHotels.length > 0) {
+            console.log("Loaded edit mode hotels:", sessionHotels);
+            setHotels(sessionHotels);
+          }
+        } catch (e) {
+          console.error('Error loading edit mode hotels', e);
+        }
+      }
+    }
   }, []);
-
-  useEffect(() => {
+useEffect(() => {
     let src = sessionStorage.getItem('src');
     let savedItemData;
     if (src === 'lead' || src === 'editLead') {
@@ -185,12 +204,20 @@ useEffect(() => {
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const hotelData = urlParams.get('hotelData');
+  
   if (hotelData) {
     try {
       const hotelDetails = JSON.parse(decodeURIComponent(hotelData));
-      if (hotelDetails.booking?.checkInDate) {hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString(); }
-      if (hotelDetails.booking?.checkOutDate) {hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString(); }
-      if (!hotelDetails.uniqueId) {hotelDetails.uniqueId = `hotel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`; }
+      if (hotelDetails.booking?.checkInDate) {
+        hotelDetails.booking.checkInDate = new Date(hotelDetails.booking.checkInDate).toISOString();
+      }
+      if (hotelDetails.booking?.checkOutDate) {
+        hotelDetails.booking.checkOutDate = new Date(hotelDetails.booking.checkOutDate).toISOString();
+      }
+      if (!hotelDetails.uniqueId) {
+        hotelDetails.uniqueId = `hotel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      }
+      
       setHotels(prevHotels => {
         const existingHotels = [...prevHotels];
         if (hotelDetails.specificDayId) {
@@ -218,19 +245,39 @@ useEffect(() => {
         const uniqueHotels = Array.from(
           new Map(existingHotels.map(h => [h.uniqueId, h])).values()
         );
+        
         const src = sessionStorage.getItem('src');
         if (src === 'editLead' || src === 'lead') {
           sessionStorage.setItem('updatingHotelData', JSON.stringify(uniqueHotels));
         } else {
           sessionStorage.setItem('tripPlannerHotels', JSON.stringify(uniqueHotels));
         }
+        
         return uniqueHotels;
       });
 
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
-    } catch (e) { console.error('Error parsing hotel data from URL', e); }
+    } catch (e) { 
+      console.error('Error parsing hotel data from URL', e); 
+    }
   }
+  
+  const src = sessionStorage.getItem('src');
+  if ((src === 'editLead' || src === 'lead') && !hotelData) {
+    const updatingHotelData = sessionStorage.getItem('updatingHotelData');
+    if (updatingHotelData) {
+      try {
+        const sessionHotels = JSON.parse(updatingHotelData);
+        if (Array.isArray(sessionHotels) && sessionHotels.length > 0 && sessionHotels.length !== hotels.length) {
+          setHotels(sessionHotels);
+        }
+      } catch (e) {
+        console.error('Error loading session hotel data', e);
+      }
+    }
+  }
+  
   if (hotels.length > 0) {
     const hotelCurrency = hotels[0]?.booking?.currency || 'USD';
     setCurrency(hotelCurrency);
@@ -244,6 +291,7 @@ useEffect(() => {
     const merged = [...hotels, ...prevHotels];
     const uniqueHotels = Array.from(new Map(merged.map(h => [h.uniqueId, h])).values());
     sessionStorage.setItem(storageKey, JSON.stringify(uniqueHotels));
+    
     let total = 0;
     const processedHotels = new Map();
     hotels.forEach(hotel => {
@@ -268,7 +316,6 @@ useEffect(() => {
     setSelectedHotel(null);
   }
 }, [hotels, plannerItems, currentSearchParams.nights]);
-
 useEffect(() => {
   if (hotels.length > 0) {
     setPlannerItems(prevItems => {
@@ -350,7 +397,6 @@ useEffect(() => {
   } else { setPlannerItems(prevItems => prevItems.map(item => ({ ...item,  hotel: null })) ); }
 }, [hotels]);
 
-
 useEffect(() => {
     let src = sessionStorage.getItem('src');
     if (src === 'lead') {
@@ -428,6 +474,7 @@ const syncDataWithSessionStorage = () => {
     }
     setEditDataVersion(prev => prev);
   };
+
 const handleHotelSelection = (itemId) => {
     let src = sessionStorage.getItem('src');
     if (src === 'lead') {sessionStorage.setItem('src', 'editLead'); }
@@ -550,7 +597,8 @@ const handleRemoveHotel = (plannerItem) => {
     else { sessionStorage.setItem('tripPlannerHotels', JSON.stringify(updatedHotels)); }
   };
 
-  const handleRemoveTour = (plannerItem) => {
+
+const handleRemoveTour = (plannerItem) => {
     if (!plannerItem.tours) return;
     const tourPrice = parseFloat(plannerItem.tours.price || plannerItem.tours.details?.booking?.totalPrice || 0);
     console.log("Removing tour with price:", tourPrice);
@@ -657,6 +705,7 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
         return total + adults + cwb + cnb + infants;
       }, 0);
     };
+    const roomsData = currentSearchParams.rooms || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }];
     const { totalRooms, adult, cnb, cwb } = calculateRoomCounts();
     const totalPersons = calculateTotalPersons();
     const finalBookingRef = isEditMode ? (originalLeadId || editingClientData?.id || editingClientData?._id || editData.leadId) : bookingRef;
@@ -689,7 +738,7 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
       invoice: `/invoices/${finalBookingRef}`,
       voucher: `/vouchers/${finalBookingRef}`,
       totalPersons: totalPersons,
-      totalRooms: totalRooms,
+      totalRooms: roomsData,
       adult: adult,
       cnb: cnb,
       cwb: cwb,
