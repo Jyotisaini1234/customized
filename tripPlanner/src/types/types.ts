@@ -654,6 +654,8 @@ export interface ReadymadeData {
 
 
 export interface ReadyMadeHotel {
+  cityId: string;
+  city: string;
   specificDayId: any;
   checkOutDate: any;
   checkInDate: any;
@@ -773,6 +775,8 @@ export interface PackageData {
 }
 
 export interface SearchData {
+    city: any;
+    cityId: any;
   pricing?: {
     totalPrice: number;
     breakdown: {
@@ -863,8 +867,9 @@ export interface TripPlannerDBData {
     children: number;
     infants: number;
     rooms: any[];
-    packageType: string;
-    currency: string;
+    cityId:string;
+    // packageType: string;
+    // currency: string;
   };
   
   pricing: {
@@ -893,10 +898,10 @@ export interface TripPlannerDBData {
       checkOutDate?: string;
       roomType?: string;
       mealPlan?: string;
-      isPackageHotel: boolean;
+      // isPackageHotel: boolean;
       isAdditional: boolean;
-      isUpdated: boolean;
-      uniqueId?: number;
+      // isUpdated: boolean;
+      // uniqueId?: number;
       specificDayId?: string;
     };
     tours?: {
@@ -935,12 +940,6 @@ export interface TripPlannerDBData {
       day: number;
     };
   }[];
-
-  packageData?: {
-    packageName: string;
-    originalPackageData: any;
-  };
-  
   metadata: {
     createdAt: string;
     updatedAt: string;

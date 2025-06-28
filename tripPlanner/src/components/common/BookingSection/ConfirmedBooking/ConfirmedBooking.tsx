@@ -6,19 +6,9 @@ import { useGetAllPackageDataQuery } from '../../../../api/TourAPI.tsx';
 import PackagePDFGenerator from '../../packages/Readymade/PackagePDFGenerator/PackagePDFGenerator.tsx';
 
 const ConfirmedBooking: React.FC = () => {
-const location = useLocation();
-const navigate = useNavigate();
 const [packages, setPackages] = useState<any[]>([]);
 const [filteredPackages, setFilteredPackages] = useState<any[]>([]);
-const [searchParams, setSearchParams] = useState({ 
-    refNo: '', 
-    packageName: '', 
-    destination: '', 
-    country: '',
-    totalAmount: '',
-    createdDate: ''
-});
-
+const [searchParams, setSearchParams] = useState({ refNo: '',  packageName: '', destination: '',  country: '',totalAmount: '',createdDate: ''});
 const { data: apiPackages = [], error: packagesError, isLoading: packagesLoading } = useGetAllPackageDataQuery();
 
 useEffect(() => {
@@ -37,21 +27,18 @@ useEffect(() => {
 
 const filterPackages = () => {
     let filtered = [...packages];
-
     if (searchParams.refNo) {
         filtered = filtered.filter(item => {
             const refNumber = item._id || item.packageId || '';
             return refNumber.toLowerCase().includes(searchParams.refNo.toLowerCase());
         });
     }
-
     if (searchParams.packageName) {
         filtered = filtered.filter(item => {
             const packageName = getPackageName(item);
             return packageName.toLowerCase().includes(searchParams.packageName.toLowerCase());
         });
     }
-
     if (searchParams.destination) {
         filtered = filtered.filter(item => {
             const destination = getPackageDestination(item);
@@ -79,74 +66,68 @@ const filterPackages = () => {
             return createdDate.includes(searchParams.createdDate);
         });
     }
-
     setFilteredPackages(filtered);
 };
 
+
+
 const getPackageName = (packageData: any) => {
-    if (packageData.packageData?.packageName) {
-        return packageData.packageData.packageName;
+    const uniqueHotels = new Map();
+    if (packageData.plannerItems && Array.isArray(packageData.plannerItems)) {
+        packageData.plannerItems.forEach((item, index) => {
+            if (item.hotel && item.hotel.destination && item.hotel.nights) {
+                const city = item.hotel.destination;
+                const nights = item.hotel.nights;
+                const hotelKey = `${item.hotel.name}-${city}`;
+                if (!uniqueHotels.has(hotelKey)) {  uniqueHotels.set(hotelKey, { city: city,  nights: nights, hotelName: item.hotel.name}); }
+            }
+        });
     }
-    return 'Package Name Not Found';
+    const hotelData = Array.from(uniqueHotels.values());
+    if (hotelData.length > 0) {
+        const packageParts = hotelData.map(hotel => `${hotel.nights}N ${hotel.city}`);
+        const result = packageParts.join(' + ');
+        return result;
+    }
+    return "No Package";
 };
 
 const getPackageDestination = (packageData: any) => {
-    if (packageData.packageData?.originalPackageData?.destinations && 
-        Array.isArray(packageData.packageData.originalPackageData.destinations)) {
-        return packageData.packageData.originalPackageData.destinations.join(', ');
+    const uniqueDestinations = new Set();
+    if (packageData.plannerItems && Array.isArray(packageData.plannerItems)) {
+        packageData.plannerItems.forEach((item) => {
+        if (item.hotel && item.hotel.destination) { uniqueDestinations.add(item.hotel.destination); }
+        });
     }
+    const destinationsArray = Array.from(uniqueDestinations);
+    if (destinationsArray.length > 0) { return destinationsArray.join(', '); }
     return 'Destination Not Found';
 };
 
 const getPackageCountry = (packageData: any) => {
-    if (packageData.tripDetails?.country) {
-        return packageData.tripDetails.country;
-    }
+    if (packageData.tripDetails?.country) { return packageData.tripDetails.country; }
     return 'Country Not Found';
 };
 
 const getPackageTotalAmount = (packageData: any) => {
-    if (packageData.pricing?.grandTotal) {
-        return packageData.pricing.grandTotal.toString();
-    }
-    if (packageData.totalAmount) {
-        return packageData.totalAmount.toString();
-    }
-    if (packageData.price) {
-        return packageData.price.toString();
-    }
+    if (packageData.pricing?.grandTotal) {return packageData.pricing.grandTotal.toString();}
     return "0";
 };
 
 const getPackageCreatedDate = (packageData: any) => {
-    if (packageData.metadata?.createdAt) {
-        return formatDate(packageData.metadata.createdAt);
-    }
-    if (packageData.createdAt) {
-        return formatDate(packageData.createdAt);
-    }
-    if (packageData.created_date) {
-        return formatDate(packageData.created_date);
-    }
+    if (packageData.metadata?.createdAt) { return formatDate(packageData.metadata.createdAt); }
     return 'Date Not Found';
 };
 
 const formatDate = (dateTime: any) => {
     if (!dateTime) return "-";
     let date;
-    if (typeof dateTime === 'string') {
-        date = new Date(dateTime);
-    } else {
-        date = dateTime;
-    }
-    if (isNaN(date.getTime())) {
-        return "-";
-    }
-
+    if (typeof dateTime === 'string') {date = new Date(dateTime); } 
+    else {  date = dateTime; } 
+    if (isNaN(date.getTime())) { return "-";}
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    
     return `${day}-${month}-${year}`;
 };
 
@@ -192,43 +173,24 @@ const renderPackageRow = (packageItem: any, index: number) => {
                             },
                             totalAmount: packageItem.totalCost || packageItem.price || packageItem.pricing?.grandTotal || packageItem.totalAmount || 0,
                             price: packageItem.totalCost || packageItem.price || packageItem.pricing?.grandTotal || packageItem.totalAmount || 0,
-                            tripDetails: {
-                                country: packageItem.country || getPackageCountry(packageItem)
-                            }
+                            tripDetails: {country: packageItem.country || getPackageCountry(packageItem) }
                         }}
                     />
-                ) : (
-                    <span>No data available</span>
+                ) : (<span>No data available</span>
                 )}
             </TableCell>
-
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                {getPackageName(packageItem)}
-            </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                {getPackageDestination(packageItem)}
-            </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                {getPackageCountry(packageItem)}
-            </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-            USD {getPackageTotalAmount(packageItem)}
-            </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                {getPackageCreatedDate(packageItem)}
-            </TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> {getPackageName(packageItem)} </TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> {getPackageDestination(packageItem)} </TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> {getPackageCountry(packageItem)} </TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> USD {getPackageTotalAmount(packageItem)} </TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{getPackageCreatedDate(packageItem)}</TableCell>
         </TableRow>
     );
 };
 
 return (
     <Box className="confirmed-booking-container">
-        <Box className='payment_confirm'>
-            <Typography variant="h4" className="page-title">
-                All Packages
-            </Typography>
-        </Box>
-        
+        <Box className='payment_confirm'><Typography variant="h4" className="page-title"> All Packages </Typography> </Box>
         <Paper className="search-container">
             <TableContainer className="bookings-table-container">
                 <Table stickyHeader className="bookings-table" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
@@ -243,16 +205,9 @@ return (
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredPackages.length > 0 ? (
-                            filteredPackages.map((packageItem: any, index: number) => 
-                                renderPackageRow(packageItem, index)
-                            )
+                        {filteredPackages.length > 0 ? (filteredPackages.map((packageItem: any, index: number) =>  renderPackageRow(packageItem, index)  )
                         ) : (
-                            <TableRow>
-                                <TableCell colSpan={6} align="center" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                                    No packages available
-                                </TableCell>
-                            </TableRow>
+                        <TableRow><TableCell colSpan={6} align="center" sx={{border: '1px solid rgba(224, 224, 224, 1)' }}>  No packages available </TableCell>   </TableRow>
                         )}
                     </TableBody>
                 </Table>

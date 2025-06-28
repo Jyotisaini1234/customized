@@ -132,27 +132,56 @@ const calculatePricing = () => {
   const totals = calculateTotals();
   const selectedHotelOption = packageDetails?.hotelOption?.[selectedOptionIndex];
   const basePackageCost = selectedHotelOption?.totalPackageCost || 0;
-  let totalPrice = basePackageCost;
-  const additionalRooms = Math.max(0, rooms.length - 1);
-  const additionalRoomPrice = additionalRooms * basePackageCost;
-  totalPrice += additionalRoomPrice;
-  const baseAdultCount = 2;
-  const totalAdultCount = totals.totalAdults;
-  const additionalAdults = Math.max(0, totalAdultCount - baseAdultCount);
-  const additionalAdultPrice = additionalAdults * (packageData?.pricing?.additionalAdultPrice || basePackageCost * 0.5);
-  totalPrice += additionalAdultPrice;
+  
+  // Calculate total people (adults + children, excluding infants for room calculation)
+  const totalPeople = totals.totalAdults + totals.totalCwb + totals.totalCnb;
+  
+  let totalPrice = 0;
+  let hotelBasePrice = 0;
+  let additionalAdultPrice = 0;
+  
+  // Hotel pricing logic based on total adults only
+  if (totals.totalAdults === 1) {
+    // For 1 adult, show per person price
+    hotelBasePrice = Math.round(basePackageCost / 2); // Per person price
+    totalPrice = hotelBasePrice;
+  } else if (totals.totalAdults === 2) {
+    // For 2 adults, use full package price
+    hotelBasePrice = basePackageCost;
+    totalPrice = basePackageCost;
+  } else {
+    // For 3+ adults, base price + additional adult charges
+    hotelBasePrice = basePackageCost;
+    totalPrice = basePackageCost;
+    
+    const additionalAdults = totals.totalAdults - 2;
+    additionalAdultPrice = additionalAdults * (packageData?.pricing?.additionalAdultPrice || basePackageCost * 0.5);
+    totalPrice += additionalAdultPrice;
+  }
+  
+  // Children pricing (always add separately)
   const cwbPricePerChild = selectedHotelOption?.cwbCost || 0;
   const cwbPrice = totals.totalCwb * cwbPricePerChild;
   totalPrice += cwbPrice;
+  
   const cnbPricePerChild = selectedHotelOption?.cnbCost || 0;
   const cnbPrice = totals.totalCnb * cnbPricePerChild;
   totalPrice += cnbPrice;
+  
+  // Infant pricing (always free)
   const infantPrice = 0;
+  
+  // Additional rooms calculation
+  const additionalRooms = Math.max(0, rooms.length - 1);
+  const additionalRoomPrice = additionalRooms * basePackageCost;
+  totalPrice += additionalRoomPrice;
+  
   console.log('Pricing Calculation Debug:', {
-    selectedHotelOption,
+    totalAdults: totals.totalAdults,
+    totalCwb: totals.totalCwb,
+    totalCnb: totals.totalCnb,
     basePackageCost,
-    totalAdultCount,
-    additionalAdults,
+    hotelBasePrice,
     additionalAdultPrice,
     cwbCount: totals.totalCwb,
     cwbPricePerChild,
@@ -163,11 +192,11 @@ const calculatePricing = () => {
     additionalRooms,
     additionalRoomPrice,
     totalPrice,
-    note: "Base package already includes activities - no separate calculation needed"
+    note: totals.totalAdults === 1 ? "Single adult - per person hotel price + children separately" : "Multiple adults - package price + additional charges"
   });
 
   return {
-    basePrice: basePackageCost,
+    basePrice: hotelBasePrice,
     additionalAdultPrice,
     cwbPrice,
     cnbPrice,
@@ -176,13 +205,15 @@ const calculatePricing = () => {
     totalPrice,
     breakdown: {
       basePackage: {
-        cost: basePackageCost,
-        includes: "2 Adults + Activities + Hotels" // Updated description
+        cost: hotelBasePrice,
+        includes: totals.totalAdults === 1 ? "1 Adult + Activities + Hotels (Per Person)" : 
+                 totals.totalAdults === 2 ? "2 Adults + Activities + Hotels" : 
+                 `2 Adults + Activities + Hotels + ${totals.totalAdults - 2} Additional Adults`
       },
       adults: {
-        count: totalAdultCount,
-        baseIncluded: baseAdultCount,
-        additionalCount: additionalAdults,
+        count: totals.totalAdults,
+        baseIncluded: totals.totalAdults === 1 ? 1 : 2,
+        additionalCount: totals.totalAdults > 2 ? totals.totalAdults - 2 : 0,
         pricePerPerson: packageData?.pricing?.additionalAdultPrice || basePackageCost * 0.5,
         total: additionalAdultPrice
       },
@@ -209,9 +240,8 @@ const calculatePricing = () => {
     }
   };
 };
-
-  const handleBack = () => { navigate(-1);};
-  const handleSearch = async () => {
+const handleBack = () => { navigate(-1);};
+const handleSearch = async () => {
     setLoading(true);
     const totals = calculateTotals();
     const pricing = calculatePricing();
@@ -307,7 +337,7 @@ const calculatePricing = () => {
     }
   };
 
-  if (!searchData || !packageData) {
+if (!searchData || !packageData) {
     return (
       <Container className="error-container">
         <Alert severity="warning"> No package data found. Please go back and select a package. </Alert>

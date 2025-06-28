@@ -216,13 +216,7 @@ return (
                 </Grid>
               </Grid>
               <Grid item xs={12} md={5} className="image-container">
-                <Box className="image-box">
-                  <img 
-                    src="https://www.uandiholidays.net/Admin/UploadFiles/Advertising/WhatsAppImage2023-12-02at1.09.55PM_2-12-2023-13438.jpeg" 
-                    alt="Trans Studio baku" 
-                    className="attraction-image"
-                  />
-                </Box>
+                <Box className="image-box"> <img src="https://assets.micontenthub.com/traveloffers/travel-tips/baku_OIPJAbO-S.jpg"  alt="Trans Studio baku"  className="attraction-image" /> </Box>
               </Grid>
             </Grid>
           </Paper>
