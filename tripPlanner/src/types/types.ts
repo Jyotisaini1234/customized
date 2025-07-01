@@ -254,6 +254,7 @@ export interface Lead {
   from?: string;
   conversion?: string;
   options: string;
+  createdByEmail:string | null;
   type: string;
   travelDate: string;
   totalAmount: number;
@@ -856,10 +857,13 @@ export interface Room {
 export interface TripPlannerDBData {
   tripId?: string;
   userId?: string;
+  
   tripDetails: {
+    creationDate:string;
     destination: string;
     country: string;
     checkInDate: string;
+    lastUpdated:string
     checkOutDate: string;
     nights: number;
     totalDays: number;
@@ -868,8 +872,7 @@ export interface TripPlannerDBData {
     infants: number;
     rooms: any[];
     cityId:string;
-    // packageType: string;
-    // currency: string;
+    createdByEmail:string;
   };
   
   pricing: {

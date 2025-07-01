@@ -878,7 +878,7 @@ useEffect(() => {
     catch (err) {  console.error("Invalid tour data", err);} }
 }, []);
 
-const prepareTripPlannerDataForDB = (plannerItems: PlannerItem2[], searchData: SearchData, hotels: any[],activities: any[],transfers: any[], grandTotal: number, marginTotal: string,originalSearchParams: any,packageData?: any): TripPlannerDBData => {
+const prepareTripPlannerDataForDB = (plannerItems: PlannerItem2[], searchData: SearchData, hotels: any[],activities: any[],transfers: any[], grandTotal: number, marginTotal: string,originalSearchParams: any,packageData?: any, userEmail?: string): TripPlannerDBData => {
     const getAllHotelsFromSources = (): ReadyMadeHotel[] => {
         const allHotels: ReadyMadeHotel[] = [];
         plannerItems.forEach(item => {
@@ -999,6 +999,7 @@ const prepareTripPlannerDataForDB = (plannerItems: PlannerItem2[], searchData: S
     const totals = calculateTotalsFromRooms(rooms);
     const costBreakdown = calculateComprehensiveCostBreakdown();
     const comprehensivePlannerItems = prepareComprehensivePlannerItems();
+    
     return {
     tripDetails: {
         destination: originalSearchParams?.city || searchData?.destinations?.[0] || 'Batumi',
@@ -1011,8 +1012,10 @@ const prepareTripPlannerDataForDB = (plannerItems: PlannerItem2[], searchData: S
         children: (originalSearchParams?.cwb || 0) + (originalSearchParams?.cnb || 0) + (searchData?.guests?.cwb || 0) + (searchData?.guests?.cnb || 0),
         infants: originalSearchParams?.infants || searchData?.guests?.infants || 0,
         rooms: originalSearchParams?.rooms || searchData?.room || [],
-        cityId: searchData?.cityId || originalSearchParams?.cityId
-
+        createdByEmail: userEmail || 'guest@example.com',
+        cityId: searchData?.cityId || originalSearchParams?.cityId,
+        creationDate: "",
+        lastUpdated: ""
     },
     pricing: {
         grandTotal: grandTotal,
@@ -1023,18 +1026,24 @@ const prepareTripPlannerDataForDB = (plannerItems: PlannerItem2[], searchData: S
     metadata: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-    }
+    },
+   
 };
+
 };
 
 const handleDownloadPDF = async () => {setLoading(true);
     try {
+        const userEmail = localStorage.getItem('username') || 'guest@example.com';
         const currentHotels = JSON.parse(sessionStorage.getItem('existingReadymadeHotels') || '[]');
         const currentActivities = JSON.parse(sessionStorage.getItem('readymadeActivities') || '[]');
         const currentTransfers = JSON.parse(sessionStorage.getItem('tripTransfers') || '[]');
-        const dbData = prepareTripPlannerDataForDB(  plannerItems,searchData,currentHotels, currentActivities,currentTransfers, grandTotal,marginTotal,  originalSearchParams, searchData?.packageData?.packageDetails);
+        const dbData = prepareTripPlannerDataForDB(  plannerItems,searchData,currentHotels, 
+            currentActivities,currentTransfers, grandTotal,marginTotal,  originalSearchParams,
+             searchData?.packageData?.packageDetails,userEmail);
         const result = await submitPackageData(dbData).unwrap();
         console.log('Complete trip data saved successfully:', result);
+        console.log("DB Data being sent:", dbData);
         setTimeout(() => { setLoading(false);setShowThankYou(true);
             console.log('PDF generated successfully with all trip data');
             const keysToRemove = ['persistentTableData', 'readymadeSearchData', 'originalReadymadeSearchData','existingReadymadeHotels', 'readymadeActivities', 'tripTransfers','deletedHotels', 'deletedActivities','deletedItineraries','deletedTransfers', 'tourDayMapping', 'hotelPositionMapping','tripPlannerItems' ];

@@ -95,11 +95,14 @@ useEffect(() => {
       alert('Invalid booking reference. Please try again.');
       return;
     }
+    const loginEmail = localStorage.getItem('username') || localStorage.getItem('email');
+
     const currencyValue = typeof currency === 'number' ? currency.toString() : (currency || 'USD');
     const leadData: Partial<Lead> = {
       id: finalId,
       clientName: clientData.name.trim(),
       options: clientData.options || 'package',
+      createdByEmail:loginEmail,
       travelDate: travelDate,
       totalAmount: totalAmount,
       bookingStatus: bookingStatus || 'confirmed',

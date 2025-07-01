@@ -80,7 +80,7 @@ export const DASHBOARD_NAV_ITEMS = [
 export const USER_NAV_ITEMS = [
   {
     path: ROUTE_CONSTANTS.FLY_DIVINE_TRAVELS,
-    label: "Fly Divine Travels",
+    label: "",
     key: 'fly-divine-travels'
   },
   {

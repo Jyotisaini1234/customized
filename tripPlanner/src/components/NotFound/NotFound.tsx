@@ -28,7 +28,7 @@ const NotFound = () => {
             <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>PAGE NOT FOUND</h2>
             <p style={{ fontSize: '1rem', color: '#555' }}>
               We couldn't find the page you're looking for. Try visiting the{' '}
-              <a href="http://localhost:8080/authentication/login" style={{ color: '#007bff', textDecoration: 'none' }}>
+              <a href="https://b2b.flydivinetravels.com/authentication/login" style={{ color: '#007bff', textDecoration: 'none' }}>
                Login.com
               </a>{' '}
               Home Page.

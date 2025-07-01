@@ -1,44 +1,17 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { BASE_URL, BASE_URL_BACKEND } from '../utils/ApiConstants.ts';
 import { Lead } from '../types/types.ts';
-import MainAppTokenService from '../pages/tokenService.ts';
-
-const baseQueryWithAuth = fetchBaseQuery({
-  baseUrl: BASE_URL,
-  prepareHeaders: (headers) => {
-    const token = MainAppTokenService.getAccessToken();
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
-
-const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
-  MainAppTokenService.updateActivity();
-  let result = await baseQueryWithAuth(args, api, extraOptions);
-
-  if (result.error && result.error.status === 401) {
-    console.log('Token expired, attempting to refresh...');
-    
-    const refreshed = await MainAppTokenService.validateToken();
-    if (refreshed) {
-      result = await baseQueryWithAuth(args, api, extraOptions);
-    } else {
-      MainAppTokenService.clearTokensAndRedirect();
-    }
-  }
-
-  return result;
-};
 
 export const tourApi = createApi({
   reducerPath: 'tourApi',
   baseQuery: fetchBaseQuery({ 
-    baseUrl: BASE_URL_BACKEND,
+    baseUrl: BASE_URL,
     prepareHeaders: (headers) => {
       headers.set('Content-Type', 'application/json');
-      headers.set('Access-Control-Allow-Origin', '*');
+      const userEmail = localStorage.getItem('username') || 'default@example.com';
+      const userRole = 'USER';
+      headers.set('User-Email', userEmail);
+      headers.set('User-Role', userRole);
       return headers;
     },
   }),
@@ -59,11 +32,13 @@ export const tourApi = createApi({
     }),
 
     getLeads: builder.query<any[], void>({
-      query: () => '/sightTour/leads',
+      query: () => ({
+        url: '/sightTour/leads',
+        method: 'GET',
+      }),
       providesTags: ['Lead'],
     }),
 
-  
     updateLead: builder.mutation<Lead, { id: string; lead: Partial<Lead> }>({
       query: ({ id, lead }) => {
         console.log('API: Updating lead with ID:', id);
@@ -105,6 +80,7 @@ export const tourApi = createApi({
       }),
       invalidatesTags: ['Lead'],
     }),
+    
     searchPackages: builder.query<any, { 
       country: string; 
       city: string; 
@@ -125,6 +101,7 @@ export const tourApi = createApi({
       query: (id) => `sightTour/package/${id}`,
       providesTags: (_result, error, id) => [{ type: 'Package', id }],
     }),
+    
     submitPackageData: builder.mutation<any, any>({
       query: (tripPlannerData) => ({
         url: '/sightTour/packageData',
@@ -133,6 +110,7 @@ export const tourApi = createApi({
       }),
       invalidatesTags: ['Package'],
     }),
+    
     getAllPackageData: builder.query<any[], void>({
       query: () => ({
         url: '/sightTour/packageData',
@@ -140,7 +118,6 @@ export const tourApi = createApi({
       }),
       providesTags: ['Package'],
     }),
-    
   }),
 });
 

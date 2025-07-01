@@ -547,7 +547,7 @@ const handleAddItem = (itemId: string, itemType: 'tours' ) => {
       params.append('checkInDate', itemDate.toISOString());
       params.append('specificDayId', itemId);
       params.append('packageType', packageType);
-      if (currentSearchParams.rooms && currentSearchParams.rooms.length > 0) {params.append('rooms', encodeURIComponent(JSON.stringify(currentSearchParams.rooms)));  }
+      if (currentSearchParams.rooms && currentSearchParams.rooms.length > 0) {params.append('rooms', decodeURIComponent(JSON.stringify(currentSearchParams.rooms)));  }
       window.location.href = `${TRIP_PLANNER}${params.toString()}`;
     } else {
       navigate(`/${itemType}-summary`, { state: { ...currentSearchParams,dayId: itemId.split('-')[1], fromTripPlanner: true, checkInDate: itemDate.toISOString(), city: selectedCity, country: selectedCountry } });
@@ -677,6 +677,8 @@ const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hot
 const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, plannerItems: incomingPlannerItems, marginTotal, grandTotal, bookingRef,  travelDate,currency, bookingStatus, destination,...restClientData}) => {
   setClientFormOpen(false);
   setShowThankYou(true);
+  const loginEmail = localStorage.getItem('username') || localStorage.getItem('email');
+
   const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
   if (plannerItems?.length > 0) {sessionStorage.setItem('editLeadData', JSON.stringify({ ...editData, plannerItems }));}
   const editingClientData = JSON.parse(sessionStorage.getItem('editingClientData') || '{}');
@@ -727,6 +729,7 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
       status: 'Confirm',
       destinations: selectedCity,
       country: selectedCountry,
+      createdByEmail:loginEmail,
       travelDate: currentSearchParams.checkInDate || editData.currentSearchParams?.checkInDate,
       nights: currentSearchParams.nights || editData.nights || nights || 1,
       totalAmount: finalGrandTotal + (parseFloat(marginTotal) || 0),

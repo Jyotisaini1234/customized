@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Button, Alert, Card, CardContent, CardMedia, Chip, CircularProgress, FormControl, Grid, InputLabel, MenuItem, Rating, Select } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CustomizeSearchProps, PackageData } from "../../../../../types/types.ts";
 import './ReadymadePackage.scss';
@@ -9,33 +9,37 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
   isModifying = false,
 }) => {
   const navigate = useNavigate();
-  
-  const [filters, setFilters] = useState({
-    destination: 'Azerbaijan',
-    city: 'Baku',
-    nights: '',
-    theme: ''
-  });
-
-  const { 
-    data: allPackagesData,
-    isLoading,
-    error 
-  } = useGetAllPackagesQuery();
-
+  const [filters, setFilters] = useState({ destination: 'Azerbaijan',city: 'Baku', nights: '', theme: ''});
+  const {  data: allPackagesData, isLoading, error } = useGetAllPackagesQuery();
   const packages: PackageData[] = Array.isArray(allPackagesData) ? allPackagesData : [];
-
-  console.log('Raw API Response:', allPackagesData);
-  console.log('Processed packages:', packages);
-
-  const handleViewDetails = (packageData: PackageData) => {
-    console.log('Navigating to package details:', packageData);
-    sessionStorage.clear();
-    navigate(`/package-details/${packageData.id}`, {
-      state: { packageData }
-    });
-  };
-
+  const handleViewDetails = (packageData: PackageData) => { console.log('Navigating to package details:', packageData);sessionStorage.clear(); navigate(`/package-details/${packageData.id}`, { state: { packageData }}); };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const refreshToken = params.get("refreshToken");
+    const email = params.get("email");
+    if (params.has("token") || params.has("refreshToken") || params.has("email")) {
+      if (!token || !refreshToken || !email) {
+        console.log("Incomplete auth params, redirecting to hotel");
+        window.location.href = "https://b2b.flydivinetravels.com/hotel";
+        return;
+      }
+      localStorage.setItem("token", token);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("username", email);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.dispatchEvent(new CustomEvent('emailUpdated'));
+    } else {
+      const existingToken = localStorage.getItem("token");
+      const existingRefreshToken = localStorage.getItem("refreshToken");
+      const existingEmail = localStorage.getItem("username");
+      if (!existingToken || !existingRefreshToken || !existingEmail) {
+        console.log("No existing session found, redirecting to hotel");
+        window.location.href = "https://b2b.flydivinetravels.com/hotel";
+        return;
+      }
+    }
+  }, []);
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="25rem">

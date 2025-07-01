@@ -1,4 +1,4 @@
-export const BASE_URL_JWT = 'https://b2b.flydivinetravels.com/sso';
+// export const BASE_URL_JWT = 'https://b2b.flydivinetravels.com/sso';
 // export const BASE_URL = 'http://localhost:8081';
 export const BASE_URL = 'https://b2b.flydivinetravels.com';
 export const BASE_URL_BACKEND = 'https://b2b.flydivinetravels.com';

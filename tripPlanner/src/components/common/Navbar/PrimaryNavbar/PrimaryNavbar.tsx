@@ -6,7 +6,6 @@ import { Box, IconButton } from '@mui/material';
 import { dropdownMenus } from '../../../../model/selectOptions.ts';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
-import MainAppTokenService from '../../../../pages/tokenService.ts';
 
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
@@ -16,11 +15,10 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   const [activeItem, setActiveItem] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>('Guest');
   const navigate = useNavigate();
   const location = useLocation();
-  
 
-  
   useEffect(() => {
     const currentPath = location.pathname;
     const dashboardItem = DASHBOARD_NAV_ITEMS.find(item => currentPath.startsWith(item.path));
@@ -33,7 +31,25 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
       setActiveItem(userItem.key);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    const updateEmail = () => {
+      const email = localStorage.getItem('username');
+      console.log("Updating email from localStorage:", email); 
+      setUserEmail(email || 'Guest');
+    };
+    updateEmail();
+    const handleEmailUpdate = () => {
+      console.log("Email update event received");
+      updateEmail();
+    };
   
+    window.addEventListener('emailUpdated', handleEmailUpdate);
+    
+    return () => {
+      window.removeEventListener('emailUpdated', handleEmailUpdate);
+    };
+  }, []);
   const handleItemClick = (item: string, path?: string) => {
     if (item === 'logout') {
       handleLogout();
@@ -62,9 +78,11 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
       }
     }
   };
+
   const handleLogout = () => {
-    MainAppTokenService.clearTokensAndRedirect();
-    window.location.href = AWS_INSTANCE;
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    window.location.href =  `${AWS_INSTANCE}/hotel`;
   };
 
   const toggleMenu = () => {
@@ -80,7 +98,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
         </Box>
         <Box className="nav-items">
           <Box className="trip_details">
-            {/* <span>Welcome :</span> */}
+            <span>Welcome: {userEmail}</span>
             {USER_NAV_ITEMS.map((item, index) => (
               <React.Fragment key={item.key}>
                 <Link to={item.path}  onClick={() => handleItemClick(item.key)} >
@@ -127,4 +145,3 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   );
 };
 export default PrimaryNavbar;
-
