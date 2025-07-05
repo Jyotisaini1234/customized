@@ -236,7 +236,7 @@ const handleProceedToSearch = () => {
             <TableCell className="table-header-cell" sx={{ width: '80px' }}>Star</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '80px' }}>Nights</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '120px' }}>Room</TableCell>
-            <TableCell className="table-header-cell" sx={{ width: '100px' }}>Adult 2</TableCell>
+            <TableCell className="table-header-cell" sx={{ width: '100px' }}>Adult 1</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '100px' }}>CWB 1</TableCell>
             <TableCell className="table-header-cell" sx={{ width: '100px' }}>CNB</TableCell>
           </TableRow>
@@ -253,7 +253,9 @@ const handleProceedToSearch = () => {
               <TableCell className="table-cell" > {hotel.roomType} </TableCell>
               {hotelIndex === 0 && (
                 <>
-                  <TableCell  className="table-cell" rowSpan={option.hotels.length}  > {`USD ${option.hotels.reduce((sum, hotel) => sum + (hotel.price || 0), 0)}`}  </TableCell>
+                  {/* <TableCell  className="table-cell" rowSpan={option.hotels.length}  > {`USD ${option.hotels.reduce((sum, hotel) => sum + (hotel.price || 0), 0)}`}  </TableCell> */}
+                  <TableCell  className="table-cell"  rowSpan={option.hotels.length}  > {`USD ${option.perPersonCost}`} </TableCell>
+
                   <TableCell  className="table-cell"  rowSpan={option.hotels.length}  > {`USD ${option.cwbCost}`} </TableCell>
                   <TableCell className="table-cell"rowSpan={option.hotels.length} >{`USD ${option.cnbCost}`}
                   </TableCell>

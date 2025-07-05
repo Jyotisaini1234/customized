@@ -155,7 +155,6 @@ useEffect(() => {
               }
             };
           } else {
-            // If the day is not found, optionally add it (if valid)
             console.warn("Tour specificDayId not found in plannerItems:", tourDetails.specificDayId);
           }
         
@@ -278,44 +277,66 @@ useEffect(() => {
     }
   }
   
+  // Calculate hotel total
+  let hotelTotal = 0;
+  const processedHotels = new Map();
+  
+  hotels.forEach(hotel => {
+    const hotelKey = hotel.specificDayId || `${hotel.hotel?.hotelId}-${hotel.booking?.checkInDate}-${hotel.booking?.checkOutDate}`;
+    if (!processedHotels.has(hotelKey)) {
+      processedHotels.set(hotelKey, true);
+      if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
+        hotelTotal += hotel.booking.totalPrice;
+      }
+    }
+  });
+
+  // Calculate tour total
+  let tourTotal = 0;
+  plannerItems.forEach(item => {
+    if (item.tours) {
+      let tourPrice = 0;
+      
+      if (typeof item.tours.price === 'number') {
+        tourPrice = item.tours.price;
+      }
+      else if (item.tours.details && item.tours.details.booking && typeof item.tours.details.booking.totalPrice === 'number') {
+        tourPrice = item.tours.details.booking.totalPrice;
+      }
+      else if (item.tours.details && typeof item.tours.details.price === 'number') {
+        tourPrice = item.tours.details.price;
+      }
+      
+      tourTotal += tourPrice;
+      console.log(`Tour ${item.id}: ${item.tours.name || 'Unknown'} - Price: ${tourPrice}`);
+    }
+  });
+  const grandTotal = hotelTotal + tourTotal;
+  setGrandTotal(grandTotal);
+
   if (hotels.length > 0) {
     const hotelCurrency = hotels[0]?.booking?.currency || 'USD';
     setCurrency(hotelCurrency);
-    if (!selectedHotel && hotels.length > 0) {
+    if (!selectedHotel) {
       setSelectedHotel(hotels[0]);
     }
-    const src = sessionStorage.getItem('src');
-    const storageKey = src === 'editLead' ? 'updatingHotelData' : 'tripPlannerHotels';
+    
+    const storageKey = src === 'editLead' || src === 'lead' ? 'updatingHotelData' : 'tripPlannerHotels';
     const prevHotelDataStr = sessionStorage.getItem(storageKey);
     const prevHotels = prevHotelDataStr ? JSON.parse(prevHotelDataStr) : [];
     const merged = [...hotels, ...prevHotels];
     const uniqueHotels = Array.from(new Map(merged.map(h => [h.uniqueId, h])).values());
     sessionStorage.setItem(storageKey, JSON.stringify(uniqueHotels));
-    
-    let total = 0;
-    const processedHotels = new Map();
-    hotels.forEach(hotel => {
-      const hotelKey = hotel.specificDayId || `${hotel.hotel?.hotelId}-${hotel.booking?.checkInDate}-${hotel.booking?.checkOutDate}`;
-      if (!processedHotels.has(hotelKey)) {
-        processedHotels.set(hotelKey, true);
-        if (hotel.booking && typeof hotel.booking.totalPrice === 'number') {
-          total += hotel.booking.totalPrice;
-        }
-      }
-    });
-    plannerItems.forEach(item => {
-      if (item.tours && item.tours.details &&
-        item.tours.details.booking &&
-        typeof item.tours.details.booking.totalPrice === 'number') {
-        total += item.tours.details.booking.totalPrice;
-      }
-    });
-    setGrandTotal(total);
   } else {
-    setGrandTotal(0);
     setSelectedHotel(null);
   }
+
+  console.log(`Total calculation - Hotels: ${hotelTotal}, Tours: ${tourTotal}, Grand Total: ${grandTotal}`);
+  
 }, [hotels, plannerItems, currentSearchParams.nights]);
+
+
+
 useEffect(() => {
   if (hotels.length > 0) {
     setPlannerItems(prevItems => {

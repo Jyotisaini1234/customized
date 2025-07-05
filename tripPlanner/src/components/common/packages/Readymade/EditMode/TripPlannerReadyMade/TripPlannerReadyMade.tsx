@@ -5,6 +5,7 @@ import { AddCircleOutline, DeleteOutline, ArrowDownward as ArrowDownIcon} from "
 import './TripPlannerReadyMade.scss';
 import { SearchData, PlannerItem2, PackageHotel, PackageData, TripPlannerDBData, ReadyMadeHotel, Activity, Transfer, Itinerary, PackageItinerary } from "../../../../../../types/types.ts";
 import { useSubmitPackageDataMutation } from "../../../../../../api/TourAPI.tsx";
+import { TRIP_PLANNER } from "../../../../../../utils/ApiConstants.ts";
 
 const TripPlannerReadyMade: React.FC = () => {
 const location = useLocation();
@@ -73,7 +74,6 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
     let currentDate = new Date(startDate);
     const nights = currentSearchParams.nights || currentSearchParams.totalNights || 3;
     const totalDays = nights + 1;
-    console.log(`Creating planner for ${nights} nights = ${totalDays} days`);
     const deletedItineraries = JSON.parse(sessionStorage.getItem('deletedItineraries') || '[]');
     for (let i = 0; i < totalDays; i++) {
         const itineraryId = `itinerary-day-${i + 1}`;
@@ -90,26 +90,91 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
         currentDate.setDate(currentDate.getDate() + 1); 
     }
     items.forEach(item => { item.hotel = undefined; });
-    hotelList.forEach((hotel) => {
+    const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
+    const packageHotels = hotelList.filter(hotel => hotel.isPackageHotel && typeof hotel.packageIndex === 'number');
+    const additionalHotels = hotelList.filter(hotel => !hotel.isPackageHotel || hotel.isAdditional || hotel.specificDayId);
+    packageHotels.sort((a, b) => (a.packageIndex || 0) - (b.packageIndex || 0));
+    const originalHotelMapping = new Map();
+    let currentDayIndex = 0;
+    if (packageData?.hotelOption?.[0]?.hotels) {
+        packageData.hotelOption[0].hotels.forEach((originalHotel, index) => {
+            const hotelNights = originalHotel.nights || 1;
+            const isDeleted = deletedHotels.some((deleted: any) => 
+                (deleted.name === originalHotel.name && deleted.destination === originalHotel.destination) ||
+                deleted.packageIndex === index
+            );
+            originalHotelMapping.set(index, {
+                startDay: currentDayIndex,
+                endDay: Math.min(currentDayIndex + hotelNights - 1, totalDays - 2),
+                nights: hotelNights,
+                isDeleted: isDeleted,
+                hotelData: originalHotel
+            });
+            
+            currentDayIndex += hotelNights;
+            if (index === packageData.hotelOption[0].hotels.length - 1 && !isDeleted) {
+                originalHotelMapping.set(index, {
+                    ...originalHotelMapping.get(index),
+                    endDay: totalDays - 1
+                });
+            }
+        });
+    }
+    packageHotels.forEach((hotel) => {
+        const isDeleted = deletedHotels.some((deleted: any) => 
+            (deleted.name === hotel.name && deleted.destination === hotel.destination) ||
+            deleted.uniqueId === hotel.uniqueId || 
+            deleted.packageIndex === hotel.packageIndex
+        );
+        if (isDeleted) {
+            console.log(`Skipping deleted hotel: ${hotel.name}`);
+            return;
+        }
+        
+        const originalMapping = originalHotelMapping.get(hotel.packageIndex);
+        if (!originalMapping) return;
+        const { startDay, endDay } = originalMapping;
+        for (let dayIndex = startDay; dayIndex <= endDay; dayIndex++) {
+            if (dayIndex < items.length) {
+                items[dayIndex].hotel = {
+                    ...hotel,
+                    displayInfo: {
+                        isFirstDay: dayIndex === startDay,
+                        isLastDay: dayIndex === endDay,
+                        dayNumber: dayIndex - startDay + 1,
+                        totalDays: endDay - startDay + 1
+                    }
+                };
+            }
+        }
+    });
+    additionalHotels.forEach((hotel) => {
         if (hotel.specificDayId) {
-            // Handle specific day assignment
             const dayIndex = items.findIndex(item => item.id === hotel.specificDayId);
-            if (dayIndex !== -1) { items[dayIndex].hotel = {...hotel, isAdditional: true,displayInfo: { isFirstDay: true,isLastDay: true, dayNumber: 1,totalDays: 1 } };
-                // If this is the second-to-last day, also show on last day
+            if (dayIndex !== -1) { 
+                items[dayIndex].hotel = {
+                    ...hotel, 
+                    isAdditional: true,
+                    displayInfo: {
+                        isFirstDay: true, 
+                        isLastDay: true,  
+                        dayNumber: 1, 
+                        totalDays: 1 
+                    } 
+                };
                 if (dayIndex === totalDays - 2) {
                     const lastDayIndex = totalDays - 1;
                     items[lastDayIndex].hotel = {
                         ...hotel,
                         isAdditional: true,
                         displayInfo: { 
-                            isFirstDay: false, 
+                            isFirstDay: false,  
                             isLastDay: true,
-                            dayNumber: 2, 
+                            dayNumber: 2,   
                             totalDays: 2 
                         }
                     };
                 }
-                console.log(`Assigned hotel "${hotel.name}" to specific day: ${hotel.specificDayId} with price: $${hotel.price}`); 
             }
         } 
         else if (hotel.checkInDate && hotel.checkOutDate) {
@@ -120,81 +185,48 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
             const checkInDayIndex = items.findIndex(item => {
                 const itemDate = new Date(item.date);
                 itemDate.setHours(0, 0, 0, 0);
-                return itemDate.getTime() === checkInDate.getTime();});
+                return itemDate.getTime() === checkInDate.getTime();
+            });
             const checkOutDayIndex = items.findIndex(item => {
                 const itemDate = new Date(item.date);
                 itemDate.setHours(0, 0, 0, 0);
-                return itemDate.getTime() === checkOutDate.getTime();});
+                return itemDate.getTime() === checkOutDate.getTime();
+            });
             if (checkInDayIndex !== -1) {
                 const numNights = checkOutDayIndex - checkInDayIndex;
                 const isFullItinerary = checkInDayIndex === 0 && checkOutDayIndex === totalDays - 1;
                 const isLastDayCheckout = checkOutDayIndex === totalDays - 1;
                 let startShowIndex = checkInDayIndex;
                 let endShowIndex = checkOutDayIndex;
-                if (isFullItinerary) {endShowIndex = totalDays - 1; }
-                else if (isLastDayCheckout) {}
-                else if (numNights === 2) {endShowIndex = checkInDayIndex + 1; } 
-                else if (numNights === 1 && checkOutDayIndex < totalDays - 1) {endShowIndex = checkInDayIndex;  }
-                else {endShowIndex = checkOutDayIndex - 1;}
-                // Assign hotel to calculated range
+                
+                if (isFullItinerary) { 
+                    endShowIndex = totalDays - 1;  
+                }
+                else if (isLastDayCheckout) { 
+                }
+                else if (numNights === 2) { 
+                    endShowIndex = checkInDayIndex + 1;   
+                } 
+                else if (numNights === 1 && checkOutDayIndex < totalDays - 1) {
+                    endShowIndex = checkInDayIndex;   
+                }
+                else {
+                    endShowIndex = checkOutDayIndex - 1; 
+                }
                 for (let i = startShowIndex; i <= endShowIndex; i++) {
                     items[i].hotel = {
                         ...hotel,
-                        displayInfo: {
-                            isFirstDay: i === startShowIndex,
-                            isLastDay: i === endShowIndex,
-                            dayNumber: i - startShowIndex + 1,
-                            totalDays: endShowIndex - startShowIndex + 1
+                        displayInfo: { 
+                            isFirstDay: i === startShowIndex, 
+                            isLastDay: i === endShowIndex,  
+                            dayNumber: i - startShowIndex + 1, 
+                            totalDays: endShowIndex - startShowIndex + 1 
                         }
                     };
                 }
-                console.log(`✅ Assigned hotel "${hotel.name}" from day ${startShowIndex + 1} to day ${endShowIndex + 1}`);
             }
-            // Alternative assignment based on date range
-            items.forEach((item, index) => {
-                const itemDate = new Date(item.date);
-                itemDate.setHours(0, 0, 0, 0);
-                if (itemDate >= checkInDate && itemDate < checkOutDate) {
-                    if (!items[index].hotel) { // Only assign if no hotel already assigned
-                        items[index].hotel = {
-                            ...hotel,
-                            displayInfo: {
-                                isFirstDay: itemDate.getTime() === checkInDate.getTime(),
-                                isLastDay: itemDate.getTime() === new Date(checkOutDate.getTime() - 24 * 60 * 60 * 1000).getTime(),
-                                dayNumber: Math.floor((itemDate.getTime() - checkInDate.getTime()) / (24 * 60 * 60 * 1000)) + 1,
-                                totalDays: Math.floor((checkOutDate.getTime() - checkInDate.getTime()) / (24 * 60 * 60 * 1000))
-                            }
-                        };
-                    }
-                }
-            });
-        }
-        else {
-            // Handle package hotels with nights-based assignment
-            const hotelNights = hotel.nights || 1;
-            const hotelDays = hotelNights + 1;
-            let startDayIndex = 0;
-            // Find first available day
-            while (startDayIndex < items.length && items[startDayIndex].hotel) {  startDayIndex++; }
-            // Assign to consecutive days
-            for (let dayOffset = 0; dayOffset < hotelDays && (startDayIndex + dayOffset) < items.length; dayOffset++) {
-                const dayIndex = startDayIndex + dayOffset;
-                if (!items[dayIndex].hotel) {
-                    items[dayIndex].hotel = { 
-                        ...hotel, 
-                        displayInfo: {  
-                            isFirstDay: dayOffset === 0,  
-                            isLastDay: dayOffset === hotelDays - 1,  
-                            dayNumber: dayOffset + 1,  
-                            totalDays: hotelDays 
-                        }  
-                    }; 
-                } 
-            }
-            console.log(`✅ Assigned package hotel "${hotel.name}" starting from day ${startDayIndex + 1} for ${hotelDays} days`);
         }
     });
-    // Handle activities assignment
     const deletedActivities = JSON.parse(sessionStorage.getItem('deletedActivities') || '[]');
     const tourMapping = JSON.parse(sessionStorage.getItem('tourDayMapping') || '{}');
     activityList.forEach((activity) => { 
@@ -202,22 +234,26 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
         const assignedDayId = activity.assignedDayId || tourMapping[activity.id];
         if (assignedDayId) { 
             const dayIndex = items.findIndex(item => item.id === assignedDayId);
-            if (dayIndex !== -1) { 
+            if (dayIndex !== -1) {  
                 items[dayIndex].tours = activity; 
-                console.log(`✅ Assigned activity "${activity.name}" to specific day: ${assignedDayId}`);}
+            }
         } else {
             const availableDayIndex = items.findIndex(item => !item.tours);
-            if (availableDayIndex !== -1) {
-                items[availableDayIndex].tours = activity;
-                console.log(`✅ Assigned activity "${activity.name}" to first available day: ${items[availableDayIndex].id}`);
-            } }
+            if (availableDayIndex !== -1) { 
+                items[availableDayIndex].tours = activity;  
+            }
+        }
     });
-    // Handle transfers
-    transferList.forEach((transfer, index) => {if (index < items.length) {   items[index].transfer = transfer;  }});
+    transferList.forEach((transfer, index) => {
+        if (index < items.length) {   
+            items[index].transfer = transfer;  
+        }
+    });
     setPlannerItems(items);
     calculateTotalWithPackageData(items, packageData);
     savePersistentTableData(items);
 };
+
 const createEmptyPlannerItems = () => {
     const items: PlannerItem2[] = [];
     const startDate = new Date(currentSearchParams.checkInDate);
@@ -269,7 +305,6 @@ const calculateTotalWithPackageData = (items: PlannerItem2[], packageData?: Pack
         }
     }
     
-    // Subtract deleted hotels with proper room calculation
     const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
     deletedHotels.forEach(deletedHotel => {
         if (deletedHotel.originalPrice) {
@@ -403,34 +438,27 @@ useEffect(() => {
 
 useEffect(() => {
     if (searchData && hasValidData && !isDataLoaded.current) {
-        console.log('Processing search data:', searchData);
         isDataLoaded.current = true;
         const packageData = searchData.packageData?.packageDetails;
-        console.log('Package data:', packageData);
-        
         const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
         const deletedPackageHotels = JSON.parse(sessionStorage.getItem('deletedPackageHotels') || '[]');
         const deletedActivities = JSON.parse(sessionStorage.getItem('deletedActivities') || '[]');
         const existingHotels = JSON.parse(sessionStorage.getItem('existingReadymadeHotels') || '[]');
-        
         let hotelList: any[] = [];
-        
         if (packageData?.hotelOption?.[0]?.hotels) {
             hotelList = packageData.hotelOption[0].hotels.map((hotel: PackageHotel, index: number) => {
                 const hotelId = `hotel-package-${index}-${hotel.name.replace(/\s+/g, '-').toLowerCase()}`;
                 const uniqueId = `package-${hotel.name.replace(/\s+/g, '-').toLowerCase()}-${hotel.destination.replace(/\s+/g, '-').toLowerCase()}`; 
-                
+            
                 const isDeleted = deletedHotels.some((deleted: any) => 
                     (deleted.name === hotel.name && deleted.destination === hotel.destination) ||
                     deleted.uniqueId === uniqueId ||
                     deleted.packageIndex === index
                 );
-                
                 if (isDeleted) { 
                     console.log('Skipping deleted hotel:', hotel.name, 'from', hotel.destination);  
                     return null;
                 }
-                
                 return {
                     id: hotelId,
                     name: hotel.name,
@@ -447,25 +475,17 @@ useEffect(() => {
                     isPackageHotel: true
                 };
             }).filter(hotel => hotel !== null);
-            console.log('Processed hotels from package (after filtering deleted):', hotelList); 
         }
-        
-        // Process existing hotels with proper mapping
         const filteredExistingHotels = existingHotels.filter((hotel: any) => {
             const isDeleted = deletedHotels.some((deleted: any) => 
-                deleted.id === hotel.id && 
-                (deleted.specificDayId === hotel.specificDayId || deleted.uniqueId === hotel.uniqueId)
-            );
+                deleted.id === hotel.id && (deleted.specificDayId === hotel.specificDayId || deleted.uniqueId === hotel.uniqueId) );
             return !isDeleted;
         }).map((hotel: any) => ({
             ...hotel,
             city: hotel.city || hotel.destination || hotel.hotel?.city || searchData?.city || 'Unknown',
             roomType: hotel.roomType || hotel.room?.roomCategory || hotel.hotel?.roomType || 'Standard Room'
         }));
-        
         hotelList = [...filteredExistingHotels, ...hotelList];
-        
-        // Enhanced hotel from params processing
         if (selectedHotelFromParams && selectedHotelFromParams.hotel) {
             const hotelFromParams = {
                 id: selectedHotelFromParams.hotel.id,
@@ -484,37 +504,20 @@ useEffect(() => {
                 roomType: selectedHotelFromParams.room?.roomCategory || selectedHotelFromParams.hotel?.roomType || 'Standard Room',
                 mealPlan: selectedHotelFromParams.room?.mealPlan || selectedHotelFromParams.hotel?.mealPlan || 'BB'
             };
-            
-            const isParamsHotelDeleted = deletedHotels.some((deleted: any) => 
-                deleted.id === hotelFromParams.id && 
-                (deleted.specificDayId === hotelFromParams.specificDayId || deleted.uniqueId === hotelFromParams.uniqueId)
-            );
-            
+            const isParamsHotelDeleted = deletedHotels.some((deleted: any) =>  deleted.id === hotelFromParams.id &&  (deleted.specificDayId === hotelFromParams.specificDayId || deleted.uniqueId === hotelFromParams.uniqueId) );
             if (!isParamsHotelDeleted) {
-                const hotelExists = hotelList.some(hotel => 
-                    hotel.id === hotelFromParams.id && 
-                    hotel.specificDayId === hotelFromParams.specificDayId
-                );
-                if (!hotelExists) {
-                    hotelList = [hotelFromParams, ...hotelList];
-                }
-            } else { 
-                console.log('Skipping deleted hotel from params:', hotelFromParams.name);
-            }
+                const hotelExists = hotelList.some(hotel =>  hotel.id === hotelFromParams.id &&  hotel.specificDayId === hotelFromParams.specificDayId );
+                if (!hotelExists) {hotelList = [hotelFromParams, ...hotelList]; }
+            } else {  console.log('Skipping deleted hotel from params:', hotelFromParams.name);   }
         }
-        
         setHotels(hotelList);
         saveHotelsToSession(hotelList);
-        
         const savedActivities = sessionStorage.getItem('readymadeActivities');
         let activityList: any[] = [];
-        
         if (savedActivities) {
             try {
                 const parsedActivities = JSON.parse(savedActivities);
-                activityList = parsedActivities.filter((activity: any) => 
-                    !deletedActivities.includes(activity.id)
-                );
+                activityList = parsedActivities.filter((activity: any) =>  !deletedActivities.includes(activity.id) );
                 console.log('Using saved activities (after filtering deleted):', activityList.length);
             } catch (e) {
                 console.error('Error parsing saved activities:', e);
@@ -566,6 +569,8 @@ useEffect(() => {
         }
     }
 }, [searchData, hasValidData, selectedHotelFromParams]);
+
+
 const saveHotelsToSession = (hotelList: any[]) => {
         try {
             sessionStorage.setItem('existingReadymadeHotels', JSON.stringify(hotelList));
@@ -690,44 +695,54 @@ useEffect(() => {
 }, [location]);
 
 const handleRemoveHotel = (plannerItem: PlannerItem2) => {
-        if (!plannerItem.hotel) return;
-        const hotelToRemove = plannerItem.hotel;
-        console.log('Removing hotel:', hotelToRemove.name);
-        const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
-        const deletedHotel = {
-            id: hotelToRemove.id,
-            specificDayId: hotelToRemove.specificDayId,
-            uniqueId: hotelToRemove.uniqueId,
-            originalPrice: Number(hotelToRemove.price) || 0,
-            name: hotelToRemove.name,
-            timestamp: new Date().toISOString()
-        };
-        deletedHotels.push(deletedHotel);
-        sessionStorage.setItem('deletedHotels', JSON.stringify(deletedHotels));
-        const updatedHotels = hotels.filter(hotel => {
-            const hotelKey = `${hotel.id}-${hotel.uniqueId || hotel.specificDayId || 'default'}`;
-            const removeKey = `${hotelToRemove.id}-${hotelToRemove.uniqueId || hotelToRemove.specificDayId || 'default'}`;
-            return hotelKey !== removeKey;
-        });
-        setHotels(updatedHotels);
-        saveHotelsToSession(updatedHotels);
-        const updatedItems = plannerItems.map(item => {
-            if (item.hotel) {
-                const itemHotelKey = `${item.hotel.id}-${item.hotel.uniqueId || item.hotel.specificDayId || 'default'}`;
-                const removeKey = `${hotelToRemove.id}-${hotelToRemove.uniqueId || hotelToRemove.specificDayId || 'default'}`;
-                if (itemHotelKey === removeKey) {console.log(`Removing hotel from day: ${item.id}`);
-                    return { ...item, hotel: undefined }; }
-            }
-            return item;
-        });
-        setPlannerItems(updatedItems);
-        calculateTotalWithPackageData(updatedItems, searchData?.packageData?.packageDetails);
-        sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
-        sessionStorage.removeItem('hotelSearchParams');
-        sessionStorage.removeItem('lastNightHotelParams');
-        sessionStorage.removeItem('selectedHotelArea');
-        savePersistentTableData(updatedItems);
+    if (!plannerItem.hotel) return;
+    const hotelToRemove = plannerItem.hotel;
+    console.log(' Removing hotel:', hotelToRemove.name, 'from day:', plannerItem.id);
+    const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
+    const deletedHotel = {
+        id: hotelToRemove.id,
+        specificDayId: hotelToRemove.specificDayId,
+        uniqueId: hotelToRemove.uniqueId,
+        packageIndex: hotelToRemove.packageIndex,
+        originalPrice: Number(hotelToRemove.price) || 0,
+        name: hotelToRemove.name,
+        destination: hotelToRemove.destination,
+        timestamp: new Date().toISOString()
     };
+    deletedHotels.push(deletedHotel);
+    sessionStorage.setItem('deletedHotels', JSON.stringify(deletedHotels));
+    console.log(' Added to deleted hotels:', deletedHotel);
+    const updatedHotels = hotels.filter(hotel => {
+        const hotelKey = `${hotel.id}-${hotel.uniqueId || hotel.specificDayId || 'default'}`;
+        const removeKey = `${hotelToRemove.id}-${hotelToRemove.uniqueId || hotelToRemove.specificDayId || 'default'}`;
+        return hotelKey !== removeKey;
+    });
+    
+    setHotels(updatedHotels);
+    saveHotelsToSession(updatedHotels);
+    console.log('Updated hotels list, remaining:', updatedHotels.length);
+    const updatedItems = plannerItems.map(item => {
+        if (item.hotel) {
+            const itemHotelKey = `${item.hotel.id}-${item.hotel.uniqueId || item.hotel.specificDayId || 'default'}`;
+            const removeKey = `${hotelToRemove.id}-${hotelToRemove.uniqueId || hotelToRemove.specificDayId || 'default'}`;
+            
+            if (itemHotelKey === removeKey) {
+                console.log(`Removing hotel from day: ${item.id}`);
+                return { ...item, hotel: undefined };
+            }
+        }
+        return item;
+    });
+    
+    setPlannerItems(updatedItems);
+    calculateTotalWithPackageData(updatedItems, searchData?.packageData?.packageDetails);
+    sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
+    sessionStorage.removeItem('hotelSearchParams');
+    sessionStorage.removeItem('lastNightHotelParams');
+    sessionStorage.removeItem('selectedHotelArea');
+    savePersistentTableData(updatedItems);
+};
+
 const calculateTotal = (items: PlannerItem2[]) => { return calculateTotalWithPackageData(items, searchData?.packageData?.packageDetails);};
 const handleTabChange = (event: React.SyntheticEvent, newValue: string) => { setActiveTab(newValue); };
 const handleAddItem = (plannerItemId: string, type: string) => {
@@ -747,7 +762,7 @@ const handleAddItem = (plannerItemId: string, type: string) => {
             } else if (searchData?.guests?.adults !== undefined) { adults = searchData.guests.adults; cwb = searchData.guests.cwb || 0; cnb = searchData.guests.cnb || 0; infants = searchData.guests.infants || 0;
             } else if (rooms && rooms.length > 0) { const firstRoom = rooms[0];adults = firstRoom.adults || 2;cwb = firstRoom.cwb || 0; cnb = firstRoom.cnb || 0; infants = firstRoom.infants || 0;} else { adults = currentSearchParams.adults || 2;  cwb = currentSearchParams.cwb || 0; cnb = currentSearchParams.cnb || 0; infants = currentSearchParams.infants || 0;  }
             const totalPax = adults + cwb + cnb;
-            const tourSelectionUrl = new URL('http://b2b.flydivinetravels.com/hotel/home-page');
+            const tourSelectionUrl = new URL(TRIP_PLANNER);
             tourSelectionUrl.searchParams.set('city', city);
             tourSelectionUrl.searchParams.set('country', 'Georgia');
             tourSelectionUrl.searchParams.set('pax', totalPax.toString());
@@ -840,6 +855,7 @@ const handleHotelSelection2 = (itemId: string) => {
     console.log(`Opening hotel selection for day ${itemId} at position ${dayNumber}`);
     navigate('/trip-planner-area', { state: hotelSearchParams });
 };
+
 const handleRemoveTour = (plannerItem: PlannerItem2) => {
     const tourToRemove = plannerItem.tours;
     const itineraryToRemove = plannerItem.itinerary;

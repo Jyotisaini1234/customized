@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import './ReadyMadeSearch.scss';
 import { ReadymadeData } from "../../../../../../types/types.ts";
 import { enGB } from "date-fns/locale";
+import { BAKU_REQUIREMENT } from "../../../../../../utils/ApiConstants.ts";
 
 interface Room {
   id: string;
@@ -349,13 +350,15 @@ if (!searchData || !packageData) {
   const destinations = selectedHotelOption?.hotels?.map((hotel: any) => hotel.destination) || [];
   const uniqueDestinations = [...new Set(destinations)];
   const totals = calculateTotals();
-
+  const handleBakuRequirement = () => {
+    window.open(BAKU_REQUIREMENT, '_blank');
+  };
   return (
     <Box className="customize-search-page">
       <Container sx={{ paddingLeft: '0rem', paddingRight: '0rem' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading"> Readymade Packages Search </Typography>
-          <Button className='entry-btn' sx={{ borderRadius: '4px', boxShadow: 'none', textTransform: 'none', py: 1 }}> baku Entry Requirements</Button>
+          <Button className='entry-btn' sx={{ borderRadius: '4px', boxShadow: 'none', textTransform: 'none', py: 1 }}  onClick={handleBakuRequirement}> baku Entry Requirements</Button>
         </Box>
 
         {/* Display current selections summary */}

@@ -10,6 +10,7 @@
   import TripPlanner from "../TripPlanner/TripPlanner.tsx";
   import { country as countriesList  ,citiesList as citiesList} from "../../../../model/selectOptions.ts"; 
 import { enGB } from "date-fns/locale";
+import { BAKU_REQUIREMENT } from "../../../../utils/ApiConstants.ts";
 
   const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initialValues = {}, onSearchComplete }) => {
     const location = useLocation();
@@ -194,8 +195,6 @@ import { enGB } from "date-fns/locale";
         filteredHotels
       };
       if (!isModifying) {
-        // sessionStorage.removeItem('tripPlannerHotels');
-        // sessionStorage.removeItem('tripPlannerItems');
       }
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(params));
       if (isModifying && onSearchComplete) {
@@ -216,7 +215,9 @@ import { enGB } from "date-fns/locale";
       setCity(filteredCities[0] || null); // set first city or null
     };
     
-    
+  const handleBakuRequirement = () => {
+        window.open(BAKU_REQUIREMENT, '_blank');
+      };
 return (
   <Box className={`customize-search-page ${isModifying ? 'modify-mode' : ''}`}>
       <Container sx={{paddingLeft:'0rem', paddingRight:'0rem'}}>
@@ -224,7 +225,7 @@ return (
           {!isModifying && (
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading">Customize Search</Typography>
-          <Button className='entry-btn'  sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1 }} > baku Entry Requirements</Button>
+          <Button className='entry-btn'  sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1 }}  onClick={handleBakuRequirement} > baku Entry Requirements</Button>
           </Box>)}
             <Grid container spacing={1} className='form-container'>
               <Grid item xs={12} md={6}>

@@ -3,9 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './PrimaryNavbar.scss';
 import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstants.ts';
 import { Box, IconButton } from '@mui/material';
-import { dropdownMenus } from '../../../../model/selectOptions.ts';
+import { dropdownMenus, userDropdownOptions } from '../../../../model/selectOptions.ts';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
+import CreateUser from '../CreateUser/CreateUser.tsx';
 
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
@@ -18,6 +19,8 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   const [userEmail, setUserEmail] = useState<string>('Guest');
   const navigate = useNavigate();
   const location = useLocation();
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -89,8 +92,19 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     setMenuOpen(!menuOpen);
     setOpenDropdown(null);
   };
-
+  const handleCloseCreateUser = () => {
+    setCreateUserOpen(false);
+  };
+  const handleUserDropdownClick = (option: { label: string; path: string; action?: string }) => {
+    setUserDropdownOpen(false);
+    if (option.action === 'modal') {
+      setCreateUserOpen(true);
+      return;
+    }
+    window.location.href = option.path;
+  };
   return (
+    <>
     <Box className="nav-holder">
       <nav className="primary-navbar">
         <Box className="logo">
@@ -101,12 +115,26 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
             <span>Welcome: {userEmail}</span>
             {USER_NAV_ITEMS.map((item, index) => (
               <React.Fragment key={item.key}>
-                <Link to={item.path}  onClick={() => handleItemClick(item.key)} >
-                  {item.label}
-                </Link>
+                {item.key === 'user' ? (
+                  <Box   sx={{ position: 'relative', display: 'inline-block' }}  onMouseEnter={() => setUserDropdownOpen(true)}  onMouseLeave={() => setUserDropdownOpen(false)}  >
+                    <Link to={item.path} onClick={() => handleItemClick(item.key)}>   {item.label} </Link>
+                    {userDropdownOpen && (
+                      <Box sx={{position: 'absolute',  top: '100%', left: '50%', transform: 'translateX(-50%)',   backgroundColor: '#0369a1', color:'black', borderRadius: '4px',   zIndex: 1000,  minWidth: '11rem', padding: '5px 0',  }}>
+                        {userDropdownOptions.map((option, idx) => (
+                          <Box key={idx} onClick={(e) => { e.stopPropagation();  handleUserDropdownClick(option); }}
+                            style={{display: 'block',   padding: '8px 1rem',  color: 'white',textDecoration: 'none',  fontSize: '14px',  borderBottom: idx < userDropdownOptions.length - 1 ? '1px solid #eee' : 'none', cursor: 'pointer'  }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0369a1'; }}
+                            onMouseLeave={(e) => {  e.currentTarget.style.backgroundColor = 'transparent'; }} >{option.label} 
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <Link to={item.path} onClick={() => handleItemClick(item.key)}>  {item.label}  </Link> )}
                 {index < USER_NAV_ITEMS.length - 1 && ' | '}
               </React.Fragment>
-            ))}
+        ))}
           </Box>
         </Box>
       </nav>
@@ -121,7 +149,6 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
                 </span>
                 {item.label}
               </Link>
-              {/* Dropdown menu for baku Packages and My Bookings */}
               {(item.key === 'baku-packages' || item.key === 'bookings') && 
                 <Box className={`dropdown-menu ${openDropdown === item.key ? 'show' : ''}`}>
                   {dropdownMenus[item.key as keyof typeof dropdownMenus].map((dropdownItem, idx) => (
@@ -142,6 +169,10 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
         </IconButton>
       </Box>
     </Box>
+    {createUserOpen && (
+        <CreateUser onClose={handleCloseCreateUser} />
+      )}
+    </>
   );
 };
 export default PrimaryNavbar;

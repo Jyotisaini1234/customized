@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { CustomizeSearchProps, PackageData } from "../../../../../types/types.ts";
 import './ReadymadePackage.scss';
 import { useGetAllPackagesQuery } from "../../../../../api/TourAPI.tsx";
+import { BAKU_REQUIREMENT } from "../../../../../utils/ApiConstants.ts";
 
 const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({ 
   isModifying = false,
@@ -21,7 +22,7 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
     if (params.has("token") || params.has("refreshToken") || params.has("email")) {
       if (!token || !refreshToken || !email) {
         console.log("Incomplete auth params, redirecting to hotel");
-        window.location.href = "https://b2b.flydivinetravels.com/hotel";
+        window.location.href = "http://b2b.flydivinetravels.com/hotel";
         return;
       }
       localStorage.setItem("token", token);
@@ -35,7 +36,7 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
       const existingEmail = localStorage.getItem("username");
       if (!existingToken || !existingRefreshToken || !existingEmail) {
         console.log("No existing session found, redirecting to hotel");
-        window.location.href = "https://b2b.flydivinetravels.com/hotel";
+        window.location.href = "http://b2b.flydivinetravels.com/hotel";
         return;
       }
     }
@@ -48,13 +49,15 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
       </Box>
     );
   }
-
+  const handleBakuRequirement = () => {
+    window.open(BAKU_REQUIREMENT, '_blank');
+  };
   return (
     <Box className={`readymade-search-page ${isModifying ? 'modify-mode' : ''}`}>
       <Container sx={{ paddingLeft: '0rem', paddingRight: '0rem' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
           <Typography variant="h4">Readymade Packages</Typography>
-          <Button className='entry-btn'>Baku Entry Requirements</Button>
+          <Button className='entry-btn' onClick={handleBakuRequirement} >Baku Entry Requirements</Button>
         </Box>
         <Box className="search-details">
           <Grid container spacing={2} alignItems="center">
@@ -135,7 +138,7 @@ return (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{mainHotel.name} </Typography> )}
         <Box sx={{ mt: 'auto' }}>
         <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > USD {((
-          packageDetails.hotelOption?.[0]?.totalPackageCost ?? 0) +(packageDetails.itinerary?.reduce((sum, day) => sum + (day.price ?? 0), 0) ?? 0)).toLocaleString()}
+          packageDetails.hotelOption?.[0]?.perPersonCost ?? 0) +(packageDetails.itinerary?.reduce((sum, day) => sum + (day.price ?? 0), 0) ?? 0)).toLocaleString()}
 
         </Typography>
         <Typography variant="body2"  sx={{color: '#f44336', fontWeight: 'bold', mb: 2  }}  > Regular</Typography>

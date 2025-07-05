@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField } from '@mui/material';
 import './ConfirmedBooking.scss';
 import { useGetAllPackageDataQuery } from '../../../../api/TourAPI.tsx';
@@ -79,7 +78,7 @@ const getPackageName = (packageData: any) => {
                 const city = item.hotel.destination;
                 const nights = item.hotel.nights;
                 const hotelKey = `${item.hotel.name}-${city}`;
-                if (!uniqueHotels.has(hotelKey)) {  uniqueHotels.set(hotelKey, { city: city,  nights: nights, hotelName: item.hotel.name}); }
+                if (!uniqueHotels.has(hotelKey)) {uniqueHotels.set(hotelKey, { city: city,  nights: nights, hotelName: item.hotel.name}); }
             }
         });
     }
@@ -151,7 +150,7 @@ const renderPackageRow = (packageItem: any, index: number) => {
                                 rooms: packageItem.rooms || [],
                                 packageType: packageItem.packageType || '',
                                 currency: packageItem.currency || 'USD',
-                                status: packageItem.status || ''
+                                status: packageItem.status
                             },
                             packageData: {
                                 packageName: packageItem.packageName || packageItem.name || getPackageName(packageItem),
@@ -176,18 +175,18 @@ const renderPackageRow = (packageItem: any, index: number) => {
                             tripDetails: {country: packageItem.country || getPackageCountry(packageItem) }
                         }}
                     />
-                ) : (<span>No data available</span>
+                ) : (
+                    <span>No data available</span>
                 )}
             </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> {getPackageName(packageItem)} </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> {getPackageDestination(packageItem)} </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> {getPackageCountry(packageItem)} </TableCell>
-            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}> USD {getPackageTotalAmount(packageItem)} </TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{getPackageName(packageItem)}</TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{getPackageDestination(packageItem)}</TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{getPackageCountry(packageItem)}</TableCell>
+            <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>USD {getPackageTotalAmount(packageItem)}</TableCell>
             <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{getPackageCreatedDate(packageItem)}</TableCell>
         </TableRow>
     );
 };
-
 return (
     <Box className="confirmed-booking-container">
         <Box className='payment_confirm'><Typography variant="h4" className="page-title"> All Packages </Typography> </Box>
@@ -205,11 +204,10 @@ return (
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredPackages.length > 0 ? (filteredPackages.map((packageItem: any, index: number) =>  renderPackageRow(packageItem, index)  )
-                        ) : (
-                        <TableRow><TableCell colSpan={6} align="center" sx={{border: '1px solid rgba(224, 224, 224, 1)' }}>  No packages available </TableCell>   </TableRow>
-                        )}
-                    </TableBody>
+                    {filteredPackages.length > 0 ? (
+                    filteredPackages.map((packageItem: any, index: number) => renderPackageRow(packageItem, index))
+                    ) : (
+                    <TableRow><TableCell colSpan={6} align="center" sx={{border: '1px solid rgba(224, 224, 224, 1)' }}>No packages available</TableCell></TableRow>)}</TableBody>
                 </Table>
             </TableContainer>
         </Paper>

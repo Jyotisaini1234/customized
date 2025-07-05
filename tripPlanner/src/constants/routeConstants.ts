@@ -12,11 +12,12 @@ export const ROUTE_CONSTANTS = {
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
   HOTEL_PAGE: 'http://b2b.flydivinetravels.com/hotel/hotel-search',
-  HOME_PAGE: '/home-page',
   BAKU_PACKAGES: '/baku-packages',
   TOURS_TRANSFERS: 'http://b2b.flydivinetravels.com/hotel/transfer-search',
   BOOKINGS: '/readymade-booking',
   CUSTOMIZE:'/customize-search',
+  USER_PROFILE: 'http://b2b.flydivinetravels.com/hotel/user-list',
+  CREATE_USER:'http://b2b.flydivinetravels.com/hotel/create-user',
   CUSTOMIZE_PACKAGE:'/customize-package',
   TRIP_PLANNER_AREA:'/trip-planner-area',
   TRIP_PLANNER:'/trip-planner',
@@ -26,7 +27,6 @@ export const ROUTE_CONSTANTS = {
   READYMADE_SEARCH:'/readymade-search',
   READYMADE_SEARCH_PLANNER:'/readymade-planner',
   // User related routes
-  USER_PROFILE: '/user',
   LOGOUT: 'http://b2b.flydivinetravels.com/hotel',
   FLY_DIVINE_TRAVELS: '/fly-divine-travels',
   UI_TEAMS: '/u_i_teams'

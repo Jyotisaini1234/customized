@@ -30,3 +30,9 @@ export let citiesList = [
     ]
   };
   
+
+  export const userDropdownOptions = [
+    { label: 'Create New User', path: '#',action: 'modal' },
+    { label: 'User List', path: 'http://b2b.flydivinetravels.com/hotel/user-list' },
+    { label: 'Upload Logo', path: 'http://b2b.flydivinetravels.com/hotel/upload-logo' }
+  ];
