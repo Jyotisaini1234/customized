@@ -141,7 +141,7 @@ const renderPackageRow = (packageItem: any, index: number) => {
                                 destination: packageItem.destination || getPackageDestination(packageItem),
                                 checkInDate: packageItem.startDate || packageItem.checkIn,
                                 checkOutDate: packageItem.endDate || packageItem.checkOut,
-                                adults: packageItem.adults || packageItem.trip_details?.adults || 1,
+                                adults: packageItem.adults || packageItem.trip_details?.adults,
                                 children: packageItem.children || packageItem.trip_details?.children || 0,
                                 infants: packageItem.infants || packageItem.trip_details?.infants || 0,
                                 country: packageItem.country || getPackageCountry(packageItem),

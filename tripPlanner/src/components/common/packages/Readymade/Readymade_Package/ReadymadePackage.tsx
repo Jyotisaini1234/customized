@@ -5,6 +5,7 @@ import { CustomizeSearchProps, PackageData } from "../../../../../types/types.ts
 import './ReadymadePackage.scss';
 import { useGetAllPackagesQuery } from "../../../../../api/TourAPI.tsx";
 import { BAKU_REQUIREMENT } from "../../../../../utils/ApiConstants.ts";
+import BakuEntryDropdown from "../../../BakuEntryDropdown/BakuEntryDropdown.tsx";
 
 const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({ 
   isModifying = false,
@@ -57,7 +58,8 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
       <Container sx={{ paddingLeft: '0rem', paddingRight: '0rem' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
           <Typography variant="h4">Readymade Packages</Typography>
-          <Button className='entry-btn' onClick={handleBakuRequirement} >Baku Entry Requirements</Button>
+          {/* <Button className='entry-btn' onClick={handleBakuRequirement} >Baku Entry Requirements</Button> */}
+          <BakuEntryDropdown className="entry-btn" />
         </Box>
         <Box className="search-details">
           <Grid container spacing={2} alignItems="center">
@@ -109,22 +111,11 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({
             </Grid>
           </Grid>
         </Box>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error instanceof Error ? error.message : 'Error loading packages. Please try again.'}
-            <br />
-            <small>Check console for more details</small>
-          </Alert>
-        )}
-        {packages.length > 0 ? (
-          <Grid container spacing={3}>
-            {packages.map((pkg) => {
-              if (!pkg.packageDetails) {
-                console.warn('Package missing packageDetails:', pkg);
-                return null;
-              }
-              const { packageDetails } = pkg;
-              const firstHotelOption = packageDetails.hotelOption?.[0] || null;
+{error && ( <Alert severity="error" sx={{ mb: 3 }}> {error instanceof Error ? error.message : 'Error loading packages. Please try again.'} <br /> <small>Check console for more details</small></Alert> )}
+{packages.length > 0 ? (<Grid container spacing={3}>
+{packages.map((pkg) => { if (!pkg.packageDetails) { console.warn('Package missing packageDetails:', pkg); return null;}
+const { packageDetails } = pkg;
+const firstHotelOption = packageDetails.hotelOption?.[0] || null;
 const mainHotel = firstHotelOption?.hotels?.[0] || null;
 
 return (
@@ -137,9 +128,8 @@ return (
       {mainHotel && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{mainHotel.name} </Typography> )}
         <Box sx={{ mt: 'auto' }}>
-        <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > USD {((
-          packageDetails.hotelOption?.[0]?.perPersonCost ?? 0) +(packageDetails.itinerary?.reduce((sum, day) => sum + (day.price ?? 0), 0) ?? 0)).toLocaleString()}
-
+        <Typography  variant="h5" sx={{fontWeight: 'bold', color: '#1976d2',  mb: 0.5  }} > 
+          USD {(packageDetails.hotelOption?.[0]?.totalPackageCost ?? 0).toLocaleString()}
         </Typography>
         <Typography variant="body2"  sx={{color: '#f44336', fontWeight: 'bold', mb: 2  }}  > Regular</Typography>
         <Button className="view" fullWidth  onClick={() => handleViewDetails(pkg)} >  View Details </Button>

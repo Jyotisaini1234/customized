@@ -12,81 +12,91 @@ import ClientDetailsForm from '../../BookingSection/ClientForm/ClientDetailsForm
 import { useGetLeadByIdQuery, useSubmitLeadMutation, useUpdateLeadMutation } from '../../../../api/TourAPI.tsx';
 
 const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOutDate, onProceed,initialClientData = null }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [clientData, setClientData] = useState({name: '', destination:'',options:'package', type: 'package'});
-  const [updateLead] = useUpdateLeadMutation(); 
-  const getSearchParams = () => {
-    if (location.state && Object.keys(location.state).length > 0) { sessionStorage.setItem('tripPlannerParams', JSON.stringify(location.state)); return location.state; }
-    const storedParams = sessionStorage.getItem('tripPlannerParams');
-    if (storedParams) { return JSON.parse(storedParams); }
-    return { checkInDate: checkInDate, checkOutDate: checkOutDate, nights: nights || 1,city: '', packageType: 'hotel-land'}; };
-  const [submitLead] = useSubmitLeadMutation();
-  const [currency, setCurrency] = useState('');
-
-
-  const searchParams = getSearchParams();
-  const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
-  const [hotels, setHotels] = useState<any[]>([]);
-  const [showModifySearch, setShowModifySearch] = useState(false);
-  const [activeTab, setActiveTab] = useState<'planner' | 'hotel'>('planner');
-  const [grandTotal, setGrandTotal] = useState(0);
-  const [marginTotal, setMarginTotal] = useState('0');
-  const [selectedHotel, setSelectedHotel] = useState<any>(null);
-  const packageType = currentSearchParams.packageType || 'hotel-land';
-  const [clientFormOpen, setClientFormOpen] = useState(false);
-  const [bookingRef,] = useState(`BK${Math.floor(Math.random() * 90000) + 10000}`);
-  const [showThankYou, setShowThankYou] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [originalLeadId, setOriginalLeadId] = useState<string | null>(null);
-  const [editingClientData, setEditingClientData] = useState<any>(null);
-  const [editDataVersion, setEditDataVersion] = useState(0);
-  const onCancel = () => { navigate('/customize-package');};
-  const calculateNights = (startDate: Date | null, endDate: Date | null) => {
-    if (startDate && endDate) {
-      const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays; }
-    return 0;
-  };
-  const generateInitialPlannerItems = () => {
+const location = useLocation();
+const navigate = useNavigate();
+const [clientData, setClientData] = useState({name: '', destination:'',options:'package', type: 'package'});
+const [updateLead] = useUpdateLeadMutation(); 
+const getSearchParams = () => {
+if (location.state && Object.keys(location.state).length > 0) { sessionStorage.setItem('tripPlannerParams', JSON.stringify(location.state)); return location.state; }
+const storedParams = sessionStorage.getItem('tripPlannerParams');
+if (storedParams) { return JSON.parse(storedParams); }
+return { checkInDate: checkInDate, checkOutDate: checkOutDate, nights: nights || 1,city: '', packageType: 'hotel-land'}; };
+const [submitLead] = useSubmitLeadMutation();
+const [currency, setCurrency] = useState('');
+const searchParams = getSearchParams();
+const [currentSearchParams, setCurrentSearchParams] = useState(searchParams);
+const [hotels, setHotels] = useState<any[]>([]);
+const [showModifySearch, setShowModifySearch] = useState(false);
+const [activeTab, setActiveTab] = useState<'planner' | 'hotel'>('planner');
+const [grandTotal, setGrandTotal] = useState(0);
+const [marginTotal, setMarginTotal] = useState('0');
+const [selectedHotel, setSelectedHotel] = useState<any>(null);
+const packageType = currentSearchParams.packageType || 'hotel-land';
+const [clientFormOpen, setClientFormOpen] = useState(false);
+const [bookingRef,] = useState(`BK${Math.floor(Math.random() * 90000) + 10000}`);
+const [showThankYou, setShowThankYou] = useState(false);
+const [isEditMode, setIsEditMode] = useState(false);
+const [originalLeadId, setOriginalLeadId] = useState<string | null>(null);
+const [editingClientData, setEditingClientData] = useState<any>(null);
+const [editDataVersion, setEditDataVersion] = useState(0);
+const onCancel = () => { navigate('/customize-package');};
+const calculateNights = (startDate: Date | null, endDate: Date | null) => { if (startDate && endDate) { const diffTime = Math.abs(endDate.getTime() - startDate.getTime()); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); return diffDays; }return 0; };
+const generateInitialPlannerItems = (searchParams = currentSearchParams) => {
     let startDate, endDate;
+    
     if (searchParams?.checkInDate && searchParams?.checkOutDate) {
       startDate = new Date(searchParams.checkInDate);
-      endDate = new Date(searchParams.checkOutDate);}
-    else if (checkInDate && checkOutDate) {
+      endDate = new Date(searchParams.checkOutDate);
+    } else if (checkInDate && checkOutDate) {
       startDate = new Date(checkInDate);
-      endDate = new Date(checkOutDate); }
-    else {
+      endDate = new Date(checkOutDate);
+    } else {
       startDate = new Date();
       endDate = new Date();
-      endDate.setDate(endDate.getDate() + 1); }
+      endDate.setDate(endDate.getDate() + 1);
+    }
+    
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      console.error('Invalid date values', { checkInDate, checkOutDate, searchParamsIn: searchParams?.checkInDate, searchParamsOut: searchParams?.checkOutDate });
+      console.error('Invalid date values', { 
+        checkInDate, 
+        checkOutDate, 
+        searchParamsIn: searchParams?.checkInDate, 
+        searchParamsOut: searchParams?.checkOutDate 
+      });
       startDate = new Date();
       endDate = new Date();
-      endDate.setDate(endDate.getDate() + 1);}
+      endDate.setDate(endDate.getDate() + 1);
+    }
+    
     const items: PlannerItem[] = [];
     const currentDate = new Date(startDate);
     const totalNights = calculateNights(startDate, endDate);
+    
     for (let i = 0; i <= totalNights; i++) {
       const dayDate = new Date(currentDate);
       const day = dayDate.getDate();
       const month = dayDate.toLocaleString('default', { month: 'short' });
       const year = dayDate.getFullYear();
+      
       items.push({
-        id: `day-${items.length + 1}`, date: `${day.toString().padStart(2, '0')}-${month} ${year}`, dateObj: new Date(dayDate), hotel: null, transfer: null, tours: null, meals: null, eventDate: '',
+        id: `day-${items.length + 1}`,
+        date: `${day.toString().padStart(2, '0')}-${month} ${year}`,
+        dateObj: new Date(dayDate),
+        hotel: null,
+        transfer: null,
+        tours: null,
+        meals: null,
+        eventDate: '',
         dayNumber: ''
-      }); currentDate.setDate(currentDate.getDate() + 1);
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
     }
+    
     return items;
   };
-
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>(generateInitialPlannerItems());
-  const handleMarginChange = (event) => { const inputValue = event.target.value;if (inputValue === '' || !isNaN(parseFloat(inputValue))) {setMarginTotal(inputValue); }};
-
-
-
+const [plannerItems, setPlannerItems] = useState<PlannerItem[]>(generateInitialPlannerItems());
+const handleMarginChange = (event) => { const inputValue = event.target.value;if (inputValue === '' || !isNaN(parseFloat(inputValue))) {setMarginTotal(inputValue); }};
 useEffect(() => {
     const savedHotels = sessionStorage.getItem('tripPlannerHotels');
     if (savedHotels) {
@@ -244,24 +254,20 @@ useEffect(() => {
         const uniqueHotels = Array.from(
           new Map(existingHotels.map(h => [h.uniqueId, h])).values()
         );
-        
         const src = sessionStorage.getItem('src');
         if (src === 'editLead' || src === 'lead') {
           sessionStorage.setItem('updatingHotelData', JSON.stringify(uniqueHotels));
         } else {
           sessionStorage.setItem('tripPlannerHotels', JSON.stringify(uniqueHotels));
         }
-        
         return uniqueHotels;
       });
-
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     } catch (e) { 
       console.error('Error parsing hotel data from URL', e); 
     }
   }
-  
   const src = sessionStorage.getItem('src');
   if ((src === 'editLead' || src === 'lead') && !hotelData) {
     const updatingHotelData = sessionStorage.getItem('updatingHotelData');
@@ -276,11 +282,8 @@ useEffect(() => {
       }
     }
   }
-  
-  // Calculate hotel total
   let hotelTotal = 0;
   const processedHotels = new Map();
-  
   hotels.forEach(hotel => {
     const hotelKey = hotel.specificDayId || `${hotel.hotel?.hotelId}-${hotel.booking?.checkInDate}-${hotel.booking?.checkOutDate}`;
     if (!processedHotels.has(hotelKey)) {
@@ -290,8 +293,6 @@ useEffect(() => {
       }
     }
   });
-
-  // Calculate tour total
   let tourTotal = 0;
   plannerItems.forEach(item => {
     if (item.tours) {
@@ -306,21 +307,18 @@ useEffect(() => {
       else if (item.tours.details && typeof item.tours.details.price === 'number') {
         tourPrice = item.tours.details.price;
       }
-      
       tourTotal += tourPrice;
       console.log(`Tour ${item.id}: ${item.tours.name || 'Unknown'} - Price: ${tourPrice}`);
     }
   });
   const grandTotal = hotelTotal + tourTotal;
   setGrandTotal(grandTotal);
-
   if (hotels.length > 0) {
     const hotelCurrency = hotels[0]?.booking?.currency || 'USD';
     setCurrency(hotelCurrency);
     if (!selectedHotel) {
       setSelectedHotel(hotels[0]);
     }
-    
     const storageKey = src === 'editLead' || src === 'lead' ? 'updatingHotelData' : 'tripPlannerHotels';
     const prevHotelDataStr = sessionStorage.getItem(storageKey);
     const prevHotels = prevHotelDataStr ? JSON.parse(prevHotelDataStr) : [];
@@ -330,12 +328,8 @@ useEffect(() => {
   } else {
     setSelectedHotel(null);
   }
-
   console.log(`Total calculation - Hotels: ${hotelTotal}, Tours: ${tourTotal}, Grand Total: ${grandTotal}`);
-  
 }, [hotels, plannerItems, currentSearchParams.nights]);
-
-
 
 useEffect(() => {
   if (hotels.length > 0) {
@@ -672,34 +666,74 @@ const handleRemoveTour = (plannerItem) => {
   const displayCheckOutDate = formatHeaderDate(currentSearchParams?.checkOutDate);
   const displayNights = currentSearchParams?.nights || nights || '1';
   const displayCity = currentSearchParams?.city || '';
-  const handleSearchComplete = (updatedParams: any) => {
+ const handleSearchComplete = (updatedParams: any) => {
     if (updatedParams) {
+      console.log('Updated search params:', updatedParams);
       setCurrentSearchParams(updatedParams);
       sessionStorage.setItem('tripPlannerParams', JSON.stringify(updatedParams));
       sessionStorage.removeItem('tripPlannerItems');
-      setPlannerItems(generateInitialPlannerItems());
+      const generateUpdatedPlannerItems = () => {
+        let startDate, endDate;
+        if (updatedParams.checkInDate && updatedParams.checkOutDate) {
+          startDate = new Date(updatedParams.checkInDate);
+          endDate = new Date(updatedParams.checkOutDate);
+        } else {
+          startDate = new Date();
+          endDate = new Date();
+          endDate.setDate(endDate.getDate() + 1);
+        }
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          console.error('Invalid date values in updated params');
+          startDate = new Date();
+          endDate = new Date();
+          endDate.setDate(endDate.getDate() + 1);
+        }
+        const items: PlannerItem[] = [];
+        const currentDate = new Date(startDate);
+        const totalNights = calculateNights(startDate, endDate);
+        for (let i = 0; i <= totalNights; i++) {
+          const dayDate = new Date(currentDate);
+          const day = dayDate.getDate();
+          const month = dayDate.toLocaleString('default', { month: 'short' });
+          const year = dayDate.getFullYear();
+          items.push({ id: `day-${items.length + 1}`,date: `${day.toString().padStart(2, '0')}-${month} ${year}`, dateObj: new Date(dayDate), hotel: null,  transfer: null, tours: null, meals: null, eventDate: '', dayNumber: '' });
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return items;
+      };
+      const newPlannerItems = generateUpdatedPlannerItems();
+      setPlannerItems(newPlannerItems);
       if (hotels.length > 0) {
         const newStartDate = new Date(updatedParams.checkInDate);
         const newEndDate = new Date(updatedParams.checkOutDate);
-        setHotels(prevHotels => prevHotels.filter(hotel => {
+        const filteredHotels = hotels.filter(hotel => {
           if (hotel.specificDayId) {
             const hotelDate = new Date(hotel.booking?.checkInDate);
-            return hotelDate >= newStartDate && hotelDate < newEndDate; }
+            return hotelDate >= newStartDate && hotelDate < newEndDate;
+          }
           const hotelCheckIn = new Date(hotel.booking?.checkInDate);
           const hotelCheckOut = new Date(hotel.booking?.checkOutDate);
           return hotelCheckIn < newEndDate && hotelCheckOut > newStartDate;
-        }));
+        });
+        setHotels(filteredHotels);
+        const src = sessionStorage.getItem('src');
+        if (src === 'editLead' || src === 'lead') {
+          sessionStorage.setItem('updatingHotelData', JSON.stringify(filteredHotels));
+        } else {
+          sessionStorage.setItem('tripPlannerHotels', JSON.stringify(filteredHotels));
+        }
       }
+      setGrandTotal(0);
+      setMarginTotal('0');
     }
     setShowModifySearch(false);
   };
-const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hotel') => { setActiveTab(newValue); };
 
+const handleTabChange = (event: React.SyntheticEvent, newValue: 'planner' | 'hotel') => { setActiveTab(newValue); };
 const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, plannerItems: incomingPlannerItems, marginTotal, grandTotal, bookingRef,  travelDate,currency, bookingStatus, destination,...restClientData}) => {
   setClientFormOpen(false);
   setShowThankYou(true);
   const loginEmail = localStorage.getItem('username') || localStorage.getItem('email');
-
   const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
   if (plannerItems?.length > 0) {sessionStorage.setItem('editLeadData', JSON.stringify({ ...editData, plannerItems }));}
   const editingClientData = JSON.parse(sessionStorage.getItem('editingClientData') || '{}');
@@ -757,7 +791,7 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
       isUpdate: isEditMode,
       paidAmount: editingClientData?.paidAmount || editData.paidAmount || 0,
       referenceId: finalBookingRef,
-      bookingStatus: 'confirmed',
+      bookingStatus: 'confirm',
       type: clientData.type,
       invoice: `/invoices/${finalBookingRef}`,
       voucher: `/vouchers/${finalBookingRef}`,
@@ -799,17 +833,36 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
       plannerItems: finalPlannerItems.map(item => {
         console.log('Processing planner item:', item);
         console.log('Tours data:', item.tours);
+        
         const tourPrice = item.tours?.details?.booking?.totalPrice || item.tours?.price || item.tours?.totalPrice || 0;
         const carTypePrice = item.tours?.carType?.price || 0;
         const activityDetails = item.tours?.details?.booking?.activityDetails || [];
+        const getDescription = (tourItem: any) => {
+          const possibleDescriptions = [
+            tourItem.tours?.description,
+            tourItem.tours?.details?.tour?.description,
+            tourItem.description,
+            tourItem.tours?.bookingDetails?.description,
+            tourItem.tours?.details?.description
+          ];
+          
+          for (const desc of possibleDescriptions) {
+            if (desc && desc.trim().length > 0) {
+              return desc;
+            }
+          }
+          
+          return 'No description available';
+        };
+        
         return {
           id: item.id,
           date: item.date || 'N/A',
           dateObj: item.dateObj,
           tours: item.tours ? {
-            name: item.tours.name || item.tours.details?.tour?.tourName ,
-            description: item.tours.details?.tour?.description,
-            duration: item.tours.details?.tour?.eventDuration || 'N/A',
+            name: item.tours.name || item.tours.details?.tour?.tourName,
+            description: getDescription(item), // Properly extract description
+            duration: item.tours.details?.tour?.eventDuration || item.tours.duration || 'N/A',
             currency: item.tours.details?.booking?.currency || finalCurrency || 'USD',
             price: parseFloat(tourPrice),
             originalPrice: parseFloat(tourPrice),
@@ -825,7 +878,8 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
               maxAllowedPax: item.tours.details?.booking?.carType?.maxAllowedPax || item.tours.carType?.maxAllowedPax || 0
             } : null,
             bookingDetails: item.tours.details?.booking || {},
-          } : null, };
+          } : null,
+        };
       }),
       costs: {
         finalAmount: finalGrandTotal + (parseFloat(marginTotal) || 0),
@@ -836,9 +890,7 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
     };
     console.log(" FINAL TOUR PRICES BEING SAVED TO DB:");
     newLead.plannerItems.forEach((item, index) => {
-      if (item.tours) { console.log(`Day ${index + 1} (${item.date}):`, {
-          tourName: item.tours.name, tourPrice: item.tours.price,}); }});
-    
+      if (item.tours) { console.log(`Day ${index + 1} (${item.date}):`, {  tourName: item.tours.name, tourPrice: item.tours.price,}); }});
     try {
       if (isEditMode) {
         await updateLead({ id: finalBookingRef, lead: newLead }).unwrap();
@@ -849,14 +901,12 @@ const handleClientFormSubmit = async ({name, options, hotels: incomingHotels, pl
       } else {
         await submitLead(newLead).unwrap();
         alert('Lead created successfully!');
-        window.open(`/tour-package-pdf?bookingRef=${finalBookingRef}`, '_blank');
-      }
+        window.open(`/tour-package-pdf?bookingRef=${finalBookingRef}`, '_blank'); }
     } catch (err) {
       console.error(' Error in lead operation:', err);
       alert(isEditMode ? 'Failed to update lead.' : 'Failed to submit lead.');
     }
   };
-
 const handleDownloadPDF = () => {setClientFormOpen(true);};
 const showHotelTab = packageType === 'hotel-land';
 return (
@@ -935,9 +985,7 @@ return (
               <Button className="cancel-button" onClick={onCancel}>Cancel </Button>
             </Box>
           </Paper> )}
-        {activeTab === 'hotel' && showHotelTab && !showThankYou && (
-          <Paper elevation={3} className="hotel-details-container" sx={{ bgcolor: 'transparent', boxShadow: 'none' }}> <TripDetails hotels={hotels} totalPrice={undefined} /></Paper>
-        )}
+        {activeTab === 'hotel' && showHotelTab && !showThankYou && ( <Paper elevation={3} className="hotel-details-container" sx={{ bgcolor: 'transparent', boxShadow: 'none' }}> <TripDetails hotels={hotels} totalPrice={undefined} /></Paper> )}
         {showThankYou && (
           <Paper elevation={3} className="thank-you-container" sx={{ padding: '2rem', margin: '2rem 0', textAlign: 'center', bgcolor: '#f8f8f8', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
             <Typography variant="h4" sx={{ color: '#4CAF50', marginBottom: '1rem' }}>Thank You! </Typography>

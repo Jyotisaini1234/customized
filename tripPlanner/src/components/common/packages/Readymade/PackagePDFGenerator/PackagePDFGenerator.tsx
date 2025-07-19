@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Button, Box, Typography, CircularProgress } from '@mui/material';
+import { Button, Box, Typography, CircularProgress, IconButton } from '@mui/material';
 import { Download as DownloadIcon } from '@mui/icons-material';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -40,18 +40,41 @@ const getPackageName = (packageData) => {
     });
   }
   if (hotelNights.length === 0) {
-    const totalNights = packageData.trip_details?.nights || 0;
-    const destination = packageData.trip_details?.destination || 'Unknown';
+    const totalNights = packageData.tripDetails?.nights || 0;
+    const destination = packageData.tripDetails?.destination || 'Unknown';
     return `${totalNights}N ${destination}`;
   }
   return hotelNights.join(' + ');
 };
 
-const getPackageAdults = (packageData) => { return packageData.packageData?.originalPackageData?.tripDetails?.adults || packageData.trip_details?.adults || 0;};
-const getPackageChildren = (packageData) => {if (packageData.packageData?.originalPackageData?.tripDetails?.children) {return packageData.packageData?.originalPackageData?.tripDetails?.children;}return 0;};
-const getPackageInfants = (packageData) => {if (packageData.packageData?.originalPackageData?.tripDetails?.infants) {return packageData.packageData?.originalPackageData?.tripDetails?.infants;} return 0;};
+const getRoomDetails = (packageData) => {
+  let rooms = packageData.packageData?.originalPackageData?.tripDetails?.rooms;
+  if (!Array.isArray(rooms)) {
+    return [];
+  }
+  return rooms.map((room, index) => ({
+    roomNumber: index + 1,
+    adults: parseInt(room.adults) || 0,
+    cwb: parseInt(room.cwb) || 0,
+    cnb: parseInt(room.cnb) || 0,
+    infants: parseInt(room.infants) || 0
+  }));
+};
+
+const roomDetails = getRoomDetails(packageData);
+const calculateTotals = (roomDetails) => {
+  return roomDetails.reduce((totals, room) => {
+      totals.adult += room.adults;
+      totals.child += (room.cwb + room.cnb);
+      totals.infant += room.infants;
+      return totals;
+  }, { adult: 0, child: 0, infant: 0 });
+};
+
+const passengerCounts = calculateTotals(roomDetails);
+
 const transformData = () => {
-    const { trip_details, planner_items } = packageData;
+    const { tripDetails, planner_items } = packageData;
     const hotelOptions: HotelOption[] = [];
     const hotelMap = new Map();
     if (planner_items && Array.isArray(planner_items)) {
@@ -67,44 +90,98 @@ const transformData = () => {
               rating: item.hotel.rating,
               roomType: item.hotel.roomType,
               mealPlan: item.hotel.mealPlan,
-              stayDates: [trip_details?.checkInDate, trip_details?.checkOutDate]
             });
           }
         }
       });
     }
+    
     const hotels = Array.from(hotelMap.values());
     const grandTotal = getPackageTotalAmount(packageData);
-    const totalAdults = getPackageAdults(packageData); 
-    const perPersonCost = totalAdults > 0 ? grandTotal / totalAdults : 0;
-    hotelOptions.push({ hotels: hotels,totalPackageCost: grandTotal,perPersonCost: perPersonCost,cnbCost: 0, cwbCost: 0});
-      
-    const activities: any[] = [];
-    if (planner_items && Array.isArray(planner_items)) {
-      planner_items.forEach(item => {
-        if (item.itinerary && item.itinerary.title !== 'Arrival in Tbilisi' &&  item.itinerary.title !== 'Departure from Batumi (via Tbilisi Airport)' && !item.tours) {
-          activities.push({ name: item.itinerary.title,type: 'Private',vehicle: 'PVT Sedan (2 Seater)' });
-        }
-      });
+    const perPersonCost = passengerCounts.adult > 0 ? grandTotal / passengerCounts.adult : 0;
+    hotelOptions.push({ 
+      hotels: hotels,
+      totalPackageCost: grandTotal,
+      perPersonCost: perPersonCost,
+      cnbCost: 0, 
+      cwbCost: 0
+    });
+    let activities: any[] = [];
+    if (packageData.activities && Array.isArray(packageData.activities)) {
+      activities = [...packageData.activities];
     }
-
-    const transfers: any[] = [];
+    if (packageData.packageData?.originalPackageData?.activities && Array.isArray(packageData.packageData.originalPackageData.activities)) {
+      activities = [...activities, ...packageData.packageData.originalPackageData.activities];
+    }
     if (planner_items && Array.isArray(planner_items)) {
       planner_items.forEach(item => {
-        if (item.transfer) {
-          transfers.push({
-            route: item.transfer.route,
-            type: item.transfer.type,
-            vehicle: item.transfer.type === 'SIC' ? 'Train' : 'Sedan (2 Seater)'
+        if (item.tours && item.tours.activities && Array.isArray(item.tours.activities)) {
+          item.tours.activities.forEach(activity => {
+            activities.push({
+              name: activity.name || '',
+              type: 'Activity',
+              vehicle: activity.vehicle || '',
+              description: activity.description || '',
+              price: activity.price || 0,
+              currency: activity.currency || 'USD'
+            });
+          });
+        }
+        if (item.activities && Array.isArray(item.activities)) {
+          item.activities.forEach(activity => {
+            activities.push({
+              name: activity.name || '',
+              type: activity.type || 'Activity',
+              vehicle: activity.vehicle || '',
+              description: activity.description || '',
+              price: activity.price || 0,
+              currency: activity.currency || 'USD'
+            });
           });
         }
       });
     }
+    const filteredActivities = activities.filter(activity => {
+      const type = (activity.type || '').toLowerCase();
+      const name = (activity.name || '').toLowerCase();
+      return type === 'activity' || type === 'sightseeing' ||  type.includes('activity') ||  type.includes('sightseeing') || name.includes('activity') || name.includes('sightseeing') ||(type !== 'tour' && type !== 'tours');
+    });
+    const uniqueActivities = filteredActivities;
+
+    // Remove duplicates based on name
+    // const uniqueActivities = filteredActivities.filter((activity, index, self) => 
+    //   index === self.findIndex(a => a.name === activity.name)
+    // );
+    
+    let transfers: any[] = [];
+    if (packageData.transfers && Array.isArray(packageData.transfers)) {
+      transfers = [...packageData.transfers];
+    }
+    if (packageData.packageData?.originalPackageData?.transfers && Array.isArray(packageData.packageData.originalPackageData.transfers)) {
+      transfers = [...transfers, ...packageData.packageData.originalPackageData.transfers];
+    }
+    if (planner_items && Array.isArray(planner_items)) {
+      planner_items.forEach(item => {
+        if (item.transfer) {
+          transfers.push({
+            route: item.transfer.route || '',
+            type: item.transfer.type || '',
+            vehicle: item.transfer.vehicle || '',
+            description: item.transfer.description || '',
+            price: item.transfer.price || 0
+          });
+        }
+      });
+    }
+    const uniqueTransfers = transfers.filter((transfer, index, self) => 
+      index === self.findIndex(t => t.route === transfer.route)
+    );
+    
     const itinerary = planner_items && Array.isArray(planner_items) ? planner_items.map(item => {
         let title = item.itinerary?.title || item.tours?.name || 'Untitled Day';
         let details = item.itinerary?.details || '';
         if (item.tours?.description) {details += item.tours.description;}
-        return { day: item.dayNumber,date: item.date, title: title, details: details};
+        return { day: item.dayNumber, date: item.date, title: title, details: details};
       }) : [];
       
     return {
@@ -112,37 +189,25 @@ const transformData = () => {
         packageName: getPackageName(packageData),
         destinations: [getPackageDestination(packageData)],
         country: getPackageCountry(packageData),
-        travelDates: {
-          start: trip_details?.checkInDate,
-          end: trip_details?.checkOutDate
-        },
-        passengers: {
-          adult: getPackageAdults(packageData),
-          child: getPackageChildren(packageData),
-          infant: getPackageInfants(packageData)
-        },
-        totalNights: trip_details?.nights,
-        validity: packageData?.originalPackageData?.validity || {
-          startDate: '2025-01-01',
-          endDate: '2025-12-31'
-        },
-        activities: activities,
-        transfers: transfers,
+        totalNights: tripDetails?.nights,
+        validity: packageData?.packageData?.originalPackageData?.validity || {
+startDate: '2025-01-01',  endDate: '2025-12-31' },
+        activities: uniqueActivities,
+        transfers: uniqueTransfers,
         itinerary: itinerary,
-        inclusions: packageData?.originalPackageData?.inclusions || [
-        'Breakfast included on all days in the hotel',
-        'Accommodation, tours, and tickets as mentioned in the package'
+        inclusions: packageData?.packageData?.originalPackageData?.inclusions || [
+          'Breakfast included on all days in the hotel',
+          'Accommodation, tours, and tickets as mentioned in the package'
         ],
-        exclusions: packageData?.originalPackageData?.exclusions || [
-
-        ' GST (5%) & TCS (5%) excluded.',
-        'Passport fees, immunization costs, city taxes, and local departure taxes.',
-        'Optional enhancements like room/flight upgrades, local camera/video fees.',
-        'Additional sightseeing, activities, or experiences outside the itinerary.',
-        'Early check-in or late check-out (unless specified).',
-        'Flights, excess baggage charges, tips, and other personal expenses (Unless mentioned)',
+        exclusions: packageData?.packageData?.originalPackageData?.exclusions || [
+          ' GST (5%) & TCS (5%) excluded.',
+          'Passport fees, immunization costs, city taxes, and local departure taxes.',
+          'Optional enhancements like room/flight upgrades, local camera/video fees.',
+          'Additional sightseeing, activities, or experiences outside the itinerary.',
+          'Early check-in or late check-out (unless specified).',
+          'Flights, excess baggage charges, tips, and other personal expenses (Unless mentioned)',
         ],
-        importantNotes: packageData?.originalPackageData?.importantNotes || [
+        importantNotes: packageData?.packageData?.originalPackageData?.importantNotes || [
             'This is just a quote and no reservations have been held yet or booking has not proceeded yet.',
             'The rooms & rates are subject to availability at the time of booking / confirmation.',
             'Hotel, sightseeing, meals, and transfer rates might change without prior notice until & unless the tour has been booked',
@@ -154,14 +219,20 @@ const transformData = () => {
             'INternational Tours)',
             'We Are Not Responsible For Any Loss Of Your Valuables Like Mobiles, Bags, Jewellery & Money.',
         ],
-        cancellationPolicy: packageData?.originalPackageData?.cancellationPolicy
+        cancellationPolicy: packageData?.packageData?.originalPackageData?.cancellationPolicy
     },
     hotelOptions: hotelOptions,
     grandTotal: grandTotal
     };
 };
 
-  const getVehicleCount = (type: string, vehicle: string) => {if (type === 'Ticket Only' || type === 'SIC' || vehicle === 'Train') {return ''; }return '1';};
+  const getVehicleCount = (type: string, vehicle: string) => {
+    if (type === 'Ticket Only' || type === 'SIC' || vehicle === 'Train') {
+      return ''; 
+    }
+    return '1';
+  };
+  
   const transformedData = transformData();
   const { packageDetails } = transformedData;
   const selectedHotelOption = transformedData.hotelOptions[0];
@@ -169,11 +240,18 @@ const transformData = () => {
   const packageTitle = packageDetails.packageName;
   const destinations = packageDetails.destinations;
   const country = packageDetails.country;
-  const passengerCounts = packageDetails.passengers;
-  const totalNights = packageDetails.totalNights;
   const grandTotal = transformedData.grandTotal;
-  const getValidityText = () => {if (packageDetails.validity?.startDate && packageDetails.validity?.endDate) { return `${formatDate(packageDetails.validity.startDate)} till ${formatDate(packageDetails.validity.endDate)}`; } return 'Validity dates not available'; };
-  const generatePDF = async () => {if (!pdfRef.current) return; setIsGenerating(true); 
+  
+  const getValidityText = () => {
+    if (packageDetails.validity?.startDate && packageDetails.validity?.endDate) { 
+      return `${formatDate(packageDetails.validity.startDate)} till ${formatDate(packageDetails.validity.endDate)}`; 
+    } 
+    return 'Validity dates not available'; 
+  };
+  
+  const generatePDF = async () => {
+    if (!pdfRef.current) return; 
+    setIsGenerating(true); 
     try {
       pdfRef.current.style.position = 'absolute';
       pdfRef.current.style.top = '-10000px';
@@ -242,7 +320,7 @@ if (scaledHeight <= contentHeight) {
 
   return (
     <Box className="pdf-generator">
-      <Button sx={{bgcolor:'#0369a1', color:'white'}} startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}onClick={generatePDF} disabled={isGenerating}className="pdf-generator__button" >{isGenerating ? 'Generating PDF...' : 'Download PDF'}</Button>
+      <IconButton sx={{ color:'black'}}  onClick={generatePDF} disabled={isGenerating}className="pdf-generator__button" title={isGenerating ? 'Generating PDF...' : 'Download PDF'}>{isGenerating ? <CircularProgress size={20}  /> : <DownloadIcon />}</IconButton>
       <Box ref={pdfRef} className="pdf-content">
         <Box className="pdf-header">
           <Box className="quotation-title">QUOTATION</Box>
@@ -268,13 +346,11 @@ if (scaledHeight <= contentHeight) {
               <Box>No. of Adult</Box>
               <Box>No. of Child</Box>
               <Box>No. of Infant</Box>
-              <Box>Total Nights</Box>
             </Box>
             <Box className="travel-grid-content">
               <Box>{passengerCounts.adult || 0}</Box>
               <Box>{passengerCounts.child || 0}</Box>
               <Box>{passengerCounts.infant || 0}</Box>
-              <Box>{totalNights || 0}</Box>
             </Box>
           </Box>
           <Box className="currency-notice">  QUOTATION COSTS ARE PROVIDED [USD]</Box>
@@ -296,11 +372,11 @@ if (scaledHeight <= contentHeight) {
                 {selectedHotelOption.hotels.map((hotel: any, index: number) => (
                   <tr key={index}>
                     <td> {hotel.name }<div className="hotel-rating">{hotel.rating} Star</div> </td>
-                    <td>{hotel.destination }</td>
+                    <td> {hotel.destination }</td>
                     <td>{hotel.roomType}</td>
                     <td>{hotel.mealPlan}</td>
                     <td>DBL 1</td>
-                    <td> {hotel.nights || 0}  </td>
+                    <td>{hotel.nights || 0}N</td>
                   </tr>
                 ))}
                 <tr className="total-row">
@@ -314,6 +390,7 @@ if (scaledHeight <= contentHeight) {
         )}
         {packageDetails.activities && packageDetails.activities.length > 0 && (
           <Box className="activities-section">
+            <Box className="section-title">SIGHTSEEING / ACTIVITIES</Box>
             <table className="activities-table">
               <thead>
                 <tr>
@@ -338,6 +415,7 @@ if (scaledHeight <= contentHeight) {
         )}
         {packageDetails.transfers && packageDetails.transfers.length > 0 && (
           <Box className="transfers-section">
+            <Box className="section-title">TRANSFERS</Box>
             <table className="transfers-table">
               <thead>
                 <tr>
@@ -365,11 +443,11 @@ if (scaledHeight <= contentHeight) {
           <Box className="itinerary-section">
             <Box className="section-title">DAY WISE ITINERARY DETAILS</Box>
             {packageDetails.itinerary.map((dayData: any, index: number) => (
-              <Box key={index} className="day-item">
-                <Box className="day-header">
-                Day {dayData.day} {dayData.date ? `(${formatDate(dayData.date)})` : ''} : {dayData.title}
+              <Box key={index} className="day-item" sx={{textAlign: 'left', alignItems: 'flex-start'}}>
+                <Box className="day-header" sx={{textAlign: 'left', marginLeft: '0'}}> 
+                  Day {dayData.day} {dayData.date ? `(${formatDate(dayData.date)})` : ''} : {dayData.title}
                 </Box>
-                <Box className="day-details">{dayData.details}</Box>
+                <Box className="day-details" sx={{textAlign: 'left', marginLeft: '0'}}>{dayData.details}</Box>
               </Box>
             ))}
           </Box>
@@ -410,9 +488,7 @@ if (scaledHeight <= contentHeight) {
               {packageDetails.cancellationPolicy.nonRefundablePeriods && (
                 <li><strong>Non-refundable periods:</strong> {packageDetails.cancellationPolicy.nonRefundablePeriods}</li>
               )}
-              {packageDetails.cancellationPolicy.notes && (
-                <li className="policy-notes"><strong>Note:</strong> {packageDetails.cancellationPolicy.notes}</li>
-              )}
+              {packageDetails.cancellationPolicy.notes && ( <li className="policy-notes"><strong>Note:</strong> {packageDetails.cancellationPolicy.notes}</li> )}
             </ul>
           </Box>
         )}

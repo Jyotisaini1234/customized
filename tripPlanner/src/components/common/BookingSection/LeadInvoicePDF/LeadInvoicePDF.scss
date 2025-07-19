@@ -113,6 +113,7 @@ $text-color-muted: #666;
 }
 
 .cost-summary {
+  background: $light-gray;
   @include section-container;
   background: $light-gray;
   color: white;

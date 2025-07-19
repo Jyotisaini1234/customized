@@ -1,24 +1,17 @@
-export interface RoomState {
-  id: number;
-  adults: number;
-  cwb: number;
-  cnb: number;
-  infants: number;
-}
 export interface HotelSummaryParams {
   country: string;
   city: string;
   checkInDate: string;
   checkOutDate: string;
   nights: number;
-  rooms: RoomState[];
+  rooms: Room[];
   packageType?: string;
   filteredHotels?: any[];
   packageData?: any;
 }
 
 export interface Room {
-  id: number;
+  id:number |string;
   adults: number;
   cwb: number;
   cnb: number;
@@ -160,6 +153,7 @@ export interface PackageCosts {
 
 export interface SearchParams {
   city: any;
+  country:any;
   checkInDate?: string;
   checkOutDate?: string;
   nights?: number;
@@ -245,6 +239,7 @@ export interface Quote {
 }
 
 export interface Lead {
+  isBooking: any;
   id?: string;
   bookingRef?: string;
   referenceId?: string;
@@ -259,7 +254,6 @@ export interface Lead {
   travelDate: string;
   totalAmount: number;
   bookingStatus: string;
-  destination?: string;
   destinations?: string;
   creationDate: string;
   bookingTime: string;
@@ -444,6 +438,9 @@ export interface Costs {
 
 
 export interface LeadInvoiceData {
+  destinations: any;
+  isTourTransfer: any;
+  packageType: string;
   bookingRef: string;
   generateDate: string;
   clientDetails: ClientDetails;
@@ -454,9 +451,18 @@ export interface LeadInvoiceData {
   costs: Costs;
   currency: string;
   totalPersons?: string | number;
+  bookingItems:BookingItem[];
+  destination:string;
+  country:string;
 }
 
 export interface LeadDetail {
+  country: any;
+  isBooking: boolean;
+  options: string;
+  isTourTransfer: boolean;
+  bookingItems: never[];
+  packageType: string;
   id?: string;
   _id?: string;
   referenceId: string;
@@ -776,8 +782,10 @@ export interface PackageData {
 }
 
 export interface SearchData {
+    selectedCountry: string;
     city: any;
     cityId: any;
+    country:string;
   pricing?: {
     totalPrice: number;
     breakdown: {
@@ -859,20 +867,16 @@ export interface TripPlannerDBData {
   userId?: string;
   
   tripDetails: {
-    creationDate:string;
     destination: string;
     country: string;
     checkInDate: string;
-    lastUpdated:string
     checkOutDate: string;
     nights: number;
-    totalDays: number;
-    adults: number;
-    children: number;
-    infants: number;
     rooms: any[];
     cityId:string;
     createdByEmail:string;
+    totalRooms:string;
+    
   };
   
   pricing: {
@@ -901,10 +905,8 @@ export interface TripPlannerDBData {
       checkOutDate?: string;
       roomType?: string;
       mealPlan?: string;
-      // isPackageHotel: boolean;
       isAdditional: boolean;
-      // isUpdated: boolean;
-      // uniqueId?: number;
+
       specificDayId?: string;
     };
     tours?: {
@@ -947,4 +949,105 @@ export interface TripPlannerDBData {
     createdAt: string;
     updatedAt: string;
   };
+}
+
+export interface BookingData {
+  bookingItems: never[];
+  totalPrice: number;
+  grandTotal: any;
+  currency: string;
+  email: string;
+  name: string;
+  packageType: string;
+  bookingReference: any;
+  bookingNumber: string;
+  referenceNumber: string;
+  bookingDate: string;
+  confirmedBy: string;
+  destination: string;
+  hotelName: string;
+  guestName: string;
+  checkIn: string;
+  checkOut: string;
+  cancelDate?: string;
+  cancelledBy?: string;
+  status: string;
+  details?: {
+    adults: number;
+    extraAdults: number;
+    childWithBed: number;
+    childWithoutBed: number;
+    infants: number;
+    amount: string;
+    hotel: string;
+    category: string;
+    area: string;
+    nights: number;
+    rooms: number;
+    roomType: string;
+    freebies?: string[];
+    cancellationPolicy?: string;
+    costExcludes?: string[];
+  };
+}
+export interface BookingItem {
+  id: number;
+  sightName: string;
+  description?:string;
+  date: string;
+  type: string;
+  pickUp: string;
+  pax: number;
+  cost: number;
+  currency: string;
+  commuteType: string;
+  selectedActivities: Record<string, boolean>;
+}
+export interface TourBookingData {
+  referenceId: string;
+  bookingNo: any;
+  bookingRef: any;
+  country: any;
+  destinations: any;
+  destination: any;
+  city: any;
+  travelDate: any;
+  checkInDate: any;
+  hotelDetails: any;
+  checkOutDate: any;
+  nights(nights: any): number | undefined;
+  totalNights(totalNights: any): number | undefined;
+  totalPersons: any;
+  adults: any;
+  plannerItems: any;
+  totalAmount: number;
+  finalAmount: any;
+  amount: any;
+  id?: string;
+  bookingReference: string;
+  bookingDate: string;
+  packageType: string;
+  bookingItems: BookingItem[];
+  totalPrice: number;
+  grandTotal: number;
+  currency: string;
+  status: string;
+  name: string;
+  email: string;
+}
+
+export interface BookingTours {
+  id?: string;
+  bookingData: TourBookingData;
+}
+
+export interface Country {
+  label: string;
+  id: number;
+}
+
+export interface City {
+  label: string;
+  id: number;
+  countryId: number;
 }

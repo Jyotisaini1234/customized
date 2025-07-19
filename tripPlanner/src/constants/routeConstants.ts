@@ -1,3 +1,4 @@
+
 export const ROUTE_CONSTANTS = {
   // Public routes
   DEFAULT_PAGE: '/customize-package',
@@ -8,7 +9,6 @@ export const ROUTE_CONSTANTS = {
   LOGIN_HOME_PAGE: '/login',
   LOGIN_HOME_PAGE_2: '/new-user',
   NOT_FOUND: '/404',
-  
   // Protected routes (after login)
   DASHBOARD: '/dashboard',
   HOTEL_PAGE: 'http://b2b.flydivinetravels.com/hotel/hotel-search',
@@ -34,24 +34,24 @@ export const ROUTE_CONSTANTS = {
 
 export const PUBLIC_NAV_ITEMS = [
   {
-    path: ROUTE_CONSTANTS.DEFAULT_PAGE, 
+    path: ROUTE_CONSTANTS.DEFAULT_PAGE,
     label: "Home",
     exact: true
   },
-  { 
-    path: ROUTE_CONSTANTS.ABOUT, 
+  {
+    path: ROUTE_CONSTANTS.ABOUT,
     label: "About Us"
   },
-  { 
-    path: ROUTE_CONSTANTS.CAREERS, 
+  {
+    path: ROUTE_CONSTANTS.CAREERS,
     label: "Careers"
   },
-  { 
-    path: ROUTE_CONSTANTS.CONTACT, 
-    label: "Contact Us" 
+  {
+    path: ROUTE_CONSTANTS.CONTACT,
+    label: "Contact Us"
   },
-  { 
-    path: ROUTE_CONSTANTS.SUBSCRIBE, 
+  {
+    path: ROUTE_CONSTANTS.SUBSCRIBE,
     label: "Subscribe"
   }
 ];

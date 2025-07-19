@@ -1,16 +1,17 @@
-  import React, { useEffect, useState } from "react";
-  import {Box,Container,Grid,Typography, Button,Autocomplete,TextField,Paper, FormControl,Select,MenuItem, RadioGroup, FormControlLabel, Radio,} from "@mui/material";
-  import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-  import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-  import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-  import { useLocation, useNavigate } from "react-router-dom";
-  import "./Customize.scss"; 
-  import { useGetHotelsByCityQuery } from "../../../../api/TourAPI.tsx";
-  import { CustomizeSearchProps, HotelSummaryParams, OptionType } from "../../../../types/types.ts";
-  import TripPlanner from "../TripPlanner/TripPlanner.tsx";
-  import { country as countriesList  ,citiesList as citiesList} from "../../../../model/selectOptions.ts"; 
+import React, { useEffect, useState } from "react";
+import {Box,Container,Grid,Typography, Button,Autocomplete,TextField,Paper, FormControl,Select,MenuItem, RadioGroup, FormControlLabel, Radio,} from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { useLocation, useNavigate } from "react-router-dom";
+import "./Customize.scss"; 
+import { useGetHotelsByCityQuery } from "../../../../api/TourAPI.tsx";
+import { CustomizeSearchProps, HotelSummaryParams, OptionType } from "../../../../types/types.ts";
+import TripPlanner from "../TripPlanner/TripPlanner.tsx";
+import { country as countriesList  ,citiesList as citiesList} from "../../../../model/selectOptions.ts"; 
 import { enGB } from "date-fns/locale";
 import { BAKU_REQUIREMENT } from "../../../../utils/ApiConstants.ts";
+import BakuEntryDropdown from "../../BakuEntryDropdown/BakuEntryDropdown.tsx";
 
   const Customize: React.FC<CustomizeSearchProps> = ({ isModifying = false, initialValues = {}, onSearchComplete }) => {
     const location = useLocation();
@@ -71,15 +72,7 @@ import { BAKU_REQUIREMENT } from "../../../../utils/ApiConstants.ts";
     const [rooms, setRooms] = useState(searchParams?.rooms || [{ id: 1, adults: 2, cwb: 0, cnb: 0, infants: 0 }]);
     useEffect(() => {
       if (isModifying && country && city && checkInDate && checkOutDate) {
-        const currentParams = {
-          country: country.label,
-          city: city.label,
-          checkInDate: checkInDate.toISOString(),
-          checkOutDate: checkOutDate.toISOString(),
-          nights,
-          rooms,
-          packageType
-        };
+        const currentParams = {country: country.label, city: city.label,checkInDate: checkInDate.toISOString(), checkOutDate: checkOutDate.toISOString(), nights, rooms,  packageType};
         sessionStorage.setItem('tripPlannerParams', JSON.stringify(currentParams));
       }
     }, [country, city, checkInDate, checkOutDate, nights, packageType, isModifying]);
@@ -121,39 +114,28 @@ import { BAKU_REQUIREMENT } from "../../../../utils/ApiConstants.ts";
           date.getFullYear() === checkInDate.getFullYear();
           
         if (isSameDay) {
-          setNights(1);
-        } else if (date < checkInDate) {
+          setNights(1); } 
+        else if (date < checkInDate) {
           setCheckOutDate(checkInDate);
           setCheckInDate(date);
-          setNights(1);
-        } else {
+          setNights(1);}
+        else {
           const nightsCount = calculateNights(checkInDate, date);
-          setNights(nightsCount);
-        }
+          setNights(nightsCount);}
       }
     };
     const handleAddRoom = () => {
-      setRooms([
-        ...rooms,
-        { id: rooms.length + 1, adults: 2, cwb: 0, cnb: 0, infants: 0 }
-      ]);
+      setRooms([ ...rooms,{ id: rooms.length + 1, adults: 2, cwb: 0, cnb: 0, infants: 0 }]);
     };
 
     const handleRemoveRoom = (roomId: number) => {
-      if (rooms.length > 1) {
-        setRooms(rooms.filter(room => room.id !== roomId));
-      }
+      if (rooms.length > 1) { setRooms(rooms.filter(room => room.id !== roomId));  }
     };
 
     const handleRoomChange = (
-      roomId: number,
-      field: 'adults' | 'cwb' | 'cnb' | 'infants',
-      value: number
-    ) => {
+      roomId: number, field: 'adults' | 'cwb' | 'cnb' | 'infants', value: number ) => {
       setRooms(
-        rooms.map(room =>
-          room.id === roomId ? { ...room, [field]: value } : room
-        )
+        rooms.map(room => room.id === roomId ? { ...room, [field]: value } : room  )
       );
     };
 
@@ -215,9 +197,7 @@ import { BAKU_REQUIREMENT } from "../../../../utils/ApiConstants.ts";
       setCity(filteredCities[0] || null); // set first city or null
     };
     
-  const handleBakuRequirement = () => {
-        window.open(BAKU_REQUIREMENT, '_blank');
-      };
+  const handleBakuRequirement = () => {  window.open(BAKU_REQUIREMENT, '_blank');};
 return (
   <Box className={`customize-search-page ${isModifying ? 'modify-mode' : ''}`}>
       <Container sx={{paddingLeft:'0rem', paddingRight:'0rem'}}>
@@ -225,7 +205,8 @@ return (
           {!isModifying && (
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading">Customize Search</Typography>
-          <Button className='entry-btn'  sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1 }}  onClick={handleBakuRequirement} > baku Entry Requirements</Button>
+          {/* <Button className='entry-btn'  sx={{ borderRadius: '4px',boxShadow:'none', textTransform: 'none', py: 1 }}  onClick={handleBakuRequirement} > baku Entry Requirements</Button> */}
+          <BakuEntryDropdown className="entry-btn" />
           </Box>)}
             <Grid container spacing={1} className='form-container'>
               <Grid item xs={12} md={6}>
@@ -342,5 +323,3 @@ return (
   );
 };
 export default Customize;
-
-

@@ -1,21 +1,17 @@
-  import React, { useState, useEffect } from 'react';
-  import { useLocation, useNavigate } from 'react-router-dom';
-  import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
-  import './TripPlannerArea.scss';
-  import { AreaOption, Areas } from '../../../../types/types.ts';
-  import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
-  import {  citiesList as cityOptions,country} from "../../../../model/selectOptions.ts"; 
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
+import './TripPlannerArea.scss';
+import { AreaOption, Areas } from '../../../../types/types.ts';
+import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
+import { citiesList as cityOptions, country as countryOptions } from "../../../../model/selectOptions.ts";
 
 const TripPlannerArea: React.FC = () => {
 const location = useLocation();
 const navigate = useNavigate();
 const { state } = location;
 const searchParams = location.state || {};
-const [areas, setAreas] = useState<AreaOption[]>([]);
-const [loading, setLoading] = useState<boolean>(false);
-const [hotelDetails, setHotelDetails] = useState(null);
 const [city, setCity] = useState<string>(searchParams.city || '');
-const [country, setCountry] = useState<string>(searchParams.country);
 const [applyToAllDays, setApplyToAllDays] = useState<boolean>(searchParams.applyToAllDays || false);
 const [selectedCity, setSelectedCity] = useState<string>(searchParams.city || '');
 const [selectedCountry, setSelectedCountry] = useState<string>(searchParams.country || '');
@@ -26,7 +22,47 @@ const [adultsCount, setAdultsCount] = useState<number>(totalFromRooms('adults') 
 const [cwbCount, setCwbCount] = useState<number>(totalFromRooms('cwb') || 0);
 const [cnbCount, setCnbCount] = useState<number>(totalFromRooms('cnb') || 0);
 const [infantsCount, setInfantsCount] = useState<number>(totalFromRooms('infants') || 0);
-    
+const [country, setCountry] = useState<string>(searchParams.country || searchParams.selectedCountry);
+
+const getFilteredCities = () => {
+  if (!country && !selectedCountry) {
+    return [];
+  }
+  
+  const currentCountry = country || selectedCountry;
+  const countryObj = countryOptions.find(c => c.label === currentCountry);
+  
+  if (!countryObj) {
+    return [];
+  }
+  
+  return cityOptions.filter(city => city.countryId === countryObj.id);
+};
+const filteredCities = getFilteredCities();
+const getTotalBookedNights = () => {
+  const savedHotels = sessionStorage.getItem('tripPlannerHotels');
+  if (savedHotels) {
+    try {
+      const hotels = JSON.parse(savedHotels);
+      return hotels.reduce((total, hotel) => total + (hotel.nights || 0), 0);
+    } catch (e) {
+      console.error('Error parsing saved hotels', e);
+      return 0;
+    }
+  }
+  return 0;
+};
+
+const getMaxNightsAllowed = () => {
+  const originalTotalNights = searchParams.originalNights || searchParams.totalNights || 5;
+  const bookedNights = getTotalBookedNights();
+  const remainingNights = originalTotalNights - bookedNights;
+  return Math.max(remainingNights, 1); // minimum 1 night
+};
+const [maxNightsAllowed, setMaxNightsAllowed] = useState<number>(getMaxNightsAllowed());
+useEffect(() => {
+  setMaxNightsAllowed(getMaxNightsAllowed());
+}, []);
 const handleClose = () => {
 let savedHotels = [];
 const storedHotels = sessionStorage.getItem('tripPlannerHotels');
@@ -35,6 +71,62 @@ const storedHotels = sessionStorage.getItem('tripPlannerHotels');
     catch (e) {console.error('Error parsing saved hotels', e);}}
       navigate(-1);
 };
+
+useEffect(() => {
+  if (!country) {
+    const storedParams = sessionStorage.getItem('tripPlannerParams');
+    if (storedParams) {
+      try {
+        const params = JSON.parse(storedParams);
+        console.log('Retrieved params from sessionStorage:', params);
+        if (params.country) {
+          setCountry(params.country);
+        } else if (params.selectedCountry) {
+          setCountry(params.selectedCountry);
+        }
+        if (params.city && !city) { 
+          setCity(params.city); 
+        } else if (params.selectedCity && !city) {
+          setCity(params.selectedCity);
+        }
+        
+        if (params.rooms && params.rooms.length > 0) {
+          const firstRoom = params.rooms[0]; // Get first room data
+          setAdultsCount(firstRoom.adults || 2);
+          setCwbCount(firstRoom.cwb || 0);
+          setCnbCount(firstRoom.cnb || 0);
+          setInfantsCount(firstRoom.infants || 0);
+        }
+        if (params.selectedCountry) {
+          setSelectedCountry(params.selectedCountry);
+        }
+        if (params.selectedCity) {
+          setSelectedCity(params.selectedCity);
+        }
+        
+      } catch (e) {
+        console.error('Error parsing stored trip planner params', e);
+      }
+    }
+  }
+}, [country, city]);
+
+useEffect(() => {
+  if (country || selectedCountry) {
+    const currentCountry = country || selectedCountry;
+    const countryObj = countryOptions.find(c => c.label === currentCountry);
+    if (countryObj) {
+      const cityBelongsToCountry = cityOptions.some(city => 
+        city.label === selectedCity && city.countryId === countryObj.id
+      );
+      if (!cityBelongsToCountry) {
+        setSelectedCity('');
+        setCity('');
+      }
+    }
+  }
+}, [country, selectedCountry]);
+
 const handleSearch = () => {
   const params = new URLSearchParams();
   const checkInDate = searchParams.checkInDate || new Date().toISOString();
@@ -89,27 +181,6 @@ const formatDate = (dateStr) => {
   try {return new Date(dateStr).toLocaleDateString();}
   catch (e) {return dateStr || '';}
     };
-    
-useEffect(() => {
-  if (!country) {
-    const storedParams = sessionStorage.getItem('tripPlannerParams');
-    if (storedParams) {
-      try {
-        const params = JSON.parse(storedParams);
-        console.log('Retrieved params from sessionStorage:', params);
-        if (params.country) {setCountry(params.country);}
-        if (params.city && !city) { setCity(params.city); }
-        if (params.rooms && params.rooms.length > 0) {
-          setAdultsCount(params.rooms.adults || 2);
-          setCwbCount(params.rooms.cwb || 0);
-          setCnbCount(params.rooms.cnb || 0);
-          setInfantsCount(params.rooms.infants || 0);}
-      } catch (e) {
-        console.error('Error parsing stored trip planner params', e);
-      }
-    }
-  }
-}, [country, city]);
 
 const getCheckOutDate = () => {
   try {
@@ -129,6 +200,7 @@ const getCheckOutDate = () => {
     return formatDate(searchParams.checkOutDate);
   }
 };
+
 const getRoomDisplayText = () => {
   const roomCount = searchParams.rooms?.length || 1;
   if (roomCount > 1) {
@@ -150,18 +222,17 @@ return (
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined" size="small" className="form-control">
-                    <Select value={country || searchParams.country || ''} disabled className="select-input">
-                    <MenuItem value={ searchParams.country || ''}>
-                    {searchParams.country || 'Select country'}
-                      </MenuItem>
-                    </Select>
+                    <Select value={country || selectedCountry || searchParams.country || ''}  disabled  className="select-input" >
+                    <MenuItem value="">Select country</MenuItem>
+                    {(country || selectedCountry || searchParams.country) && (<MenuItem value={country || selectedCountry || searchParams.country}> {country || selectedCountry || searchParams.country}</MenuItem>)}
+                    {countryOptions && countryOptions.map((countryItem) => (<MenuItem key={countryItem.id} value={countryItem.label}>  {countryItem.label} </MenuItem>))}</Select>
                   </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth variant="outlined" size="small" className="form-control">
-                      <Select value={selectedCity || searchedCity || ""}    onChange={(e) => setSelectedCity(e.target.value)} className="select-input" >
-                        <MenuItem value="">  Select city </MenuItem>
-                        {cityOptions.map((cityItem) => ( <MenuItem key={cityItem.id} value={cityItem.label}> {cityItem.label}</MenuItem> ))}
+                      <Select value={selectedCity || searchedCity || ""}  onChange={(e) => setSelectedCity(e.target.value)}   className="select-input" disabled={!country && !selectedCountry}  >
+                        <MenuItem value="">Select city</MenuItem>
+                        {filteredCities.map((cityItem) => ( <MenuItem key={cityItem.id} value={cityItem.label}> {cityItem.label} </MenuItem> ))}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -224,4 +295,5 @@ return (
       </Box>
     );
 };
+
 export default TripPlannerArea;

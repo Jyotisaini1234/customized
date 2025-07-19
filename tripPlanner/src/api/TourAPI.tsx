@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { BASE_URL, BASE_URL_BACKEND } from '../utils/ApiConstants.ts';
-import { Lead } from '../types/types.ts';
+import { BASE_URL, GET_ALL_BOOKINGS, GET_BOOKING_BY_ID } from '../utils/ApiConstants.ts';
+import { BookingData, Lead, TourBookingData } from '../types/types.ts';
 
 export const tourApi = createApi({
   reducerPath: 'tourApi',
@@ -118,6 +118,33 @@ export const tourApi = createApi({
       }),
       providesTags: ['Package'],
     }),
+
+  getAllBookings: builder.query<TourBookingData[], void>({
+    query: () => GET_ALL_BOOKINGS,
+    providesTags: ['Bookings'],
+    transformResponse: (response: any) => {
+      console.log('Get all bookings response:', response);
+      return response;
+    },
+  }),
+  
+  getBookingById: builder.query<TourBookingData, string>({
+    query: (id) => ({
+      url: `${GET_BOOKING_BY_ID}${id}`,
+      method: 'GET',
+      headers: {
+        'User-Email': localStorage.getItem('userEmail') || '',
+        'User-Role': localStorage.getItem('userRole') || '',
+      },
+    }),
+    providesTags: (result, error, id) => [{ type: 'Bookings', id }],
+    transformResponse: (response: any) => {
+      console.log('Get booking by ID response:', response);
+      return response;
+    },
+  }),
+  
+  
   }),
 });
 
@@ -132,5 +159,7 @@ export const {
   useSearchPackagesQuery,
   useGetAllPackagesQuery,
   useSubmitPackageDataMutation,
-  useGetAllPackageDataQuery
+  useGetAllPackageDataQuery,
+  useGetAllBookingsQuery,
+  useGetBookingByIdQuery
 } = tourApi;

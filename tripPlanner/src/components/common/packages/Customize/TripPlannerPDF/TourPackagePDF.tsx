@@ -79,7 +79,8 @@ const TourPackagePDF: React.FC = () => {
             id: 0,
             roomCategory: '',
             mealPlan: ''
-          }]
+          }],
+          country: undefined
         },
         hotels: leadData.hotelDetails?.map((hotel: any) => ({
           hotel: {
@@ -96,26 +97,65 @@ const TourPackagePDF: React.FC = () => {
             mealPlan: hotel.mealPlan || 'BB'
           }
         })) || [],
-        plannerItems: leadData.plannerItems?.map((item: any, index: number) => ({
-          id: `day-${index}`,
-          date: item.date,
-          dateObj: new Date(item.date),
-          tours: item.tours ? {
-            name: item.tours.name,
-            description: item.tours.description,
-            activities: item.tours.activities || [],
-            eventDuration: item.tours.duration || 'Duration not specified',
-            details: {
-              tour: {
-                tourName: item.tours.name,
-                description: item.tours.description,
-                eventDuration: item.tours.duration || 'Duration not specified'
+        plannerItems: leadData.plannerItems?.map((item: any, index: number) => {
+          const getDescription = (tourItem: any) => {
+            const possibleDescriptions = [
+              tourItem.tours?.description,
+              tourItem.tours?.details?.tour?.description,
+              tourItem.description,
+              tourItem.tours?.bookingDetails?.description,
+              tourItem.tours?.details?.description
+            ];
+            
+            // Return the first non-empty description found
+            for (const desc of possibleDescriptions) {
+              if (desc && desc.trim().length > 0) {
+                return desc;
               }
             }
-          } : null,
-          transfer: null,
-          meals: null
-        })) || [],
+            
+            return 'No description available';
+          };
+        
+          // Extract duration from various possible locations
+          const getDuration = (tourItem: any) => {
+            const possibleDurations = [
+              tourItem.tours?.duration,
+              tourItem.tours?.details?.tour?.eventDuration,
+              tourItem.tours?.eventDuration,
+              tourItem.duration
+            ];
+            
+            for (const duration of possibleDurations) {
+              if (duration && duration.trim().length > 0) {
+                return duration;
+              }
+            }
+            
+            return 'Duration not specified';
+          };
+        
+          return {
+            id: `day-${index}`,
+            date: item.date,
+            dateObj: new Date(item.date),
+            tours: item.tours ? {
+              name: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
+              description: getDescription(item), // Use the helper function
+              activities: item.tours.activities || [],
+              eventDuration: getDuration(item), // Use the helper function
+              details: {
+                tour: {
+                  tourName: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
+                  description: getDescription(item), // Use the helper function
+                  eventDuration: getDuration(item) // Use the helper function
+                }
+              }
+            } : null,
+            transfer: null,
+            meals: null
+          };
+        }) || [],
         costs: {
           finalAmount: leadData.totalAmount || 0,
           packageDetails: {
@@ -148,15 +188,13 @@ const TourPackagePDF: React.FC = () => {
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
-      compress: true // Enable compression
+      compress: true
     });
-    // Add fonts
     pdf.setFont('helvetica');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const contentWidth = pageWidth - 20; // 10mm margins on each side
+    const contentWidth = pageWidth - 20;
     const footerText = "This document provides a summary of your tour package. Please request an official voucher to confirm your reservation.";
-    // Get all the sections to render
     const sections = [
       document.querySelector('.tour-package-header'),
       document.querySelector('.booking-reference'),
@@ -164,21 +202,18 @@ const TourPackagePDF: React.FC = () => {
       document.querySelector('.package-details-section'),
       document.querySelector('.itinerary-section .section-title')
     ];
-    // Get day containers separately
     const dayContainers = document.querySelectorAll('.day-container');
-    // Get cost summary
     const costSummary = document.querySelector('.cost-summary');
     const captureAndAddElement = async (element: Element, yPosition: number) => {
       return new Promise<number>((resolve) => {
         html2canvas(element as HTMLElement, {
-          scale: 1.5, // Reduced from 2 to save size
+          scale: 1.5,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
           imageTimeout: 2000, // Increase timeout
           allowTaint: false
         }).then(canvas => {
-          // Optimize the canvas for size reduction
           const imgData = canvas.toDataURL('image/jpeg', 0.85); // Using JPEG with 85% quality for smaller size
           const imgWidth = contentWidth;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -204,10 +239,8 @@ const TourPackagePDF: React.FC = () => {
         }
       }
       
-      // Process each day container
       for (let i = 0; i < dayContainers.length; i++) {
         const dayContainer = dayContainers[i];
-        // Calculate height of the day container
         const tempCanvas = await html2canvas(dayContainer as HTMLElement, {
           scale: 1.5,
           logging: false,
@@ -215,18 +248,14 @@ const TourPackagePDF: React.FC = () => {
         });
         const imgWidth = contentWidth;
         const imgHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
-        // Check if content fits on current page, if not add a new page
         if (yPosition + imgHeight > pageHeight - 20) {
           pdf.addPage();
           currentPage++;
           yPosition = 10;
         }
-        // Add the day container to the PDF
         yPosition = await captureAndAddElement(dayContainer, yPosition);
       }
-      // Add cost summary if it exists
       if (costSummary) {
-        // Check if cost summary fits on the current page
         const tempCanvas = await html2canvas(costSummary as HTMLElement, {
           scale: 1.5,
           logging: false
@@ -240,7 +269,6 @@ const TourPackagePDF: React.FC = () => {
         }
         yPosition = await captureAndAddElement(costSummary, yPosition);
       }
-      // Add page numbers and footer
       const totalPages = currentPage;
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
@@ -311,7 +339,6 @@ const TourPackagePDF: React.FC = () => {
     });
   };
 
-  // Calculate total persons
   const calculateTotalPersons = () => {
     if (costs.packageDetails && costs.packageDetails.totalPersons) {
       return costs.packageDetails.totalPersons;
@@ -337,7 +364,6 @@ const TourPackagePDF: React.FC = () => {
     : currentSearchParams?.city || 'Baku';
 
   const getHotelData = () => {
-    // First get all hotel entries from hotels array directly
     const hotelEntries = hotels.map(hotel => ({
       name: hotel.hotel?.hotelName || hotel.hotel?.name || 'Unknown Hotel',
       checkInDate: formatDate(hotel.booking?.checkInDate),
@@ -349,7 +375,6 @@ const TourPackagePDF: React.FC = () => {
       city: hotel.hotel?.city || currentSearchParams?.city
     }));
     
-    // Process each hotel to ensure correct checkout date calculation
     return hotelEntries.map(hotel => ({
       name: hotel.name,
       checkInDate: hotel.checkInDate,
@@ -384,7 +409,6 @@ const formatDescription = (description) => {
 return (
     <Box className="tour-package-container">
       <Box id="tour-package-content" className="tour-package-content">
-        {/* Header */}
         <Box className="tour-package-header">
           <h1 className="header-title">{(country || 'AZERBAIJAN').toUpperCase()} TOUR PACKAGE</h1>
         </Box>

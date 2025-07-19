@@ -10,7 +10,7 @@ const ClientDetailsForm: React.FC<ClientDetailsFormProps> = ({open,onClose,onSub
   nights,travelDate,grandTotal = 0, isEditMode = false,initialClientData = null,
   marginTotal = '0',currency = 'USD' , selectedHotels = [],selectedPlannerItems = [] }) => {
   const [clientData, setClientData] = useState({name: '', destination:'',options:'package', type: 'package'});
-  const [bookingStatus, setBookingStatus] = useState('confirmed');
+  const [bookingStatus, setBookingStatus] = useState('confirm');
   const [isEditModeState, setIsEditModeState] = useState(false);
   const [currentBookingRef, setCurrentBookingRef] = useState('');
   
@@ -45,8 +45,6 @@ useEffect(() => {
   
       if (parsedData.isEditMode) {
         setIsEditModeState(true);
-  
-        // ✅ Validate and set the bookingRef
         const ref = parsedData.bookingRef || parsedData.leadId;
         if (ref) {
           setCurrentBookingRef(ref);
@@ -105,7 +103,7 @@ useEffect(() => {
       createdByEmail:loginEmail,
       travelDate: travelDate,
       totalAmount: totalAmount,
-      bookingStatus: bookingStatus || 'confirmed',
+      bookingStatus: bookingStatus || 'confirm',
       destinations: clientData.destination,
       hotelDetails: hotels || [],
       plannerItems: plannerItems || [],

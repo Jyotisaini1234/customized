@@ -18,7 +18,6 @@ interface Room {
   cnb: number;
   infants: number;
 }
-
 const ReadyMadeSearch: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,6 +32,9 @@ const ReadyMadeSearch: React.FC = () => {
   const packageDetails = packageData?.packageDetails;
   const selectedOptionIndex = parseInt(searchData?.selectedHotelOption || '0');
   const selectedHotelOption = packageDetails?.hotelOption?.[selectedOptionIndex];
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  
 
   useEffect(() => {
     if (packageDetails) {
@@ -50,6 +52,14 @@ const ReadyMadeSearch: React.FC = () => {
       const checkOutDateObj = new Date(tomorrow);
       checkOutDateObj.setDate(checkOutDateObj.getDate() + calculatedNights);
       setCheckOutDate(checkOutDateObj);
+
+      if (packageDetails.country) {
+        setSelectedCountry(packageDetails.country);
+      }
+      
+      if (packageDetails.destinations && packageDetails.destinations.length > 0) {
+        setSelectedCity(packageDetails.destinations[0]);
+      }
     }
   }, [packageDetails, selectedHotelOption]);
 
@@ -133,34 +143,24 @@ const calculatePricing = () => {
   const totals = calculateTotals();
   const selectedHotelOption = packageDetails?.hotelOption?.[selectedOptionIndex];
   const basePackageCost = selectedHotelOption?.totalPackageCost || 0;
-  
-  // Calculate total people (adults + children, excluding infants for room calculation)
   const totalPeople = totals.totalAdults + totals.totalCwb + totals.totalCnb;
-  
   let totalPrice = 0;
   let hotelBasePrice = 0;
   let additionalAdultPrice = 0;
-  
-  // Hotel pricing logic based on total adults only
   if (totals.totalAdults === 1) {
-    // For 1 adult, show per person price
-    hotelBasePrice = Math.round(basePackageCost / 2); // Per person price
+    hotelBasePrice = Math.round(basePackageCost / 2);
     totalPrice = hotelBasePrice;
   } else if (totals.totalAdults === 2) {
-    // For 2 adults, use full package price
     hotelBasePrice = basePackageCost;
     totalPrice = basePackageCost;
   } else {
-    // For 3+ adults, base price + additional adult charges
     hotelBasePrice = basePackageCost;
     totalPrice = basePackageCost;
-    
     const additionalAdults = totals.totalAdults - 2;
     additionalAdultPrice = additionalAdults * (packageData?.pricing?.additionalAdultPrice || basePackageCost * 0.5);
     totalPrice += additionalAdultPrice;
   }
   
-  // Children pricing (always add separately)
   const cwbPricePerChild = selectedHotelOption?.cwbCost || 0;
   const cwbPrice = totals.totalCwb * cwbPricePerChild;
   totalPrice += cwbPrice;
@@ -168,34 +168,10 @@ const calculatePricing = () => {
   const cnbPricePerChild = selectedHotelOption?.cnbCost || 0;
   const cnbPrice = totals.totalCnb * cnbPricePerChild;
   totalPrice += cnbPrice;
-  
-  // Infant pricing (always free)
   const infantPrice = 0;
-  
-  // Additional rooms calculation
   const additionalRooms = Math.max(0, rooms.length - 1);
   const additionalRoomPrice = additionalRooms * basePackageCost;
   totalPrice += additionalRoomPrice;
-  
-  console.log('Pricing Calculation Debug:', {
-    totalAdults: totals.totalAdults,
-    totalCwb: totals.totalCwb,
-    totalCnb: totals.totalCnb,
-    basePackageCost,
-    hotelBasePrice,
-    additionalAdultPrice,
-    cwbCount: totals.totalCwb,
-    cwbPricePerChild,
-    cwbPrice,
-    cnbCount: totals.totalCnb,
-    cnbPricePerChild,
-    cnbPrice,
-    additionalRooms,
-    additionalRoomPrice,
-    totalPrice,
-    note: totals.totalAdults === 1 ? "Single adult - per person hotel price + children separately" : "Multiple adults - package price + additional charges"
-  });
-
   return {
     basePrice: hotelBasePrice,
     additionalAdultPrice,
@@ -207,9 +183,7 @@ const calculatePricing = () => {
     breakdown: {
       basePackage: {
         cost: hotelBasePrice,
-        includes: totals.totalAdults === 1 ? "1 Adult + Activities + Hotels (Per Person)" : 
-                 totals.totalAdults === 2 ? "2 Adults + Activities + Hotels" : 
-                 `2 Adults + Activities + Hotels + ${totals.totalAdults - 2} Additional Adults`
+        includes: totals.totalAdults === 1 ? "1 Adult + Activities + Hotels (Per Person)" :  totals.totalAdults === 2 ? "2 Adults + Activities + Hotels" :   `2 Adults + Activities + Hotels + ${totals.totalAdults - 2} Additional Adults`
       },
       adults: {
         count: totals.totalAdults,
@@ -241,7 +215,9 @@ const calculatePricing = () => {
     }
   };
 };
+
 const handleBack = () => { navigate(-1);};
+
 const handleSearch = async () => {
     setLoading(true);
     const totals = calculateTotals();
@@ -253,9 +229,9 @@ const handleSearch = async () => {
       checkInDate: checkInDate?.toISOString(),
       checkOutDate: checkOutDate?.toISOString(),
       totalNights,
-      nights: totalNights, // Add both for compatibility
+      nights: totalNights,
       rooms: rooms,
-      room: rooms, // Add both formats for compatibility
+      room: rooms,
       totalRooms: rooms.length,
       guests: {
         totalAdults: totals.totalAdults,
@@ -291,7 +267,9 @@ const handleSearch = async () => {
       cwb: totals.totalCwb,
       cnb: totals.totalCnb,
       infants: totals.totalInfants,
-      totalGuests: totals.totalGuests
+      totalGuests: totals.totalGuests,
+      selectedCountry,
+      selectedCity
     };
 
     try {
@@ -353,6 +331,7 @@ if (!searchData || !packageData) {
   const handleBakuRequirement = () => {
     window.open(BAKU_REQUIREMENT, '_blank');
   };
+
   return (
     <Box className="customize-search-page">
       <Container sx={{ paddingLeft: '0rem', paddingRight: '0rem' }}>
@@ -360,8 +339,6 @@ if (!searchData || !packageData) {
           <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading"> Readymade Packages Search </Typography>
           <Button className='entry-btn' sx={{ borderRadius: '4px', boxShadow: 'none', textTransform: 'none', py: 1 }}  onClick={handleBakuRequirement}> baku Entry Requirements</Button>
         </Box>
-
-        {/* Display current selections summary */}
         <Box mb={2} p={2} sx={{ bgcolor: '#f8f9fa', borderRadius: 2 }}>
           <Typography variant="body2" color="primary" fontWeight="medium">
             Current Selection: {totals.totalGuests} Guests ({totals.totalAdults} Adults, {totals.totalCwb} CWB, {totals.totalCnb} CNB, {totals.totalInfants} Infants) in {rooms.length} Room{rooms.length > 1 ? 's' : ''}
@@ -375,8 +352,17 @@ if (!searchData || !packageData) {
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" sx={{ mb: 0.5 }}>Country</Typography>
                   <FormControl fullWidth variant="outlined" size="small" className='select-option-1'>
-                    <Select value={'Georgia'} displayEmpty disabled sx={{ bgcolor: '#f5f5f5', '& .MuiInputBase-root': { height: '2rem', width: '16rem' } }}>
-                      <MenuItem value={'Georgia'}>Georgia</MenuItem>
+                    <Select 
+                      value={selectedCountry || ''} 
+                      onChange={(e) => setSelectedCountry(e.target.value)}
+                      displayEmpty  
+                      sx={{ bgcolor: '#f5f5f5', '& .MuiInputBase-root': { height: '2rem', width: '16rem' } }}
+                    >
+                      {packageDetails?.country && (
+                        <MenuItem value={packageDetails.country}>
+                          {packageDetails.country}
+                        </MenuItem>
+                      )}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -384,8 +370,8 @@ if (!searchData || !packageData) {
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" sx={{ mb: 0.5 }}>City</Typography>
                   <FormControl fullWidth variant="outlined" size="small" className='select-option-2'>
-                    <Select value={uniqueDestinations[0]} displayEmpty disabled sx={{ bgcolor: '#f5f5f5', '& .MuiInputBase-root': { height: '2rem', width: '16rem' } }}>
-                      <MenuItem value={uniqueDestinations[0]}>{uniqueDestinations[0]}</MenuItem>
+                    <Select value={selectedCity || ''}    onChange={(e) => setSelectedCity(e.target.value)}  displayEmpty   sx={{ bgcolor: '#f5f5f5', '& .MuiInputBase-root': { height: '2rem', width: '16rem' } }}  >
+                      {packageDetails?.destinations?.map((destination: string, index: number) => (<MenuItem key={index} value={destination}> {destination}</MenuItem> ))}
                     </Select>
                   </FormControl>
                 </Grid>
