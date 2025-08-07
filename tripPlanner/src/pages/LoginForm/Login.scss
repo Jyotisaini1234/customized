@@ -1,0 +1,194 @@
+@import '../../styles/variables';
+
+.login-form-container {
+  width: 20rem;
+  height: auto;
+  min-height: 14rem;
+  background: rgba(255, 255, 255, 0.774);
+  padding: 1.2rem;
+  border-radius: 0.6rem;
+  margin: auto;
+  margin-top: 3rem;
+  color: black;
+  z-index: 10;
+  .input-fields {
+    margin-bottom: 0.6rem;
+    
+    .mui-input {
+      margin-bottom: 0.6rem;
+      
+      .MuiOutlinedInput-root {
+        border-radius: 2rem;
+        
+        &.Mui-focused .MuiOutlinedInput-notchedOutline {
+          border-width: 0.0625rem !important;
+        }
+      
+      }
+      
+      .MuiOutlinedInput-input {
+        border: 0.0625rem solid black;
+        border-radius: 2rem;
+        background: white;
+        padding: 0.5rem 1rem;
+        
+        &::placeholder {
+          color: black !important;
+          opacity: 1;
+        }
+      }
+      
+      .MuiOutlinedInput-notchedOutline {
+        border: none;
+      }
+    }
+    .mui-input_2 {
+      margin-bottom: 0.6rem;
+      border: 0.0625rem solid black;
+      border-radius: 2rem;
+      background: white;
+      align-items: center;
+      text-align: center;
+      .MuiOutlinedInput-root {
+        border-radius: 2rem;
+        align-items: center;
+        text-align: center;
+        &.Mui-focused .MuiOutlinedInput-notchedOutline {
+          border-width: 0.0625rem !important;
+        }
+      
+      }
+      
+      .MuiOutlinedInput-input {
+        border-radius: 2rem;
+        background: white;
+        padding: 0.5rem 1rem;
+        
+        &::placeholder {
+          color: black !important;
+          opacity: 1;
+        }
+      }
+      
+      .MuiOutlinedInput-notchedOutline {
+        border: none;
+      }
+    }
+  }
+  
+  .form-options {
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+    
+    .remember-text {
+      letter-spacing: 0.02rem;
+      font-size: 0.8rem; 
+      font-weight: 700;
+      color: #333;
+    }
+    
+    .MuiRadio-root {
+      padding: 0.4rem;
+      color: #777777;
+      
+      &.Mui-checked {
+        color: #455cdd;
+      }
+    }
+    
+    .forgot-password {
+      font-size: 0.8rem;
+      letter-spacing: 0.02rem;
+      font-weight: 700;
+      color: #333;
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.2rem;
+    
+    .register-link {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #333;
+      border: none;
+      background: transparent;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    .login-button {
+      background-color: $primary-color;
+      color: white;
+      font-weight: bold;
+      padding: 0.5rem 2rem;
+      border-radius: 1rem;
+      width: 7.1rem;
+      height: 1.7rem;
+      font-size: 0.8rem;
+      
+      &:hover {
+        background-color: darken($primary-color, 10%);
+      }
+    }
+  }
+}
+
+
+@media (max-width: 48rem) {
+  .login-form-container {
+    width: 100%;
+    max-width: 32rem;
+    height: auto;
+    min-height: 12.5rem;
+    margin: 3rem auto;
+    float: right;
+    
+    .form-options{
+      margin: 0.7rem;
+    } 
+    
+    .form-actions {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0.8rem;
+    }
+    
+    .form-actions {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: start;
+      gap: 6.2rem;
+      .login-button {
+        width: 40%;
+        height: 2rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 30rem) {
+  .login-form-container {
+    padding: 0.8rem;
+    
+    .input-fields {
+      .mui-input {
+        .MuiOutlinedInput-input {
+          padding: 0.4rem 0.8rem;
+        }
+      }
+    }
+  }
+}

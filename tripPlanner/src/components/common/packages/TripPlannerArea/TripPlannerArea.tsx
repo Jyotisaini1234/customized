@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuItem,Paper, SelectChangeEvent,} from '@mui/material';
 import './TripPlannerArea.scss';
-import { AreaOption, Areas } from '../../../../types/types.ts';
 import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
 import { citiesList as cityOptions, country as countryOptions } from "../../../../model/selectOptions.ts";
 
@@ -39,30 +38,7 @@ const getFilteredCities = () => {
   return cityOptions.filter(city => city.countryId === countryObj.id);
 };
 const filteredCities = getFilteredCities();
-const getTotalBookedNights = () => {
-  const savedHotels = sessionStorage.getItem('tripPlannerHotels');
-  if (savedHotels) {
-    try {
-      const hotels = JSON.parse(savedHotels);
-      return hotels.reduce((total, hotel) => total + (hotel.nights || 0), 0);
-    } catch (e) {
-      console.error('Error parsing saved hotels', e);
-      return 0;
-    }
-  }
-  return 0;
-};
 
-const getMaxNightsAllowed = () => {
-  const originalTotalNights = searchParams.originalNights || searchParams.totalNights || 5;
-  const bookedNights = getTotalBookedNights();
-  const remainingNights = originalTotalNights - bookedNights;
-  return Math.max(remainingNights, 1); // minimum 1 night
-};
-const [maxNightsAllowed, setMaxNightsAllowed] = useState<number>(getMaxNightsAllowed());
-useEffect(() => {
-  setMaxNightsAllowed(getMaxNightsAllowed());
-}, []);
 const handleClose = () => {
 let savedHotels = [];
 const storedHotels = sessionStorage.getItem('tripPlannerHotels');
@@ -177,6 +153,7 @@ if (leadId) {
   window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
 };
 
+
 const formatDate = (dateStr) => {
   try {return new Date(dateStr).toLocaleDateString();}
   catch (e) {return dateStr || '';}
@@ -208,6 +185,22 @@ const getRoomDisplayText = () => {
   }
   return "Room 1";
 };
+const getMaxNights = () => {
+  if (searchParams.checkInDate && searchParams.originalCheckOutDate) {
+    try {
+      const checkIn = new Date(searchParams.checkInDate);
+      const originalCheckOut = new Date(searchParams.originalCheckOutDate);
+      const maxNights = Math.ceil((originalCheckOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+      return maxNights > 0 ? maxNights : 1;
+    } catch (e) {
+      console.error("Error calculating max nights:", e);
+      return null;
+    }
+  }
+  return null;
+};
+
+const maxNights = getMaxNights();
 
 return (
       <Box className="trip-planner-area-container">
@@ -242,13 +235,10 @@ return (
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Typography variant="body2" className="label">Night/s</Typography>
-                    <TextField 
-                      value={nights === null || nights === undefined ? '' : nights}
-                      onChange={(e) => {const value = e.target.value.trim();
-                      if (value === '') { setNights('');  } else {
-                      const parsedValue = parseInt(value, 10); setNights(parsedValue);}}}
-                      fullWidth size="small" variant="outlined" 
-                      className="nights-input" type="number" InputProps={{ inputProps: { min: 1 } }}/>
+                  <TextField value={nights === null || nights === undefined ? '' : nights} onChange={(e) => { const value = e.target.value.trim();if (value === '') {  setNights('');  
+                    } else {const parsedValue = parseInt(value, 10);
+                      if (maxNights && parsedValue > maxNights) { setNights(maxNights);
+                      } else { setNights(parsedValue); } } }} fullWidth size="small"  variant="outlined"  className="nights-input" type="number"  InputProps={{ inputProps: {  min: 1,  max: maxNights || undefined  } }} helperText={maxNights ? `Maximum ${maxNights} nights allowed` : ''}/>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Typography variant="body2" className="label">Check Out</Typography>

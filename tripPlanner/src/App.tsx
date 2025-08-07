@@ -5,14 +5,17 @@ import  Router  from './routes/Router.tsx';
 import { ErrorBoundary } from './components/error-boundary/ErrorBoundary.tsx';
 import AlertDialog from './components/common/AlertDialog.tsx';
 import NotFound from './components/NotFound/NotFound.tsx';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SearchProvider } from './constants/SearchContext.tsx';
-
+import { useAuth } from './constants/useAuth.ts';
 const App: React.FC  = () =>  {
+  const { checkSession } = useAuth();
   const loader = useSelector((state: RootState) => state.loader);
   const alert = useSelector((state: RootState) => state.alert);
   const error = useSelector((state: RootState) => state.error);
-
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
   return (
     <ErrorBoundary>
       {error.isPageNotFound && <NotFound />}

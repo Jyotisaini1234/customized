@@ -251,10 +251,10 @@ const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({ open, onClose, se
       </DialogContent>
       
       <DialogActions sx={{ p: 2 }}>
-        <Button
+        {/* <Button
           startIcon={<PictureAsPdfIcon />}  onClick={handlePdfDownload} sx={{   bgcolor: '#0369a1', color: 'white', '&:hover': {   bgcolor: 'darkgreen' }  }}>
           Download PDF
-        </Button>
+        </Button> */}
         <Button sx={{color:'white', bgcolor:'grey'}} onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>

@@ -1,3 +1,4 @@
+
 export let country = [
 { label: 'Azerbaijan', id: 1 },
 { label:'Georgia', id :2}
@@ -17,22 +18,22 @@ export let citiesList = [
   { label: 'Tbilisi', id: 10, countryId: 2 }
 ];
 
-  export const dropdownMenus = {
-    'baku-packages': [
-      { label: 'Readymade + Customized', path: '/readymade-package' },
-      { label: 'Customized', path: '/customize-package' },
-    ],
-    'bookings': [
-      { label: 'Quotation List', path: '/my-leads' },
-      { label: 'Readymade Package Bookings', path: '/readymade-booking' },
-      { label: 'Confirmed Bookings', path: '/confirmed-booking' },
-      { label: 'Cancel Bookings', path: '/cancel-booking' }
-    ]
-  };
-  
+    export const dropdownMenus = {
+      'baku-packages': [
+        { label: 'Readymade + Customized', path: '/readymade-package' },
+        { label: 'Customized', path: '/customize-package' },
+      ],
+      'bookings': [
+        { label: 'Quotation List', path: '/my-leads' },
+        { label: 'Readymade Package Bookings', path: '/readymade-booking' },
+        // { label: 'Confirmed Bookings', path: '/confirmed-booking' },
+        // { label: 'Cancel Bookings', path: '/cancel-booking' }
+      ]
+    };
+    
 
-  export const userDropdownOptions = [
-    { label: 'Create New User', path: '#',action: 'modal' },
-    { label: 'User List', path: 'http://b2b.flydivinetravels.com/hotel/user-list' },
-    { label: 'Upload Logo', path: 'http://b2b.flydivinetravels.com/hotel/upload-logo' }
-  ];
+    export const userDropdownOptions = [
+      // { label: 'Create New User', path: '#',action: 'modal' },
+      // { label: 'User List', path: 'http://b2b.flydivinetravels.com/hotel/user-list' },
+      // { label: 'Upload Logo', path: 'http://b2b.flydivinetravels.com/hotel/upload-logo' }
+    ];

@@ -118,29 +118,24 @@ export const useLeadInvoiceDownload = () => {
         const firstPartImgData = firstPartCanvas.toDataURL('image/jpeg', 0.8);
         pdf.addImage(firstPartImgData, 'JPEG', margin, yPosition, imgWidth, firstPartHeightMM);
         addNewPage();
-        // Create cropped canvas for remaining part
         const remainingHeightPx = fullCanvas.height - Math.floor(firstPartHeightPx);
         const remainingPartCanvas = createCroppedCanvas( fullCanvas,  0, Math.floor(firstPartHeightPx), fullCanvas.width, remainingHeightPx );
         const remainingPartImgData = remainingPartCanvas.toDataURL('image/jpeg', 0.8);
-        // Add remaining part to new page
         const remainingHeightMM = fullImgHeight - firstPartHeightMM;
         pdf.addImage(remainingPartImgData, 'JPEG', margin, yPosition, imgWidth, remainingHeightMM);
         yPosition += remainingHeightMM + spacing;
       };
   
-      // Function for elements that shouldn't be split (like headers)
       const captureAndAddElementNoSplit = async (element: HTMLElement, spacing: number = 5): Promise<void> => {
         if (!element) return;
         const canvas = await html2canvas(element, {scale: 1.5,useCORS: true, logging: false, backgroundColor: '#ffffff',width: 754,allowTaint: false});
         const imgData = canvas.toDataURL('image/jpeg', 0.8);
         const imgWidth = contentWidth;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        // If doesn't fit on current page, start new page
         if (yPosition + imgHeight + spacing > maxContentHeight) { addNewPage(); }
         pdf.addImage(imgData, 'JPEG', margin, yPosition, imgWidth, imgHeight);
         yPosition += imgHeight + spacing;
       };
-      // Get all sections
       const headerSection = tempDiv.querySelector('.invoice-header') as HTMLElement;
       const referenceSection = tempDiv.querySelector('.invoice-reference') as HTMLElement;
       const hotelSection = tempDiv.querySelector('.hotel-details-section') as HTMLElement;
@@ -167,7 +162,6 @@ export const useLeadInvoiceDownload = () => {
       pdf.save(fileName);
   
     } finally {
-      // Cleanup
       root.unmount();
       document.body.removeChild(tempDiv);
     }
@@ -302,7 +296,7 @@ export const useLeadInvoiceDownload = () => {
               return (
                 <Paper  key={index} className="day-container"  sx={{ mb: 2, overflow: 'hidden', border: '1px solid #e0e0e0',  borderRadius: 2,  pageBreakInside: 'avoid'}}  >
                   <Box sx={{  bgcolor: '#1976d2',   color: 'white',  p: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1.1rem', m: 0,marginLeft:'1rem' }}> DAY {index + 1} - {formattedDate} </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1.1rem', m: 0,marginLeft:'2rem' }}> DAY {index + 1} - {formattedDate} </Typography>
                   </Box>
                   
                   <Box sx={{ p: 2 }}>
@@ -320,14 +314,42 @@ export const useLeadInvoiceDownload = () => {
                       </Box>
                     </Box>
                     
-                    {item.tours?.activities && item.tours.activities.length > 0 && (
+                    {/* {item.tours?.activities && item.tours.activities.length > 0 && (
                       <Box sx={{ mt: 1.5 }}>
                         <Typography sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}> Activities </Typography>
                         <Box component="ul" sx={{ m: 0, pl: 3 }}>
                           {item.tours.activities.map((activity, actIndex) => (<Typography key={actIndex} component="li" sx={{ fontSize: '0.9rem', mb: 0.5 }}> {activity.name}  </Typography>  ))}
                         </Box>
                       </Box>
-                    )}
+                    )} */}
+                    {((item.tours?.selectedActivities && Object.keys(item.tours.selectedActivities).length > 0) || 
+  (item.tours?.activities && item.tours.activities.length > 0)) && (
+  <Box sx={{ mt: 1.5 }}>
+    <Typography sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>
+      Activities
+    </Typography>
+    <Box component="ul" sx={{ m: 0, pl: 3 }}>
+      {/* Handle selectedActivities object format */}
+      {item.tours?.selectedActivities && 
+        Object.entries(item.tours.selectedActivities)
+          .filter(([key, value]) => value === true)
+          .map(([activityName, selected], actIndex) => (
+            <Typography key={`selected-${actIndex}`} component="li" sx={{ fontSize: '0.9rem', mb: 0.5 }}>
+              {activityName.trim()}
+            </Typography>
+          ))}
+      
+      {/* Handle activities array format */}
+      {item.tours?.activities && 
+        item.tours.activities.map((activity, actIndex) => (
+          <Typography key={`activity-${actIndex}`} component="li" sx={{ fontSize: '0.9rem', mb: 0.5 }}>
+            {activity.name || activity}
+          </Typography>
+        ))}
+    </Box>
+  </Box>
+)}
+
                   </Box>
                 </Paper>
               );

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Box,Container,Typography,Button,Paper, Tabs,Tab, IconButton,TextField,CircularProgress} from "@mui/material";
-import { AddCircleOutline, DeleteOutline, ArrowDownward as ArrowDownIcon} from "@mui/icons-material";
+import { AddCircleOutline, DeleteOutline} from "@mui/icons-material";
 import './TripPlannerReadyMade.scss';
-import { SearchData, PlannerItem2, PackageHotel, PackageData, TripPlannerDBData, ReadyMadeHotel, Activity, Transfer, Itinerary, PackageItinerary } from "../../../../../../types/types.ts";
+import { SearchData, PlannerItem2, PackageHotel, PackageData, TripPlannerDBData } from "../../../../../../types/types.ts";
 import { useSubmitPackageDataMutation } from "../../../../../../api/TourAPI.tsx";
 import { TRIP_PLANNER } from "../../../../../../utils/ApiConstants.ts";
 
@@ -24,7 +24,6 @@ const [transfers, setTransfers] = useState<any[]>([]);
 const [grandTotal, setGrandTotal] = useState<number>(0);
 const [marginTotal, setMarginTotal] = useState<string>('0');
 const [loading, setLoading] = useState<boolean>(false);
-const [clientFormOpen, setClientFormOpen] = useState<boolean>(false);
 const [packageType, setPackageType] = useState<string>('hotel-land');
 const [currency] = useState<string>('USD');
 const [originalSearchParams, setOriginalSearchParams] = useState<any>(null);
@@ -86,7 +85,7 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
             transfer: undefined,
             itinerary: (!deletedItineraries.includes(itineraryId) && packageData?.itinerary?.[i]) ? packageData.itinerary[i] : undefined,
             dateObj: new Date(currentDate).toISOString()
-        }; 
+        };
         items.push(plannerItem);
         currentDate.setDate(currentDate.getDate() + 1); 
     }
@@ -100,52 +99,20 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
     if (packageData?.hotelOption?.[0]?.hotels) {
         packageData.hotelOption[0].hotels.forEach((originalHotel, index) => {
             const hotelNights = originalHotel.nights || 1;
-            const isDeleted = deletedHotels.some((deleted: any) => 
-                (deleted.name === originalHotel.name && deleted.destination === originalHotel.destination) ||
-                deleted.packageIndex === index
-            );
-            originalHotelMapping.set(index, {
-                startDay: currentDayIndex,
-                endDay: Math.min(currentDayIndex + hotelNights - 1, totalDays - 2),
-                nights: hotelNights,
-                isDeleted: isDeleted,
-                hotelData: originalHotel
-            });
-            
+            const isDeleted = deletedHotels.some((deleted: any) =>(deleted.name === originalHotel.name && deleted.destination === originalHotel.destination) ||  deleted.packageIndex === index );
+            originalHotelMapping.set(index, {  startDay: currentDayIndex,endDay: Math.min(currentDayIndex + hotelNights - 1, totalDays - 2),nights: hotelNights,isDeleted: isDeleted,  hotelData: originalHotel});
             currentDayIndex += hotelNights;
-            if (index === packageData.hotelOption[0].hotels.length - 1 && !isDeleted) {
-                originalHotelMapping.set(index, {
-                    ...originalHotelMapping.get(index),
-                    endDay: totalDays - 1
-                });
-            }
+            if (index === packageData.hotelOption[0].hotels.length - 1 && !isDeleted) { originalHotelMapping.set(index, {...originalHotelMapping.get(index), endDay: totalDays - 1 }); }
         });
     }
     packageHotels.forEach((hotel) => {
-        const isDeleted = deletedHotels.some((deleted: any) => 
-            (deleted.name === hotel.name && deleted.destination === hotel.destination) ||
-            deleted.uniqueId === hotel.uniqueId || 
-            deleted.packageIndex === hotel.packageIndex
-        );
-        if (isDeleted) {
-            console.log(`Skipping deleted hotel: ${hotel.name}`);
-            return;
-        }
-        
+        const isDeleted = deletedHotels.some((deleted: any) =>  (deleted.name === hotel.name && deleted.destination === hotel.destination) || deleted.uniqueId === hotel.uniqueId ||  deleted.packageIndex === hotel.packageIndex );
+        if (isDeleted) { console.log(`Skipping deleted hotel: ${hotel.name}`); return; }
         const originalMapping = originalHotelMapping.get(hotel.packageIndex);
         if (!originalMapping) return;
         const { startDay, endDay } = originalMapping;
         for (let dayIndex = startDay; dayIndex <= endDay; dayIndex++) {
-            if (dayIndex < items.length) {
-                items[dayIndex].hotel = {
-                    ...hotel,
-                    displayInfo: {
-                        isFirstDay: dayIndex === startDay,
-                        isLastDay: dayIndex === endDay,
-                        dayNumber: dayIndex - startDay + 1,
-                        totalDays: endDay - startDay + 1
-                    }
-                };
+            if (dayIndex < items.length) { items[dayIndex].hotel = { ...hotel, displayInfo: { isFirstDay: dayIndex === startDay, isLastDay: dayIndex === endDay,dayNumber: dayIndex - startDay + 1, totalDays: endDay - startDay + 1  } };
             }
         }
     });
@@ -153,27 +120,10 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
         if (hotel.specificDayId) {
             const dayIndex = items.findIndex(item => item.id === hotel.specificDayId);
             if (dayIndex !== -1) { 
-                items[dayIndex].hotel = {
-                    ...hotel, 
-                    isAdditional: true,
-                    displayInfo: {
-                        isFirstDay: true, 
-                        isLastDay: true,  
-                        dayNumber: 1, 
-                        totalDays: 1 
-                    } 
-                };
+                items[dayIndex].hotel = { ...hotel, isAdditional: true, displayInfo: { isFirstDay: true, isLastDay: true, dayNumber: 1, totalDays: 1}  };
                 if (dayIndex === totalDays - 2) {
                     const lastDayIndex = totalDays - 1;
-                    items[lastDayIndex].hotel = {
-                        ...hotel,
-                        isAdditional: true,
-                        displayInfo: { 
-                            isFirstDay: false,  
-                            isLastDay: true,
-                            dayNumber: 2,   
-                            totalDays: 2 
-                        }
+                    items[lastDayIndex].hotel = { ...hotel,isAdditional: true, displayInfo: { isFirstDay: false, isLastDay: true, dayNumber: 2, totalDays: 2 }
                     };
                 }
             }
@@ -186,43 +136,24 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
             const checkInDayIndex = items.findIndex(item => {
                 const itemDate = new Date(item.date);
                 itemDate.setHours(0, 0, 0, 0);
-                return itemDate.getTime() === checkInDate.getTime();
-            });
+                return itemDate.getTime() === checkInDate.getTime();});
             const checkOutDayIndex = items.findIndex(item => {
                 const itemDate = new Date(item.date);
                 itemDate.setHours(0, 0, 0, 0);
-                return itemDate.getTime() === checkOutDate.getTime();
-            });
+                return itemDate.getTime() === checkOutDate.getTime();});
             if (checkInDayIndex !== -1) {
                 const numNights = checkOutDayIndex - checkInDayIndex;
                 const isFullItinerary = checkInDayIndex === 0 && checkOutDayIndex === totalDays - 1;
                 const isLastDayCheckout = checkOutDayIndex === totalDays - 1;
                 let startShowIndex = checkInDayIndex;
                 let endShowIndex = checkOutDayIndex;
-                
-                if (isFullItinerary) { 
-                    endShowIndex = totalDays - 1;  
-                }
-                else if (isLastDayCheckout) { 
-                }
-                else if (numNights === 2) { 
-                    endShowIndex = checkInDayIndex + 1;   
-                } 
-                else if (numNights === 1 && checkOutDayIndex < totalDays - 1) {
-                    endShowIndex = checkInDayIndex;   
-                }
-                else {
-                    endShowIndex = checkOutDayIndex - 1; 
-                }
+                if (isFullItinerary) {endShowIndex = totalDays - 1;  }
+                else if (isLastDayCheckout) { }
+                else if (numNights === 2) {  endShowIndex = checkInDayIndex + 1;    } 
+                else if (numNights === 1 && checkOutDayIndex < totalDays - 1) {endShowIndex = checkInDayIndex;   }
+                else { endShowIndex = checkOutDayIndex - 1;  }
                 for (let i = startShowIndex; i <= endShowIndex; i++) {
-                    items[i].hotel = {
-                        ...hotel,
-                        displayInfo: { 
-                            isFirstDay: i === startShowIndex, 
-                            isLastDay: i === endShowIndex,  
-                            dayNumber: i - startShowIndex + 1, 
-                            totalDays: endShowIndex - startShowIndex + 1 
-                        }
+                    items[i].hotel = { ...hotel,displayInfo: { isFirstDay: i === startShowIndex, isLastDay: i === endShowIndex, dayNumber: i - startShowIndex + 1,  totalDays: endShowIndex - startShowIndex + 1  }
                     };
                 }
             }
@@ -235,21 +166,13 @@ const createPlannerItemsWithPackageData = (hotelList: any[], activityList: any[]
         const assignedDayId = activity.assignedDayId || tourMapping[activity.id];
         if (assignedDayId) { 
             const dayIndex = items.findIndex(item => item.id === assignedDayId);
-            if (dayIndex !== -1) {  
-                items[dayIndex].tours = activity; 
-            }
+            if (dayIndex !== -1) {items[dayIndex].tours = activity;  }
         } else {
             const availableDayIndex = items.findIndex(item => !item.tours);
-            if (availableDayIndex !== -1) { 
-                items[availableDayIndex].tours = activity;  
-            }
+            if (availableDayIndex !== -1) {items[availableDayIndex].tours = activity;  }
         }
     });
-    transferList.forEach((transfer, index) => {
-        if (index < items.length) {   
-            items[index].transfer = transfer;  
-        }
-    });
+    transferList.forEach((transfer, index) => {if (index < items.length) {     items[index].transfer = transfer;  }});
     setPlannerItems(items);
     calculateTotalWithPackageData(items, packageData);
     savePersistentTableData(items);
@@ -262,10 +185,7 @@ const createEmptyPlannerItems = () => {
     const totalDays = nights + 1;
     console.log(`Creating empty planner for ${nights} nights = ${totalDays} days`);
     let currentDate = new Date(startDate);
-    for (let i = 0; i < totalDays; i++) { items.push({
-        id: `day-${i + 1}`, date: new Date(currentDate),
-        dateObj: ""
-    });   currentDate.setDate(currentDate.getDate() + 1); }
+    for (let i = 0; i < totalDays; i++) { items.push({id: `day-${i + 1}`, date: new Date(currentDate),dateObj: "" });   currentDate.setDate(currentDate.getDate() + 1); }
     setPlannerItems(items);
     savePersistentTableData(items);
 };
@@ -274,52 +194,33 @@ const calculateTotalWithPackageData = (items: PlannerItem2[], packageData?: Pack
     const processedHotels = new Set();
     const processedTours = new Set();
     const processedTransfers = new Set();
-    console.log('🔢 Starting total calculation...');
-    
-    // Get room count properly - handle if it's an array  
     let roomCount = 1;
     if (searchData?.room) {
-        if (Array.isArray(searchData.room)) {
-            roomCount = searchData.room.length;
-        } else {
-            roomCount = Number(searchData.room) || 1;
-        }
+        if (Array.isArray(searchData.room)) { roomCount = searchData.room.length;} 
+        else { roomCount = Number(searchData.room) || 1; }
     } else if (currentSearchParams?.rooms) {
-        if (Array.isArray(currentSearchParams.rooms)) {
-            roomCount = currentSearchParams.rooms.length;
-        } else {
-            roomCount = Number(currentSearchParams.rooms) || 1;
-        }
+        if (Array.isArray(currentSearchParams.rooms)) { roomCount = currentSearchParams.rooms.length;} 
+        else { roomCount = Number(currentSearchParams.rooms) || 1;}
     }
-    console.log('Room count for calculations:', roomCount);
-    
     if (currentSearchParams?.pricing) {
         const packagePricing = currentSearchParams.pricing;
-        console.log('Package pricing data:', packagePricing);
         total = packagePricing.totalPrice || 0;
-        console.log(`Using calculated total price: $${total}`);
     } else {
         if (packageData && searchData?.packageData?.packageDetails?.hotelOption?.[0]?.totalPackageCost) {
             const basePackageTotal = Number(searchData.packageData.packageDetails.hotelOption[0].totalPackageCost);
             total = basePackageTotal;
-            console.log(`Using base package total: $${basePackageTotal}`);
         }
     }
-    
     const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
     deletedHotels.forEach(deletedHotel => {
         if (deletedHotel.originalPrice) {
             total -= deletedHotel.originalPrice;
-            console.log(`Subtracted deleted hotel price: $${deletedHotel.originalPrice} (${deletedHotel.name})`);
         }
     });
-    
     items.forEach((item, index) => {
         if (item.itinerary?.price) {
             total += item.itinerary.price;
-            console.log(`Added itinerary price for day ${index + 1}: $${item.itinerary.price}`);
         }
-        
         if (item.tours) {
             const tourKey = `${item.tours.id}-${item.id}`;
             if (!processedTours.has(tourKey)) {
@@ -327,11 +228,9 @@ const calculateTotalWithPackageData = (items: PlannerItem2[], packageData?: Pack
                 if (tourPrice > 0) {
                     total += tourPrice;
                     processedTours.add(tourKey);
-                    console.log(`Added tour price for day ${index + 1}: $${tourPrice} (${item.tours.name})`);
                 }
             }
-        }
-        
+        } 
         if (item.transfer) {
             const transferKey = `${item.transfer.id}-${item.id}`;
             if (!processedTransfers.has(transferKey)) {
@@ -339,33 +238,22 @@ const calculateTotalWithPackageData = (items: PlannerItem2[], packageData?: Pack
                 if (transferPrice > 0) {
                     total += transferPrice;
                     processedTransfers.add(transferKey);
-                    console.log(`Added transfer price for day ${index + 1}: $${transferPrice}`);
                 }
             }
-        }
-        
+        } 
         if (item.hotel) {
             const hotelKey = `${item.hotel.id}-${item.hotel.uniqueId || item.hotel.specificDayId || 'default'}`;
             if (!processedHotels.has(hotelKey)) {
                 const baseHotelPrice = Number(item.hotel.price) || 0;
-                
-                // Calculate actual hotel price based on rooms
                 const hotelRoomCount = item.hotel.rooms || roomCount;
                 const actualHotelPrice = baseHotelPrice * hotelRoomCount;
-                
                 if (actualHotelPrice > 0) {
                     if (item.hotel.isAdditional || item.hotel.specificDayId || !item.hotel.isPackageHotel) {
                         total += actualHotelPrice;
-                        console.log(`Added individual hotel price: $${baseHotelPrice} x ${hotelRoomCount} rooms = $${actualHotelPrice} for ${item.hotel.name} (Day: ${item.id})`);
-                    }
+                        console.log(`Added individual hotel price: $${baseHotelPrice} x ${hotelRoomCount} rooms = $${actualHotelPrice} for ${item.hotel.name} (Day: ${item.id})`); }
                     processedHotels.add(hotelKey);
-                }
-            }
-        }
+                }} }
     });
-    
-    console.log(`Final calculated total: $${total}`);
-    console.log(`Breakdown: Tours processed: ${processedTours.size}, Hotels processed: ${processedHotels.size}, Transfers processed: ${processedTransfers.size}`);
     setGrandTotal(total);
     return total;
 };
@@ -375,49 +263,31 @@ useEffect(() => {
     const addedToPlanner = urlParams.get('addedToPlanner') === 'true';
     const specificDayId = urlParams.get('specificDayId');
     const encodedTourData = urlParams.get('tourData');
-    console.log("URL-specificDayId:", specificDayId);
-    console.log('Tour Data Processing - Initial Check:', {  addedToPlanner,  specificDayId,  hasTourDataInUrl: !!encodedTourData, plannerItemsLength: plannerItems.length  });
     if (specificDayId && specificDayId !== specificDayIdState) {  console.log("Setting specificDayId state:", specificDayId);  setSpecificDayId(specificDayId);  }
     if (addedToPlanner && specificDayId && plannerItems.length > 0) {
-        console.log("Processing tour assignment for day:", specificDayId);
         let storedTour: any = {};
         if (encodedTourData) {
-            try {
-                storedTour = JSON.parse(decodeURIComponent(encodedTourData));
-                console.log('Tour data from URL params:', storedTour);
-            } catch (error) {
-                console.error(' Error parsing tourData from URL:', error);  
-            }
-        } 
+            try { storedTour = JSON.parse(decodeURIComponent(encodedTourData)); } 
+            catch (error) {console.error(' Error parsing tourData from URL:', error);   }
+        }
         if (!storedTour.tourDetails && !storedTour.tour) {
             try {
                 const sessionTour = sessionStorage.getItem('selectedTourData');
-                if (sessionTour) { 
-                    storedTour = JSON.parse(sessionTour);  
-                }
-            } catch (error) { 
-                console.error(' Error parsing sessionStorage tourData:', error); 
-            }
+                if (sessionTour) {storedTour = JSON.parse(sessionTour);  }
+            } catch (error) {console.error(' Error parsing sessionStorage tourData:', error); }
         }
         if (storedTour && (storedTour.tourDetails || storedTour.tour)) {
             const tourData = storedTour.tourDetails || storedTour.tour;
             const bookingData = storedTour.booking || {};
-            const existingTour = activities.find(activity => 
-                activity.id === tourData.id || 
-                (activity.name === (tourData.name || tourData.tourName || tourData.sightName))
-            );
-            
+            const existingTour = activities.find(activity =>  activity.id === tourData.id || (activity.name === (tourData.name || tourData.tourName || tourData.sightName))); 
             if (existingTour) {
                 const url = new URL(window.location.href);
                 ['addedToPlanner', 'tourAdded', 'preserveData', 'dayId', 'specificDayId', 'timestamp', 'tourData'].forEach(param => {  url.searchParams.delete(param);  });
                 window.history.replaceState({}, '', url.toString());
                 return;
             }
-            
-            // Process selected activities for calculation only (not for display)
             const selectedActivities = bookingData.selectedActivities || {};
             const activityDetails = bookingData.activityDetails || [];
-            
             const tourActivities = activityDetails.filter(activity => 
                 selectedActivities[activity.name] === true
             ).map(activity => ({
@@ -429,14 +299,11 @@ useEffect(() => {
                 parentTourId: tourData.id,
                 assignedDayId: specificDayId
             }));
-
-            // Calculate total price including activities
             const totalTourPrice = (bookingData.totalPrice || tourData.price || 0) +  tourActivities.reduce((sum, activity) => sum + activity.price, 0);
-
             const newActivity = {
                 id: tourData.id || `tour-${Date.now()}`,
-                name: tourData.name || tourData.tourName || tourData.sightName || 'Unnamed Tour',
-                price: totalTourPrice, // Include activities price in tour price
+                name: tourData.name || tourData.tourName || tourData.sightName,
+                price: totalTourPrice,
                 description: tourData.description || '',
                 duration: tourData.eventDuration || '',
                 city: tourData.city || bookingData.city || '',
@@ -444,202 +311,125 @@ useEffect(() => {
                 date: bookingData.date || '',
                 assignedDayId: specificDayId,
                 type: 'tour',
-                activities: tourActivities // Store activities inside tour object but don't add to main array
+                activities: tourActivities
             };
-
             setActivities(prevActivities => {
-                const filteredActivities = prevActivities.filter(act => 
-                    act.id !== newActivity.id && 
-                    act.parentTourId !== newActivity.id
-                );
-                const updatedActivities = [...filteredActivities, newActivity]; // Only add tour, not activities
+                const filteredActivities = prevActivities.filter(act => act.id !== newActivity.id && act.parentTourId !== newActivity.id);
+                const updatedActivities = [...filteredActivities, newActivity];
                 saveActivitiesToSession(updatedActivities);
                 return updatedActivities;
             });
-            
             setPlannerItems(prevItems => {
                 const targetItem = prevItems.find(item => item.id === specificDayId);
                 if (!targetItem) { return prevItems;}
                 const updatedItems = prevItems.map(item => {
-                    if (item.id === specificDayId) {
-                        return { ...item, tours: newActivity, itinerary: item.itinerary };   
-                    }
+                    if (item.id === specificDayId) {return { ...item, tours: newActivity, itinerary: item.itinerary };    }
                     return item;
                 });
                 const tourMapping = JSON.parse(sessionStorage.getItem('tourDayMapping') || '{}');
                 tourMapping[newActivity.id] = specificDayId;
                 sessionStorage.setItem('tourDayMapping', JSON.stringify(tourMapping));
-                setTimeout(() => {
-                    console.log('Recalculating total with new tour...');
-                    const newTotal = calculateTotalWithPackageData(updatedItems, searchData?.packageData?.packageDetails);
-                    console.log('New total after tour assignment:', newTotal);
+                setTimeout(() => { const newTotal = calculateTotalWithPackageData(updatedItems, searchData?.packageData?.packageDetails);
                     savePersistentTableData(updatedItems);
                 }, 100);
-                
                 return updatedItems;
             });
             sessionStorage.removeItem('selectedTourData');
             sessionStorage.removeItem('pendingTourAssignment');  
-            
             const url = new URL(window.location.href); 
-            ['addedToPlanner', 'tourAdded', 'preserveData', 'dayId', 'specificDayId', 'timestamp', 'tourData'].forEach(param => { 
-                url.searchParams.delete(param); 
-            });
-            window.history.replaceState({}, '', url.toString());
-            
-            console.log('✅ Tour processing completed successfully for day:', specificDayId);
-        } else { 
-            console.log('❌ No valid tour data found in URL or session storage'); 
-        }
+            ['addedToPlanner', 'tourAdded', 'preserveData', 'dayId', 'specificDayId', 'timestamp', 'tourData'].forEach(param => { url.searchParams.delete(param);  });
+            window.history.replaceState({}, '', url.toString());}
+        else { console.log('No valid tour data found in URL or session storage'); }
     }
 }, [plannerItems.length, specificDayIdState]);
 
 useEffect(() => {
-    if (searchData && hasValidData && !isDataLoaded.current) {
-        isDataLoaded.current = true;
-        const packageData = searchData.packageData?.packageDetails;
-        const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
-        const deletedPackageHotels = JSON.parse(sessionStorage.getItem('deletedPackageHotels') || '[]');
-        const deletedActivities = JSON.parse(sessionStorage.getItem('deletedActivities') || '[]');
-        const existingHotels = JSON.parse(sessionStorage.getItem('existingReadymadeHotels') || '[]');
-        let hotelList: any[] = [];
-        if (packageData?.hotelOption?.[0]?.hotels) {
-            hotelList = packageData.hotelOption[0].hotels.map((hotel: PackageHotel, index: number) => {
-                const hotelId = `hotel-package-${index}-${hotel.name.replace(/\s+/g, '-').toLowerCase()}`;
-                const uniqueId = `package-${hotel.name.replace(/\s+/g, '-').toLowerCase()}-${hotel.destination.replace(/\s+/g, '-').toLowerCase()}`; 
-            
-                const isDeleted = deletedHotels.some((deleted: any) => 
-                    (deleted.name === hotel.name && deleted.destination === hotel.destination) ||
-                    deleted.uniqueId === uniqueId ||
-                    deleted.packageIndex === index
-                );
-                if (isDeleted) { 
-                    console.log('Skipping deleted hotel:', hotel.name, 'from', hotel.destination);  
-                    return null;
-                }
-                return {
-                    id: hotelId,
-                    name: hotel.name,
-                    destination: hotel.destination,
-                    city: hotel.destination, // Add city field
-                    nights: hotel.nights,
-                    price: hotel.price,
-                    rating: hotel.star,
-                    currency: hotel.currency,
-                    mealPlan: hotel.mealPlan,
-                    roomType: hotel.roomType,
-                    uniqueId: uniqueId,
-                    packageIndex: index,
-                    isPackageHotel: true
-                };
-            }).filter(hotel => hotel !== null);
-        }
-        const filteredExistingHotels = existingHotels.filter((hotel: any) => {
-            const isDeleted = deletedHotels.some((deleted: any) => 
-                deleted.id === hotel.id && (deleted.specificDayId === hotel.specificDayId || deleted.uniqueId === hotel.uniqueId) );
-            return !isDeleted;
-        }).map((hotel: any) => ({
-            ...hotel,
-            city: hotel.city || hotel.destination || hotel.hotel?.city || searchData?.city || 'Unknown',
-            roomType: hotel.roomType || hotel.room?.roomCategory || hotel.hotel?.roomType || 'Standard Room'
-        }));
-        hotelList = [...filteredExistingHotels, ...hotelList];
-        if (selectedHotelFromParams && selectedHotelFromParams.hotel) {
-            const hotelFromParams = {
-                id: selectedHotelFromParams.hotel.id,
-                name: selectedHotelFromParams.hotel.hotelName,
-                destination: selectedHotelFromParams.hotel.destination || selectedHotelFromParams.city || searchData?.city || 'Unknown',
-                city: selectedHotelFromParams.hotel.city || selectedHotelFromParams.city || selectedHotelFromParams.hotel.destination || searchData?.city || 'Unknown',
-                nights: selectedHotelFromParams.booking?.nights || 1,
-                price: selectedHotelFromParams.booking?.totalPrice || 0,
-                rating: selectedHotelFromParams.hotel.starRating,
-                checkInDate: selectedHotelFromParams.booking?.checkInDate,
-                checkOutDate: selectedHotelFromParams.booking?.checkOutDate,
-                specificDayId: selectedHotelFromParams.specificDayId || undefined,
-                isAdditional: true,
-                cityId: selectedHotelFromParams.hotel.cityId || selectedHotelFromParams.cityId || searchData?.cityId,
-                uniqueId: selectedHotelFromParams.uniqueId || `hotel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-                roomType: selectedHotelFromParams.room?.roomCategory || selectedHotelFromParams.hotel?.roomType || 'Standard Room',
-                mealPlan: selectedHotelFromParams.room?.mealPlan || selectedHotelFromParams.hotel?.mealPlan || 'BB'
+    if (!searchData || !hasValidData || isDataLoaded.current) return;
+    isDataLoaded.current = true;
+    const packageData = searchData.packageData?.packageDetails;
+    const deletedHotels = JSON.parse(sessionStorage.getItem('deletedHotels') || '[]');
+    const deletedActivities = JSON.parse(sessionStorage.getItem('deletedActivities') || '[]');
+    const existingHotels = JSON.parse(sessionStorage.getItem('existingReadymadeHotels') || '[]');
+    const isHotelDeleted = (hotel: any, uniqueId?: string) => deletedHotels.some((deleted: any) =>  deleted.id === hotel.id || deleted.uniqueId === uniqueId || (deleted.name === hotel.name && deleted.destination === hotel.destination) );
+    let hotelList: any[] = [];
+    if (packageData?.hotelOption?.[0]?.hotels) {
+        hotelList = packageData.hotelOption[0].hotels.map((hotel: PackageHotel, index: number) => {
+            const uniqueId = `package-${hotel.name.replace(/\s+/g, '-').toLowerCase()}-${hotel.destination.replace(/\s+/g, '-').toLowerCase()}`;
+            if (isHotelDeleted(hotel, uniqueId)) return null;
+            return {
+                id: `hotel-package-${index}-${hotel.name.replace(/\s+/g, '-').toLowerCase()}`,
+                name: hotel.name, destination: hotel.destination, city: hotel.destination,
+                nights: hotel.nights, price: hotel.price, rating: hotel.star,
+                currency: hotel.currency, mealPlan: hotel.mealPlan, roomType: hotel.roomType,
+                uniqueId, packageIndex: index, isPackageHotel: true
             };
-            const isParamsHotelDeleted = deletedHotels.some((deleted: any) =>  deleted.id === hotelFromParams.id &&  (deleted.specificDayId === hotelFromParams.specificDayId || deleted.uniqueId === hotelFromParams.uniqueId) );
-            if (!isParamsHotelDeleted) {
-                const hotelExists = hotelList.some(hotel =>  hotel.id === hotelFromParams.id &&  hotel.specificDayId === hotelFromParams.specificDayId );
-                if (!hotelExists) {hotelList = [hotelFromParams, ...hotelList]; }
-            } else {  console.log('Skipping deleted hotel from params:', hotelFromParams.name);   }
-        }
-        setHotels(hotelList);
-        saveHotelsToSession(hotelList);
-        const savedActivities = sessionStorage.getItem('readymadeActivities');
-        let activityList: any[] = [];
-        if (savedActivities) {
-            try {
-                const parsedActivities = JSON.parse(savedActivities);
-                activityList = parsedActivities.filter((activity: any) =>  !deletedActivities.includes(activity.id) );
-                console.log('Using saved activities (after filtering deleted):', activityList.length);
-            } catch (e) {
-                console.error('Error parsing saved activities:', e);
-                if (packageData?.activities) {
-                    activityList = packageData.activities.map((activity: any, index: number) => ({
-                        id: `activity-${index}-${Date.now()}`,
-                        name: activity.name,
-                        type: activity.type,
-                        vehicle: activity.vehicle,
-                        ticketIncluded: activity.ticketIncluded,
-                        price: activity.price || 0
-                    })).filter((activity: any) => !deletedActivities.includes(activity.id));
-                }
-            }
-        } else {
-            if (packageData?.activities) {
-                activityList = packageData.activities.map((activity: any, index: number) => ({
-                    id: `activity-${index}-${Date.now()}`,
-                    name: activity.name,
-                    type: activity.type,
-                    vehicle: activity.vehicle,
-                    ticketIncluded: activity.ticketIncluded,
-                    price: activity.price || 0
-                })).filter((activity: any) => !deletedActivities.includes(activity.id));
-            }
-            saveActivitiesToSession(activityList); 
-        }
-        
-        setActivities(activityList);
-        
-        let transferList: any[] = [];
-        if (packageData?.transfers) {
-            transferList = packageData.transfers.map((transfer: any, index: number) => ({
-                id: `transfer-${index}-${Date.now()}`,
-                route: transfer.route,
-                vehicle: transfer.vehicle,
-                type: transfer.type,
-                price: transfer.price || 0
-            }));
-        }
-        
-        setTransfers(transferList);
-        
-        if (hotelList.length > 0 || (packageData?.itinerary && packageData.itinerary.length > 0)) {
-            setShowHotelTab(true);
-            createPlannerItemsWithPackageData(hotelList, activityList, transferList, packageData);
-        } else {
-            createEmptyPlannerItems(); 
+        }).filter(Boolean);
+    }
+    const filteredExistingHotels = existingHotels.filter((hotel: any) => !isHotelDeleted(hotel, hotel.uniqueId))
+        .map((hotel: any) => ({...hotel, city: hotel.city || hotel.destination || searchData?.city || 'Unknown', roomType: hotel.roomType || hotel.room?.roomCategory || 'Standard Room' }));
+    hotelList = [...filteredExistingHotels, ...hotelList];
+    if (selectedHotelFromParams?.hotel) {
+        const hotelFromParams = {
+            id: selectedHotelFromParams.hotel.id, name: selectedHotelFromParams.hotel.hotelName,
+            destination: selectedHotelFromParams.hotel.destination || selectedHotelFromParams.city || searchData?.city || 'Unknown',
+            city: selectedHotelFromParams.hotel.city || selectedHotelFromParams.city || searchData?.city || 'Unknown',
+            nights: selectedHotelFromParams.booking?.nights || 1, price: selectedHotelFromParams.booking?.totalPrice || 0,
+            rating: selectedHotelFromParams.hotel.starRating, checkInDate: selectedHotelFromParams.booking?.checkInDate,
+            checkOutDate: selectedHotelFromParams.booking?.checkOutDate, specificDayId: selectedHotelFromParams.specificDayId,
+            isAdditional: true, cityId: selectedHotelFromParams.hotel.cityId || searchData?.cityId,
+            uniqueId: selectedHotelFromParams.uniqueId || `hotel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            roomType: selectedHotelFromParams.room?.roomCategory || 'Standard Room',
+            mealPlan: selectedHotelFromParams.room?.mealPlan || 'BB'
+        };
+
+        if (!isHotelDeleted(hotelFromParams, hotelFromParams.uniqueId)) {
+            const hotelExists = hotelList.some(hotel => hotel.id === hotelFromParams.id && hotel.specificDayId === hotelFromParams.specificDayId);
+            if (!hotelExists) hotelList = [hotelFromParams, ...hotelList];
         }
     }
+    setHotels(hotelList);
+    saveHotelsToSession(hotelList);
+    let activityList: any[] = [];
+    const savedActivities = sessionStorage.getItem('readymadeActivities');
+    if (savedActivities) {
+        try {
+            activityList = JSON.parse(savedActivities).filter((activity: any) => !deletedActivities.includes(activity.id));
+        } catch (e) {
+            console.error('Error parsing saved activities:', e);
+        }
+    } else if (packageData?.activities) {
+        activityList = packageData.activities.map((activity: any, index: number) => ({
+            id: `activity-${index}-${Date.now()}`, name: activity.name, type: activity.type,
+            vehicle: activity.vehicle, ticketIncluded: activity.ticketIncluded, price: activity.price || 0
+        })).filter((activity: any) => !deletedActivities.includes(activity.id));
+        saveActivitiesToSession(activityList);
+    }
+    setActivities(activityList);
+    let transferList: any[] = [];
+    if (packageData?.transfers) {
+        transferList = packageData.transfers.map((transfer: any, index: number) => ({
+            id: `transfer-${index}-${Date.now()}`, route: transfer.route,
+            vehicle: transfer.vehicle, type: transfer.type, price: transfer.price || 0
+        }));
+    }
+    setTransfers(transferList);
+    if (hotelList.length > 0 || (packageData?.itinerary && packageData.itinerary.length > 0)) {
+        setShowHotelTab(true);
+        createPlannerItemsWithPackageData(hotelList, activityList, transferList, packageData);
+    } else {
+        createEmptyPlannerItems();
+    }
 }, [searchData, hasValidData, selectedHotelFromParams]);
-
 
 const saveHotelsToSession = (hotelList: any[]) => {
         try {
             sessionStorage.setItem('existingReadymadeHotels', JSON.stringify(hotelList));
-            console.log('Hotels saved to session storage:', hotelList.length);
         } catch (error) {console.error('Error saving hotels to session storage:', error);  }
     };
 const saveActivitiesToSession = (activityList: any[]) => {
         try {
-            sessionStorage.setItem('readymadeActivities', JSON.stringify(activityList));
-            console.log('Activities saved to session storage:', activityList.length);
-        } catch (error) { console.error('Error saving activities to session storage:', error); }
+            sessionStorage.setItem('readymadeActivities', JSON.stringify(activityList));} 
+        catch (error) { console.error('Error saving activities to session storage:', error); }
     };
 const loadReadymadePackageData = () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -661,10 +451,7 @@ const loadReadymadePackageData = () => {
                 } catch (e) {console.error('Error restoring preserved data:', e);}
             }
         }
-
-        if (originalSearchData) {
-            try { loadedSearchData = JSON.parse(originalSearchData);} catch (e) { }
-        }
+        if (originalSearchData) { try { loadedSearchData = JSON.parse(originalSearchData);} catch (e) { } }
         else if (urlParams.has('checkInDate')) {
             loadedSearchData = {
                 checkInDate: urlParams.get('checkInDate'),
@@ -689,16 +476,9 @@ const loadReadymadePackageData = () => {
                 const parsed = JSON.parse(savedSearchData);
                 if (parsed.preserveOriginalDates && originalSearchData) {
                     const original = JSON.parse(originalSearchData);
-                    loadedSearchData = {
-                        ...parsed,
-                        checkInDate: original.checkInDate,
-                        checkOutDate: original.checkOutDate,
-                        nights: original.nights,
-                        totalNights: original.totalNights
-                    };
-                } else {
-                    loadedSearchData = parsed;
-                }} catch (e) { console.error('Error parsing saved search data:', e); }
+                    loadedSearchData = { ...parsed,checkInDate: original.checkInDate,checkOutDate: original.checkOutDate, nights: original.nights, totalNights: original.totalNights};
+                } else { loadedSearchData = parsed;}} 
+                catch (e) { console.error('Error parsing saved search data:', e); }
         }
         else if (location.state) {
             loadedSearchData = location.state;
@@ -722,9 +502,8 @@ const loadReadymadePackageData = () => {
                 loadedSearchData.country = loadedSearchData.destinations_country ;} }
         let selectedHotel = null;
         if (hotelData) {
-            try {
-                selectedHotel = JSON.parse(decodeURIComponent(hotelData));
-            } catch (e) { console.error('Error parsing hotel data:', e);}}
+            try { selectedHotel = JSON.parse(decodeURIComponent(hotelData)); } 
+            catch (e) { console.error('Error parsing hotel data:', e);}}
         return {
             searchData: loadedSearchData,
             selectedHotel,
@@ -743,7 +522,7 @@ useEffect(() => {
                     checkInDate: loadedSearchData.checkInDate || new Date().toISOString(),
                     checkOutDate: loadedSearchData.checkOutDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
                     city: loadedSearchData.city || loadedSearchData.destinations?.[0] ,
-                    country: loadedSearchData.country || loadedSearchData.destinations_country, // fallback
+                    country: loadedSearchData.country || loadedSearchData.destinations_country,
                     nights: loadedSearchData.nights || loadedSearchData.totalNights || 3,
                     rooms: loadedSearchData.rooms || loadedSearchData.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }]};
                 setOriginalSearchParams(processedSearchParams);
@@ -769,29 +548,20 @@ const handleRemoveHotel = (plannerItem: PlannerItem2) => {
     };
     deletedHotels.push(deletedHotel);
     sessionStorage.setItem('deletedHotels', JSON.stringify(deletedHotels));
-    console.log(' Added to deleted hotels:', deletedHotel);
     const updatedHotels = hotels.filter(hotel => {
         const hotelKey = `${hotel.id}-${hotel.uniqueId || hotel.specificDayId || 'default'}`;
         const removeKey = `${hotelToRemove.id}-${hotelToRemove.uniqueId || hotelToRemove.specificDayId || 'default'}`;
-        return hotelKey !== removeKey;
-    });
-    
+        return hotelKey !== removeKey; });
     setHotels(updatedHotels);
     saveHotelsToSession(updatedHotels);
-    console.log('Updated hotels list, remaining:', updatedHotels.length);
     const updatedItems = plannerItems.map(item => {
         if (item.hotel) {
             const itemHotelKey = `${item.hotel.id}-${item.hotel.uniqueId || item.hotel.specificDayId || 'default'}`;
             const removeKey = `${hotelToRemove.id}-${hotelToRemove.uniqueId || hotelToRemove.specificDayId || 'default'}`;
-            
-            if (itemHotelKey === removeKey) {
-                console.log(`Removing hotel from day: ${item.id}`);
-                return { ...item, hotel: undefined };
-            }
+            if (itemHotelKey === removeKey) {return { ...item, hotel: undefined }; }
         }
         return item;
     });
-    
     setPlannerItems(updatedItems);
     calculateTotalWithPackageData(updatedItems, searchData?.packageData?.packageDetails);
     sessionStorage.setItem('tripPlannerItems', JSON.stringify(updatedItems));
@@ -800,7 +570,6 @@ const handleRemoveHotel = (plannerItem: PlannerItem2) => {
     sessionStorage.removeItem('selectedHotelArea');
     savePersistentTableData(updatedItems);
 };
-
 const calculateTotal = (items: PlannerItem2[]) => { return calculateTotalWithPackageData(items, searchData?.packageData?.packageDetails);};
 const handleTabChange = (event: React.SyntheticEvent, newValue: string) => { setActiveTab(newValue); };
 const handleAddItem = (plannerItemId: string, type: string) => {
@@ -882,7 +651,6 @@ const handleHotelSelection2 = (itemId: string) => {
     const originalCheckOutDate = baseSearchParams.checkOutDate || fallbackSearchParams.checkOutDate;
     const tripCheckOutDate = new Date(originalCheckOutDate);
     const isLastNight = checkOutDate.toDateString() === tripCheckOutDate.toDateString();
-    
     const hotelSearchParams = {
         ...baseSearchParams,
         checkInDate: checkInDate.toISOString(),
@@ -945,373 +713,104 @@ const handleRemoveTour = (plannerItem: PlannerItem2) => {
 useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const encoded = urlParams.get("tourData");
-    console.log("tour data from Tour site",encoded)
     if (encoded) {
     try { const parsedData = JSON.parse(decodeURIComponent(encoded)); setSelectedTourData(parsedData); console.log("Tour data received:", parsedData);} 
     catch (err) {  console.error("Invalid tour data", err);} }
 }, []);
-
-const prepareTripPlannerDataForDB = (plannerItems: PlannerItem2[], searchData: SearchData, hotels: any[], activities: any[], transfers: any[], grandTotal: number, marginTotal: string, originalSearchParams: any, packageData?: any, userEmail?: string): TripPlannerDBData => {
-    const getAllActivitiesFromSources = () => {
-        const allActivities: Activity[] = [];
-        
-        plannerItems.forEach(item => { 
-            if (item.tours) {
-                // Add main tour
-                allActivities.push({ 
-                    ...item.tours,  
-                    dayId: item.id, 
-                    isAssigned: true, 
-                    type: 'tour' 
-                });
-                
-                // Add tour activities/sights if they exist
-                if (item.tours.activities && Array.isArray(item.tours.activities)) {
-                    item.tours.activities.forEach(activity => {
-                        allActivities.push({
-                            ...activity,
-                            dayId: item.id,
-                            isAssigned: true,
-                            type: 'sight-activity',
-                            parentTourId: item.tours.id
-                        });
-                    });
-                }
-            } 
-        }); 
-        
-        const sessionActivities = JSON.parse(sessionStorage.getItem('readymadeActivities') || '[]');
-        sessionActivities.forEach(activity => {
-            if (!allActivities.find(a => a.id === activity.id)) {
-                allActivities.push({ 
-                    ...activity,  
-                    isAssigned: !!activity.assignedDayId,   
-                    type: activity.type || 'activity' 
-                }); 
-            } 
-        });
-        
-        if (activities && activities.length > 0) { 
-            activities.forEach(activity => { 
-                if (!allActivities.find(a => a.id === activity.id)) {  
-                    allActivities.push({ 
-                        ...activity, 
-                        isAssigned: false,   
-                        type: activity.type || 'activity' 
-                    }); 
-                }
-            }); 
-        }
-        
-        return allActivities;
-    };
-    
-    const prepareComprehensivePlannerItems = () => {
-        return plannerItems.map((item, index) => ({
-            dayId: item.id,
-            date: item.date.toISOString(),
-            dayNumber: index + 1,
-            
-            hotel: item.hotel ? {
-                id: item.hotel.id,
-                name: item.hotel.name,
-                destination: item.hotel.destination,
-                nights: item.hotel.nights || 1,
-                price: Number(item.hotel.price) || 0,
-                rating: item.hotel.rating || 0,
-                checkInDate: item.hotel.checkInDate,
-                checkOutDate: item.hotel.checkOutDate,
-                roomType: item.hotel.roomType,
-                mealPlan: item.hotel.mealPlan,
-                isAdditional: item.hotel.isAdditional || false,
-                specificDayId: item.hotel.specificDayId,
-                cityId: item.hotel.cityId || item.hotel.city || searchData?.destinations || originalSearchParams?.cityId,
-                city: item.hotel.city || item.hotel.destination || searchData?.destinations || originalSearchParams?.city,
-            } : undefined,
-            
-            tours: item.tours ? {
-                id: item.tours.id,
-                name: item.tours.name,
-                price: Number(item.tours.price) || 0,
-                description: item.tours.description || '',
-                duration: item.tours.duration || '',
-                city: item.tours.city || '',
-                assignedDayId: item.tours.assignedDayId || item.id,
-                isAdditional: item.tours.isAdditional || false,
-                isUpdated: item.tours.isUpdated || false,
-                currency: item.tours.currency || 'USD',
-                type: item.tours.type || 'tour',
-                // Include activities/sights data
-                activities: item.tours.activities || [],
-                selectedActivities: item.tours.selectedActivities || {},
-                activityDetails: item.tours.activityDetails || []
-            } : undefined,
-            
-            transfer: item.transfer ? {
-                id: item.transfer.id,
-                name: item.transfer.name,
-                route: item.transfer.route || `${item.transfer.from} - ${item.transfer.to}`,
-                price: Number(item.transfer.price) || 0,
-                from: item.transfer.from,
-                to: item.transfer.to,
-                vehicleType: item.transfer.vehicleType,
-                type: item.transfer.type,
-                isPackageTransfer: item.transfer.isPackageTransfer || false,
-            } : undefined,
-            
-            itinerary: item.itinerary ? {
-                id: item.itinerary.id || `itinerary-${item.id}`,
-                title: item.itinerary.title || '',
-                description: item.itinerary.description || '',
-                details: item.itinerary.details || '',
-                price: Number(item.itinerary.price) || 0,
-                activities: item.itinerary.activities || [],
-                isUpdated: item.itinerary.isUpdated || false,
-                isPackageItinerary: item.itinerary.isPackageItinerary || false,
-                day: item.itinerary.day || index + 1,
-            } : undefined
-        }));
-    };
-    
-    // Rest of the function remains the same...
-    const getAllHotelsFromSources = (): ReadyMadeHotel[] => {
-        const allHotels: ReadyMadeHotel[] = [];
-        plannerItems.forEach(item => {
-            if (item.hotel) { 
-                allHotels.push({ 
-                    ...item.hotel,
-                    specificDayId: item.hotel.specificDayId ?? item.id, 
-                    checkInDate: item.hotel.checkInDate ?? '', 
-                    checkOutDate: item.hotel.checkOutDate ?? '', 
-                    isAssigned: true,
-                    source: 'planner', 
-                    cityId: item.hotel.cityId || item.hotel.city || searchData?.destinations || originalSearchParams?.cityId, 
-                    city: item.hotel.city || item.hotel.destination || searchData?.destinations || originalSearchParams?.city
-                });
-            } 
-        });
-        
-        const sessionHotels: ReadyMadeHotel[] = JSON.parse(sessionStorage.getItem('existingReadymadeHotels') || '[]');
-        sessionHotels.forEach(hotel => {
-            if (!allHotels.find(h => h.id === hotel.id || h.uniqueId === hotel.uniqueId)) { 
-                allHotels.push({ 
-                    ...hotel,
-                    specificDayId: hotel.specificDayId ?? '', 
-                    checkInDate: hotel.checkInDate ?? '',
-                    checkOutDate: hotel.checkOutDate ?? '', 
-                    isAssigned: !!hotel.specificDayId,
-                    cityId: hotel.cityId || hotel.city || searchData?.destinations || originalSearchParams?.cityId, 
-                    city: hotel.city || hotel.destination || searchData?.destinations || originalSearchParams?.city 
-                });
-            }
-        });
-        
-        if (hotels && hotels.length > 0) {
-            hotels.forEach(hotel => {
-                if (!allHotels.find(h => h.id === hotel.id || h.uniqueId === hotel.uniqueId)) {
-                    allHotels.push({ 
-                        ...hotel,  
-                        specificDayId: '', 
-                        checkInDate: '', 
-                        checkOutDate: '', 
-                        isAssigned: false 
-                    }); 
-                } 
-            });
-        }
-        
-        return allHotels;
-    };
-    
-    const getAllTransfersFromSources = (): Transfer[] => {
-        const allTransfers: Transfer[] = [];
-        plannerItems.forEach(item => {
-            if (item.transfer) { 
-                allTransfers.push({  
-                    ...item.transfer, 
-                    isAssigned: true, 
-                    vehicle: item.transfer.vehicle ?? ''
-                });
-            }  
-        });
-        
-        if (transfers && transfers.length > 0) { 
-            transfers.forEach(transfer => { 
-                if (!allTransfers.find(t => t.id === transfer.id)) {
-                    allTransfers.push({  
-                        ...transfer, 
-                        isAssigned: false, 
-                        vehicle: transfer.vehicle ?? '' 
-                    });   
-                }  
-            }); 
-        }
-        
-        return allTransfers; 
-    };
-    
-    const getAllItinerariesFromSources = (): PackageItinerary[] => {
-        const allItineraries: PackageItinerary[] = []; 
-        plannerItems.forEach(item => {
-            if (item.itinerary) {  
-                allItineraries.push({  
-                    ...item.itinerary,
-                    isAssigned: true,
-                    dayId: item.id,  
-                    isUpdated: item.itinerary.isUpdated ?? false
-                });
-            }
-        });
-        
-        if (packageData?.itinerary && Array.isArray(packageData.itinerary)) {  
-            packageData.itinerary.forEach(itinerary => {
-                if (!allItineraries.find(i => i.id === itinerary.id)) { 
-                    allItineraries.push({ 
-                        ...itinerary,  
-                        isAssigned: false,  
-                        dayId: '',   
-                        isUpdated: itinerary.isUpdated ?? false,  
-                        isPackageItinerary: true
-                    });
-                } 
-            }); 
-        }
-        
-        return allItineraries;
-    };
-    
-    const calculateComprehensiveCostBreakdown = () => {
-        let hotelsCost = 0;
-        let activitiesCost = 0;
-        let transfersCost = 0;
-        let itineraryCost = 0;
-        
-        const allHotels = getAllHotelsFromSources();
-        const allActivities = getAllActivitiesFromSources();
-        const allTransfers = getAllTransfersFromSources();
-        const allItineraries = getAllItinerariesFromSources();
-        
-        allHotels.forEach(hotel => { 
-            if (hotel.price && !hotel.isDeleted) { 
-                hotelsCost += Number(hotel.price); 
-            } 
-        });
-        
-        allActivities.forEach(activity => {
-            if (activity.price && !activity.isDeleted) {  
-                activitiesCost += Number(activity.price); 
-            } 
-        });
-        
-        allTransfers.forEach(transfer => { 
-            if (transfer.price && !transfer.isDeleted) {
-                transfersCost += Number(transfer.price);  
-            } 
-        });
-        
-        allItineraries.forEach(itinerary => { 
-            if (itinerary.price) {  
-                itineraryCost += Number(itinerary.price);  
-            }
-        });
-        
-        return { hotelsCost, activitiesCost, transfersCost, itineraryCost }; 
-    };
-    
-    const calculateTotalsFromRooms = (rooms: any[]) => {
-        if (!rooms || rooms.length === 0) { 
-            return {
-                totalAdults: 2, 
-                totalCWB: 0,  
-                totalCNB: 0, 
-                totalInfants: 0, 
-                totalChildren: 0, 
-                totalRooms: 1 
-            };  
-        }
-        
-        const totalAdults = rooms.reduce((sum, room) => { 
-            const adults = parseInt(room?.adults) || 0;  
-            return sum + adults; 
-        }, 0);
-        
-        const totalCWB = rooms.reduce((sum, room) => {
-            const cwb = parseInt(room?.cwb) || 0; 
-            return sum + cwb; 
-        }, 0);
-        
-        const totalCNB = rooms.reduce((sum, room) => { 
-            const cnb = parseInt(room?.cnb) || 0;
-            return sum + cnb; 
-        }, 0);
-        
-        const totalInfants = rooms.reduce((sum, room) => { 
-            const infants = parseInt(room?.infants) || 0;
-            return sum + infants;
-        }, 0);
-        
-        return { 
-            totalAdults,
-            totalCWB, 
-            totalCNB, 
-            totalInfants, 
-            totalChildren: totalCWB + totalCNB, 
-            totalRooms: rooms.length  
-        };
-    };
-    
-    const getRoomsData = () => {
-        let rooms = originalSearchParams?.rooms || searchData?.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }];
-        console.log('Rooms data found:', rooms); 
-        return rooms;
-    };
-    
-    const rooms = getRoomsData();
-    const totals = calculateTotalsFromRooms(rooms);
-    const costBreakdown = calculateComprehensiveCostBreakdown();
-    const comprehensivePlannerItems = prepareComprehensivePlannerItems();
-    
-    return {
+const handleDownloadPDF = async () => {
+    setLoading(true);
+    try {
+    const userEmail = localStorage.getItem('username') || 'guest@example.com';
+    const rooms = originalSearchParams?.rooms || searchData?.room || [{ adults: 2, cwb: 0, cnb: 0, infants: 0 }];
+    let hotelsCost = 0, activitiesCost = 0, transfersCost = 0, itineraryCost = 0;
+    plannerItems.forEach(item => {
+        if (item.hotel?.price) hotelsCost += Number(item.hotel.price);
+        if (item.tours?.price) activitiesCost += Number(item.tours.price);
+        if (item.transfer?.price) transfersCost += Number(item.transfer.price);
+        if (item.itinerary?.price) itineraryCost += Number(item.itinerary.price);});
+    const dbData: TripPlannerDBData = {
         tripDetails: {
             destination: originalSearchParams?.city || searchData?.destinations?.[0],
-            country: originalSearchParams?.selectedCountry || originalSearchParams?.country || searchData?.country || originalSearchParams?.destinations_country,
+            country: originalSearchParams?.selectedCountry || searchData?.country,
             checkInDate: originalSearchParams?.checkInDate || searchData?.checkInDate,
             checkOutDate: originalSearchParams?.checkOutDate || searchData?.checkOutDate,
-            nights: originalSearchParams?.nights || searchData?.nights || searchData?.totalNights || 3,
-            rooms: originalSearchParams?.rooms || searchData?.room,
-            createdByEmail: userEmail || 'guest@example.com',
+            nights: originalSearchParams?.nights || searchData?.nights || 3,
+            rooms: rooms,
             cityId: searchData?.cityId || originalSearchParams?.cityId,
-            totalRooms: totals.totalRooms.toString(),
-        },
+            createdByEmail: userEmail,
+            totalRooms: rooms?.length.toString() || '1'},
         pricing: {
             grandTotal: grandTotal,
             marginTotal: marginTotal,
-            breakdown: costBreakdown
+            breakdown: { hotelsCost, activitiesCost, transfersCost, itineraryCost }
         },
-        plannerItems: comprehensivePlannerItems,
+        plannerItems: plannerItems.map((item, index) => ({
+            dayId: item.id,
+            date: item.date.toISOString(),
+            dayNumber: index + 1,
+        hotel: item.hotel ? {
+            id: item.hotel.id,
+            name: item.hotel.name,
+            destination: item.hotel.destination,
+            nights: item.hotel.nights || 1,
+            price: Number(item.hotel.price) || 0,
+            rating: item.hotel.rating || 0,
+            checkInDate: item.hotel.checkInDate,
+            checkOutDate: item.hotel.checkOutDate,
+            roomType: item.hotel.roomType,
+            mealPlan: item.hotel.mealPlan,
+            isAdditional: item.hotel.isAdditional || false,
+            specificDayId: item.hotel.specificDayId} : undefined,
+        tours: item.tours ? {
+            id: item.tours.id,
+            name: item.tours.name,
+            price: Number(item.tours.price) || 0,
+            description: item.tours.description || '',
+            duration: item.tours.duration || '',
+            city: item.tours.city || '',
+            assignedDayId: item.tours.assignedDayId || item.id,
+            isAdditional: item.tours.isAdditional || false,
+            isUpdated: item.tours.isUpdated || false,
+            currency: item.tours.currency || 'USD',
+            type: item.tours.type || 'tour',
+            activities: item.tours.activities || [],
+            selectedActivities: item.tours.selectedActivities || {},
+            activityDetails: item.tours.activityDetails || []} : undefined,
+        transfer: item.transfer ? {
+            id: item.transfer.id,
+            name: item.transfer.name,
+            route: item.transfer.route || `${item.transfer.from} - ${item.transfer.to}`,
+            price: Number(item.transfer.price) || 0,
+            from: item.transfer.from,
+            to: item.transfer.to,
+            vehicleType: item.transfer.vehicleType,
+            type: item.transfer.type,
+            isPackageTransfer: item.transfer.isPackageTransfer || false} : undefined,
+        itinerary: item.itinerary ? {
+            id: item.itinerary.id || `itinerary-${item.id}`,
+            title: item.itinerary.title || '',
+            description: item.itinerary.description || '',
+            details: item.itinerary.details || '',
+            price: Number(item.itinerary.price) || 0,
+            activities: item.itinerary.activities || [],
+            isUpdated: item.itinerary.isUpdated || false,
+            isPackageItinerary: item.itinerary.isPackageItinerary || false,
+            day: item.itinerary.day || index + 1} : undefined
+        })),
         metadata: {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
-        },
-    };
-};
-
-const handleDownloadPDF = async () => {setLoading(true);
-    try {
-        const userEmail = localStorage.getItem('username') || 'guest@example.com';
-        const currentHotels = JSON.parse(sessionStorage.getItem('existingReadymadeHotels') || '[]');
-        const currentActivities = JSON.parse(sessionStorage.getItem('readymadeActivities') || '[]');
-        const currentTransfers = JSON.parse(sessionStorage.getItem('tripTransfers') || '[]');
-        const dbData = prepareTripPlannerDataForDB(  plannerItems,searchData,currentHotels, currentActivities,currentTransfers, grandTotal,marginTotal,  originalSearchParams, searchData?.packageData?.packageDetails,userEmail);
-        const result = await submitPackageData(dbData).unwrap();
-        console.log('Complete trip data saved successfully:', result);
-        console.log("DB Data being sent:", dbData);
-        setTimeout(() => { setLoading(false);setShowThankYou(true); console.log('PDF generated successfully with all trip data');
-            const keysToRemove = ['persistentTableData', 'readymadeSearchData', 'originalReadymadeSearchData','existingReadymadeHotels', 'readymadeActivities', 'tripTransfers','deletedHotels', 'deletedActivities','deletedItineraries','deletedTransfers', 'tourDayMapping', 'hotelPositionMapping','tripPlannerItems' ]; keysToRemove.forEach(key => sessionStorage.removeItem(key));   }, 2000);
-    } catch (error) {setLoading(false);
-        console.error('Error saving comprehensive trip data:', error);
-        alert('Failed to save trip data. Please try again.');}
-};
+        }};
+    const result = await submitPackageData(dbData).unwrap();
+    console.log('Trip data saved:', result);
+    setTimeout(() => { setLoading(false);
+        setShowThankYou(true);
+        const keysToRemove = ['persistentTableData', 'readymadeSearchData', 'originalReadymadeSearchData','existingReadymadeHotels', 'readymadeActivities', 'tripTransfers','deletedHotels', 'deletedActivities', 'deletedItineraries', 'deletedTransfers', 'tourDayMapping', 'hotelPositionMapping', 'tripPlannerItems']; keysToRemove.forEach(key => sessionStorage.removeItem(key)); }, 2000);
+    } catch (error) {
+        setLoading(false);
+        console.error('Error saving trip data:', error);
+        alert('Failed to save trip data. Please try again.');
+    }};
 
 return (
         <Box className="trip-planner-page">
@@ -1346,17 +845,13 @@ return (
                                         <Box className="cell">
                                             {plannerItem.hotel ? (
                                                 <Box className="selected-hotel" sx={{ position: 'relative', padding: '8px' }}>
-                                                    <Typography className='hotel_name' variant="body2"  sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', textAlign: 'center', maxWidth: '100%', paddingRight: '24px' }}> {plannerItem.hotel.name}
-                                                    </Typography>
+                                                    <Typography className='hotel_name' variant="body2"  sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', textAlign: 'center', maxWidth: '100%', paddingRight: '24px' }}> {plannerItem.hotel.name}</Typography>
                                                     <IconButton sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}  className="remove-button" onClick={() => handleRemoveHotel(plannerItem)} aria-label="Remove hotel" size="small">
-                                                    <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} />
-                                                    </IconButton>
+                                                    <DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} /> </IconButton>
                                                 </Box>
                                             ) : (
                                                 <Box display="flex" justifyContent="flex-end">
-                                                    <IconButton className="add-button"  onClick={() => handleHotelSelection2(plannerItem.id)}  sx={{ color: '#777777', fontSize: '1rem', '& .MuiSvgIcon-root': { fill: 'grey' } }}>
-                                                        <AddCircleOutline className='add-btn'/>
-                                                    </IconButton>
+                                                    <IconButton className="add-button"  onClick={() => handleHotelSelection2(plannerItem.id)}  sx={{ color: '#777777', fontSize: '1rem', '& .MuiSvgIcon-root': { fill: 'grey' } }}> <AddCircleOutline className='add-btn'/> </IconButton>
                                                 </Box>
                                             )}
                                         </Box>
@@ -1364,8 +859,7 @@ return (
                     <Box className="cell">
                     {(plannerItem.itinerary || plannerItem.tours) ? (
                         <Box className="selected-tour" sx={{ position: 'relative', padding: '8px' }}>
-                        <Typography variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis', textAlign: 'center', maxWidth: '100%', paddingRight: '24px' }}> {plannerItem.tours?.name || plannerItem.itinerary?.title || 'No Tour Info'}
-                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.8rem', textOverflow: 'ellipsis', textAlign: 'center', maxWidth: '100%', paddingRight: '24px' }}> {plannerItem.tours?.name || plannerItem.itinerary?.title || 'No Tour Info'} </Typography>
                         <IconButton sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }} className="remove-button" onClick={() => handleRemoveTour(plannerItem)} aria-label="Remove tour"size="small" ><DeleteOutline sx={{ color: '#777777', fontSize: '1rem' }} /></IconButton>
                         </Box>) : (
                         <Box display="flex" justifyContent="flex-end">
@@ -1417,9 +911,7 @@ return (
                 {showThankYou && (
                     <Paper elevation={3} className="thank-you-container" sx={{ padding: '2rem', margin: '2rem 0', textAlign: 'center', bgcolor: '#f8f8f8', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
                         <Typography variant="h4" sx={{ color: '#4CAF50', marginBottom: '1rem' }}>Thank You!</Typography>
-                        <Typography variant="body1" sx={{ marginBottom: '1rem', fontSize: '1.3rem' }}> 
-                        Thanks Four Connecting
-                        </Typography>
+                        <Typography variant="body1" sx={{ marginBottom: '1rem', fontSize: '1.3rem' }}>  Thanks Four Connecting</Typography>
                     </Paper>
                 )}
             </Container>

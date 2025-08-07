@@ -18,6 +18,25 @@ $success-color: #4caf50;
 $warning-color: #ff9800;
 $error-color: #f44336;
 $info-color: #2196f3;
+
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #0369a1 100%);
+$background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+$card-gradient: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+$card-shadow: 0 0.625rem 1.875 rgba(0, 0, 0, 0.1);
+$button-shadow: 0 0.25rem 0.9rem rgba(25, 118, 210, 0.3);
+$input-shadow: 0 0.125 9.625rem rgba(0, 0, 0, 0.05);
+
+$border-radius: 0.75rem;
+$button-radius: 0.5rem;
+$card-radius: 1rem;
+
+$spacing-xs: 0.5rem;
+$spacing-sm: 1rem;
+$spacing-md: 1.5rem;
+$spacing-lg: 2rem;
+$spacing-xl: 3rem;
+
+
 @mixin flex-center {
     display: flex;
     justify-content: center;

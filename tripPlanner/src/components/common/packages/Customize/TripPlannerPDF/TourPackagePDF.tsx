@@ -13,12 +13,9 @@ const TourPackagePDF: React.FC = () => {
   const [packageData, setPackageData] = useState<TripPlannerData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [pdfGenerated, setPdfGenerated] = useState<boolean>(false);
+  const [companyLogo, setCompanyLogo] = useState<string>('');
 
-  const { data: leadData, error: apiError, isLoading: apiLoading } = useGetLeadByIdQuery(
-    bookingRef || '', 
-    { skip: !bookingRef }
-  );
+  const { data: leadData, error: apiError, isLoading: apiLoading } = useGetLeadByIdQuery( bookingRef || '',  { skip: !bookingRef });
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
     try {
@@ -42,7 +39,41 @@ const TourPackagePDF: React.FC = () => {
       return '';
     }
   };
-   // Transform API data to component format
+  useEffect(() => {
+    const logoPath = localStorage.getItem('logoPath');
+    console.log('Logo path from localStorage:', logoPath);
+    
+    if (logoPath) {
+      setCompanyLogo(logoPath);
+      console.log('Logo set to:', logoPath);
+    }
+  }, []);
+  useEffect(() => {
+    const logoPath = localStorage.getItem('logoPath');
+    if (logoPath) {
+      setCompanyLogo(logoPath);
+    }
+  }, []);
+  useEffect(() => {
+    const companyInfo = localStorage.getItem('companyInfo');
+    console.log('Company info from localStorage:', companyInfo); // Add this
+    
+    if (companyInfo) {
+      try {
+        const parsedInfo = JSON.parse(companyInfo);
+        console.log('Parsed company info:', parsedInfo); // Add this
+        console.log('Logo path:', parsedInfo.logoPath); // Add this
+        
+        if (parsedInfo.logoPath) {
+          setCompanyLogo(parsedInfo.logoPath);
+          console.log('Logo set to:', parsedInfo.logoPath);
+        }
+      } catch (error) {
+        console.error('Error parsing company info:', error);
+      }
+    }
+  }, []);
+  
    useEffect(() => {
     if (!bookingRef) {
       setError('No booking reference provided');
@@ -59,10 +90,8 @@ const TourPackagePDF: React.FC = () => {
 
     if (leadData && !apiLoading) {
       console.log("PDF component received data from API:", leadData);
-      
       // Transform the lead data to match TripPlannerData format
       const transformedData: TripPlannerData = {
-        
         bookingRef: leadData.referenceId || leadData.bookingNo || bookingRef,
         generateDate: new Date().toLocaleDateString('en-GB'),
         country: leadData.country || leadData.destinations || leadData.destination || 'AZERBAIJAN', // Fallback to default
@@ -359,10 +388,6 @@ const TourPackagePDF: React.FC = () => {
   
   const roomInfo = calculateRoomInfo();
   const totalPersons = calculateTotalPersons();
-  const destination = hotels && hotels.length > 0 && hotels[0].hotel?.city 
-    ? hotels[0].hotel.city 
-    : currentSearchParams?.city || 'Baku';
-
   const getHotelData = () => {
     const hotelEntries = hotels.map(hotel => ({
       name: hotel.hotel?.hotelName || hotel.hotel?.name || 'Unknown Hotel',
@@ -386,11 +411,8 @@ const TourPackagePDF: React.FC = () => {
       city: hotel.city
     }));
   }
-  
   const hotelData = getHotelData();
-  const nights = currentSearchParams?.nights ||
-    (currentSearchParams?.checkInDate && currentSearchParams?.checkOutDate ? 
-      Math.round((new Date(currentSearchParams.checkOutDate).getTime() - new Date(currentSearchParams.checkInDate).getTime()) / (1000 * 60 * 60 * 24)) : 0);
+
 const formatDescription = (description) => {
   if (!description) return "No description available";
   let formattedDesc = description
@@ -405,15 +427,15 @@ const formatDescription = (description) => {
   return formattedDesc;
 };
 
-
 return (
     <Box className="tour-package-container">
       <Box id="tour-package-content" className="tour-package-content">
         <Box className="tour-package-header">
           <h1 className="header-title">{(country || 'AZERBAIJAN').toUpperCase()} TOUR PACKAGE</h1>
+          {companyLogo && (
+      <Box className="company-logo" style={{ textAlign: 'center', marginTop: '10px' }}>
+      <img src={`${companyLogo}`} alt="Company Logo"  style={{  maxHeight: '60px',  maxWidth: '200px', objectFit: 'contain'  }} /> </Box>)}
         </Box>
-        
-        {/* Booking Reference */}
         <Box className="booking-reference">
           <Box className="booking-reference-content">
             <Box className="booking-ref">
@@ -460,7 +482,6 @@ return (
             </table>
           </Box>
         </Box>
-
         {/* Itinerary Section */}
         <Box className="itinerary-section">
           <h2 className="section-title">Daily Itinerary</h2>
@@ -471,18 +492,15 @@ return (
                 <Box className="day-header">
                   <h3 className="day-title">DAY {index + 1} - {formattedDate}</h3>
                 </Box>
-                
                 {/* Tour Details with Activities */}
                 {item.tours && (
                   <Box className="activity-container">
                     <Box className="activity-title">• {item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity'}</Box>
-                    
                     {(item.tours.details?.tour?.eventDuration || item.tours.eventDuration) && (
                       <Box className="activity-detail" sx={{color:'black'}}>
                         <span className="detail-label">Duration:</span> {item.tours.details?.tour?.eventDuration || item.tours.eventDuration}
                       </Box>
                     )}
-
                     <Box className="activity-detail">
                       <span className="detail-label">Description:</span> 
                       {formatDescription(item.tours.details?.tour?.description || "No description available")
@@ -505,18 +523,11 @@ return (
                     {item.tours.activities && item.tours.activities.length > 0 && (
                       <Box className="selected-activities" sx={{fontWeight:'800'}}>
                         <Box sx={{fontSize:"1rem"}}>Activities </Box>
-                        <ul className="activities-list">
-                          {item.tours.activities.map((activity, actIndex) => (
-                            <li key={actIndex} className="activity-item">
-                              {activity.name}
-                            </li>
-                          ))}
-                        </ul>
+                        <ul className="activities-list">{item.tours.activities.map((activity, actIndex) => ( <li key={actIndex} className="activity-item"> {activity.name} </li> ))} </ul>
                       </Box>
                     )}
                   </Box>
                 )}
-
                 {/* Day at Leisure */}
                 {!item.tours && !item.transfer && !item.meals && (
                   <Box className="activity-container">
@@ -527,14 +538,12 @@ return (
             );
           })}
         </Box>
-        
         {/* Cost Summary */}
         <Box className="cost-summary">
           <h2 className="cost-summary-title">COST SUMMARY</h2>
           <Box className="cost-grid">
             <Box className="cost-label">Total Package Cost:</Box>
             <Box className="cost-value">{currency} {(costs.finalAmount ?? 0).toFixed(2)}</Box>
-            
             <Box className="cost-label">Cost Per Person:</Box>
             <Box className="cost-value">{currency} {((costs.finalAmount ?? 0) / totalPersons).toFixed(2)}</Box>
           </Box>

@@ -326,8 +326,6 @@ if (!searchData || !packageData) {
   }
 
   const destinations = selectedHotelOption?.hotels?.map((hotel: any) => hotel.destination) || [];
-  const uniqueDestinations = [...new Set(destinations)];
-  const totals = calculateTotals();
   const handleBakuRequirement = () => {
     window.open(BAKU_REQUIREMENT, '_blank');
   };
@@ -339,12 +337,6 @@ if (!searchData || !packageData) {
           <Typography variant="h4" sx={{ color: '#333', fontWeight: 'bold' }} className="heading"> Readymade Packages Search </Typography>
           <Button className='entry-btn' sx={{ borderRadius: '4px', boxShadow: 'none', textTransform: 'none', py: 1 }}  onClick={handleBakuRequirement}> baku Entry Requirements</Button>
         </Box>
-        <Box mb={2} p={2} sx={{ bgcolor: '#f8f9fa', borderRadius: 2 }}>
-          <Typography variant="body2" color="primary" fontWeight="medium">
-            Current Selection: {totals.totalGuests} Guests ({totals.totalAdults} Adults, {totals.totalCwb} CWB, {totals.totalCnb} CNB, {totals.totalInfants} Infants) in {rooms.length} Room{rooms.length > 1 ? 's' : ''}
-          </Typography>
-        </Box>
-
         <Grid container spacing={1} className='form-container'>
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 2 }}>
@@ -352,17 +344,8 @@ if (!searchData || !packageData) {
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" sx={{ mb: 0.5 }}>Country</Typography>
                   <FormControl fullWidth variant="outlined" size="small" className='select-option-1'>
-                    <Select 
-                      value={selectedCountry || ''} 
-                      onChange={(e) => setSelectedCountry(e.target.value)}
-                      displayEmpty  
-                      sx={{ bgcolor: '#f5f5f5', '& .MuiInputBase-root': { height: '2rem', width: '16rem' } }}
-                    >
-                      {packageDetails?.country && (
-                        <MenuItem value={packageDetails.country}>
-                          {packageDetails.country}
-                        </MenuItem>
-                      )}
+                    <Select  value={selectedCountry || ''}  onChange={(e) => setSelectedCountry(e.target.value)} displayEmpty  sx={{ bgcolor: '#f5f5f5', '& .MuiInputBase-root': { height: '2rem', width: '16rem' } }} >
+                      {packageDetails?.country && (<MenuItem value={packageDetails.country}> {packageDetails.country} </MenuItem>)}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -386,7 +369,7 @@ if (!searchData || !packageData) {
 
                   <Grid item xs={12} sm={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>Night/s</Typography>
-                    <TextField  type="number"  value={totalNights || ''}  onChange={handleNightsChange}  InputProps={{ inputProps: { min: 1 }, sx: { height: '40px' }}}  fullWidth   size="small"  variant="outlined" />
+                    <TextField  type="number"  value={totalNights || ''}  onChange={handleNightsChange} disabled InputProps={{ inputProps: { min: 1 }, sx: { height: '40px' }}}  fullWidth   size="small"  variant="outlined" />
                   </Grid>
 
                   <Grid item xs={12} sm={4}>

@@ -1,3 +1,51 @@
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+  mobile?: string;
+  companyName?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  tokenExpiry: number | null;
+  lastActivity: number;
+  sessionTimeout: number;
+  isInitialized: boolean;
+  loginEmail: string | null; // Store the email used for login
+}
+
+export interface LoginCredentials {
+  identifier: string;
+  password: string;
+}
+
+export interface JWTPayload {
+  sub: string;
+  username?: string;
+  email?: string;
+  user_email?: string;
+  userEmail?: string;
+  role?: string;
+  exp: number;
+  iat: number;
+  [key: string]: any;
+  company_name?: string;
+  organizationName?: string; 
+}
+export interface User {
+  company: string | undefined;
+  id: string;
+  username: string;
+  email: string;
+  role?: string;
+  companyName?: string;
+}
 export interface HotelSummaryParams {
   country: string;
   city: string;
@@ -239,6 +287,8 @@ export interface Quote {
 }
 
 export interface Lead {
+  originalBookingData: any;
+  isTourTransfer: any;
   isBooking: any;
   id?: string;
   bookingRef?: string;
@@ -1051,3 +1101,4 @@ export interface City {
   id: number;
   countryId: number;
 }
+

@@ -1,65 +1,149 @@
+import { TokenResponse } from "../types/types.ts";
+import { BASE_URL_JWT } from "../utils/ApiConstants.ts";
 
-class MainAppTokenService {
-  private readonly ACCESS_TOKEN_KEY = 'main_app_access_token';
-  private readonly REFRESH_TOKEN_KEY = 'main_app_refresh_token';
-  private readonly USERNAME_KEY = 'main_app_username';
-  private readonly LAST_ACTIVITY_KEY = 'main_app_last_activity';
-  
-  private readonly SESSION_TIMEOUT = 30 * 60 * 1000;
+class TokenService {
+  [x: string]: any;
+  private readonly BASE_URL = BASE_URL_JWT;
+  private inactivityTimer: NodeJS.Timeout | null = null;
+  private tokenCheckInterval: NodeJS.Timeout | null = null;
+  private readonly INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+  private readonly TOKEN_CHECK_INTERVAL = 5 * 60 * 1000;
 
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  getUsername(): string | null {
-    return localStorage.getItem(this.USERNAME_KEY);
+  constructor() {
+    this.setupActivityTracking();
+    this.setupTokenValidation();
   }
 
   setTokens(accessToken: string, refreshToken: string, username: string): void {
-    localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    localStorage.setItem(this.USERNAME_KEY, username);
-    this.updateActivity();
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('user', username);
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('lastActivity', Date.now().toString());
+    this.resetInactivityTimer();
   }
 
-  isAuthenticated(): boolean {
-    const token = this.getAccessToken();
-    const refreshToken = this.getRefreshToken();
-    return !!(token && refreshToken);
+  getAccessToken(): string | null {
+    return localStorage.getItem('accessToken');
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refreshToken');
+  }
+
+  getUsername(): string | null {
+    return localStorage.getItem('user');
+  }
+
+  getLastActivity(): number {
+    const lastActivity = localStorage.getItem('lastActivity');
+    return lastActivity ? parseInt(lastActivity, 10) : 0;
   }
 
   updateActivity(): void {
-    localStorage.setItem(this.LAST_ACTIVITY_KEY, Date.now().toString());
+    if (this.isAuthenticated()) {
+      localStorage.setItem('lastActivity', Date.now().toString());
+      this.resetInactivityTimer();
+    }
   }
-
-  isSessionExpired(): boolean {
-    const lastActivity = localStorage.getItem(this.LAST_ACTIVITY_KEY);
-    if (!lastActivity) return true;
+  clearTokens(): void {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+      this.inactivityTimer = null;
+    }
     
-    const timeDiff = Date.now() - parseInt(lastActivity);
-    return timeDiff > this.SESSION_TIMEOUT;
+    if (this.tokenCheckInterval) {
+      clearInterval(this.tokenCheckInterval);
+      this.tokenCheckInterval = null;
+    }
+
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('lastActivity');
+    localStorage.removeItem('shouldRedirectToLogin');
   }
 
-  getAuthHeaders(): { [key: string]: string } {
-    const token = this.getAccessToken();
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  private setupActivityTracking(): void {
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+      document.addEventListener(event, () => {
+        this.updateActivity();
+      }, true);
+    });
   }
 
-  async validateToken(): Promise<boolean> {
+  private setupTokenValidation(): void {
+    this.tokenCheckInterval = setInterval(async () => {
+      if (this.isAuthenticated()) {
+        const isValid = await this.validateAndRefreshToken();
+        if (!isValid) {
+          this.clearTokensAndRedirect();
+        }
+      }
+    }, this.TOKEN_CHECK_INTERVAL);
+  }
+
+  private resetInactivityTimer(): void {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+
+    this.inactivityTimer = setTimeout(() => {
+      console.log('User inactive for 30 minutes, logging out...');
+      this.clearTokensAndRedirect();
+    }, this.INACTIVITY_TIMEOUT);
+  }
+
+  private isUserActive(): boolean {
+    const lastActivity = this.getLastActivity();
+    const now = Date.now();
+    return (now - lastActivity) < this.INACTIVITY_TIMEOUT;
+  }
+  isAuthenticated(): boolean {
+    const hasTokens = localStorage.getItem('isAuthenticated') === 'true' && 
+        this.getAccessToken() !== null;
+    
+    if (!hasTokens) {
+      return false;
+    }
+    if (!this.isUserActive()) {
+      this.clearTokensAndRedirect();
+      return false;
+    }
+
+    return true;
+  }
+
+  clearTokensAndRedirect(): void {
+    this.clearTokens();
+    localStorage.setItem('shouldRedirectToLogin', 'true');
+  }
+
+  shouldRedirectToLogin(): boolean {
+    return localStorage.getItem('shouldRedirectToLogin') === 'true';
+  }
+
+  clearRedirectFlag(): void {
+    localStorage.removeItem('shouldRedirectToLogin');
+  }
+  async authenticateToken(): Promise<boolean> {
     const accessToken = this.getAccessToken();
     const refreshToken = this.getRefreshToken();
-    
-    if (!accessToken || !refreshToken) return false;
+
+    if (!accessToken || !refreshToken) {
+      this.clearTokensAndRedirect();
+      return false;
+    }
 
     try {
-      const response = await fetch('https://b2b.flydivinetravels.com/sso/authenticate', {
+      const response = await fetch(`${this.BASE_URL}/authenticate`, {
         method: 'POST',
-        headers: {
+        headers: { 
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           accessToken,
@@ -68,50 +152,107 @@ class MainAppTokenService {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        if (data.refreshed) {
-          this.setTokens(data.token, data.refreshToken, this.getUsername() || '');
+        const data: TokenResponse = await response.json();
+        if (data.refreshed && data.token && data.refreshToken) {
+          const username = this.getUsername() || '';
+          this.setTokens(data.token, data.refreshToken, username);
+        } else {
+          this.updateActivity(); // Update activity for valid token
+        }
+        return true;
+      } else {
+        console.error('Token authentication failed:', response.status);
+        this.clearTokensAndRedirect();
+        return false;
+      }
+    } catch (error) {
+      console.error('Token authentication error:', error);
+      this.clearTokensAndRedirect();
+      return false;
+    }
+  }
+
+  getAuthHeaders(): HeadersInit {
+    const token = this.getAccessToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+  }
+
+  async logout(): Promise<void> {
+    const token = this.getAccessToken();
+    
+    if (token) {
+      try {
+        await fetch(`${this.BASE_URL}/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+    
+    this.clearTokensAndRedirect();
+  }
+
+  async validateAndRefreshToken(): Promise<boolean> {
+    const accessToken = this.getAccessToken();
+    const refreshToken = this.getRefreshToken();
+
+    if (!accessToken || !refreshToken) {
+      return false;
+    }
+
+    if (!this.isUserActive()) {
+      this.clearTokensAndRedirect();
+      return false;
+    }
+
+    try {
+      const validateResponse = await fetch(`${this.BASE_URL}/authenticate`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          accessToken,
+          refreshToken
+        })
+      });
+
+      if (validateResponse.ok) {
+        const data: TokenResponse = await validateResponse.json();
+        
+        if (data.refreshed && data.token && data.refreshToken) {
+          const username = this.getUsername() || '';
+          this.setTokens(data.token, data.refreshToken, username);
+        } else {
+          this.updateActivity();
         }
         return true;
       }
+
+      this.clearTokensAndRedirect();
       return false;
     } catch (error) {
-      console.error('Token validation failed:', error);
+      console.error('Token validation error:', error);
+      this.clearTokensAndRedirect();
       return false;
     }
   }
 
-  // Clear tokens and redirect to login
-  clearTokensAndRedirect(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USERNAME_KEY);
-    localStorage.removeItem(this.LAST_ACTIVITY_KEY);
-    const currentUrl = encodeURIComponent(window.location.href);
-    window.location.href = `https://b2b.flydivinetravels.com/hotel`;
-  }
-
-  extractTokensFromUrl(): { success: boolean; tokens?: any } {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const refreshToken = urlParams.get('refreshToken');
-    const username = urlParams.get('username');
-
-    if (token && refreshToken && username) {
-      this.setTokens(token, refreshToken, username);
-      
-      // Clean URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete('token');
-      url.searchParams.delete('refreshToken');
-      url.searchParams.delete('username');
-      window.history.replaceState({}, document.title, url.toString());
-      
-      return { success: true, tokens: { token, refreshToken, username } };
+  destroy(): void {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
     }
-    
-    return { success: false };
+    if (this.tokenCheckInterval) {
+      clearInterval(this.tokenCheckInterval);
+    }
   }
 }
 
-export default new MainAppTokenService();
+export default new TokenService();

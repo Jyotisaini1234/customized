@@ -6,11 +6,18 @@ export const SIGHTTOURBYCITY =`${BASE_URL}/sightTour/byCity`;
 export const ACTIVITIESBYSIGHTCODE =`${BASE_URL}/sightTour/activities/bySightCode`;
 export const HOTELDETAILS=`${BASE_URL}/sightTour/hotelbyCity`;
 export const LOCALHOST='http://localhost:3002';
-export const AWS_INSTANCE='https://b2b.flydivinetravels.com';
-// export const AWS_INSTANCE=LOCALHOST;
+const isLocalhost = window.location.hostname === 'localhost';
+export const AWS_INSTANCE = isLocalhost? 'http://localhost:3002' : 'https://b2b.flydivinetravels.com';
+
 export const TRIP_PLANNER=`${AWS_INSTANCE}/hotel/home-page?`;
 export const TRIP_PLANNER_PAGE=`${AWS_INSTANCE}/hotel/hotel-summary?`;
 export let BAKU_REQUIREMENT=`${AWS_INSTANCE}/hotel/baku-requirement`;
-export const GET_ALL_BOOKINGS = `${BASE_URL}/sightTour/all`;
-export const GET_BOOKING_BY_ID = `${BASE_URL}/sightTour/`;
-
+export const GET_ALL_BOOKINGS = `${BASE_URL}/sightTour/booking/all`;
+export const GET_BOOKING_BY_ID = `${BASE_URL}/sightTour/booking`;
+export const REGISTRATION = `${BASE_URL_JWT}/sso/signup`;
+export const LOGIN = `${BASE_URL_JWT}/login`;
+export const READYMADE_PACKAGE = `/readymade-package`;
+export const AUTHENTICATE = `${BASE_URL_JWT}/authenticate`;
+export const GENERATE_UID=`${BASE_URL}/sightTour/generateUid`;
+export const SIGHT_TOUR_BY_CITY =`${BASE_URL}/sightTour/byCity`;
+export const ACTIVITIES_BY_SIGHT_CODE =`${BASE_URL}/sightTour/activities/bySightCode`;

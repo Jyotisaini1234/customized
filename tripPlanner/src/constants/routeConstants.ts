@@ -1,19 +1,18 @@
+import { AWS_INSTANCE } from "../utils/ApiConstants.ts";
 
 export const ROUTE_CONSTANTS = {
-  // Public routes
-  DEFAULT_PAGE: '/customize-package',
+  DEFAULT_PAGE: '/home',
   ABOUT: '/about',
   CONTACT: '/contact',
   CAREERS:'/careers',
   SUBSCRIBE: '/subscribe',
   LOGIN_HOME_PAGE: '/login',
-  LOGIN_HOME_PAGE_2: '/new-user',
+  LOGIN_HOME_PAGE_2: '/home/new-user',
   NOT_FOUND: '/404',
-  // Protected routes (after login)
   DASHBOARD: '/dashboard',
-  HOTEL_PAGE: 'http://b2b.flydivinetravels.com/hotel/hotel-search',
+  HOTEL_PAGE: `${AWS_INSTANCE}/hotel/hotel-search`,
+  TOURS_TRANSFERS:  `${AWS_INSTANCE}/hotel/transfer-search`,
   BAKU_PACKAGES: '/baku-packages',
-  TOURS_TRANSFERS: 'http://b2b.flydivinetravels.com/hotel/transfer-search',
   BOOKINGS: '/readymade-booking',
   CUSTOMIZE:'/customize-search',
   USER_PROFILE: 'http://b2b.flydivinetravels.com/hotel/user-list',
@@ -26,8 +25,7 @@ export const ROUTE_CONSTANTS = {
   PACKAGE_DETAILS: '/package-details/:id',
   READYMADE_SEARCH:'/readymade-search',
   READYMADE_SEARCH_PLANNER:'/readymade-planner',
-  // User related routes
-  LOGOUT: 'http://b2b.flydivinetravels.com/hotel',
+  LOGOUT: '/home',
   FLY_DIVINE_TRAVELS: '/fly-divine-travels',
   UI_TEAMS: '/u_i_teams'
 };
@@ -78,21 +76,12 @@ export const DASHBOARD_NAV_ITEMS = [
 ];
 
 export const USER_NAV_ITEMS = [
-  {
-    path: ROUTE_CONSTANTS.FLY_DIVINE_TRAVELS,
-    label: "",
-    key: 'fly-divine-travels'
-  },
-  {
-    path: ROUTE_CONSTANTS.UI_TEAMS,
-    label: "FLY & DIVINE Team",
-    key: 'u_i_teams'
-  },
-  {
-    path: ROUTE_CONSTANTS.USER_PROFILE,
-    label: "User",
-    key: 'user'
-  },
+  
+  // {
+  //   path: ROUTE_CONSTANTS.USER_PROFILE,
+  //   label: "User",
+  //   key: 'user'
+  // },
   {
     path: ROUTE_CONSTANTS.LOGOUT,
     label: "Logout",
