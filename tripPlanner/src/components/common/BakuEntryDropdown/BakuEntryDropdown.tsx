@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import EmailIcon from '@mui/icons-material/Email';
 import ArticleIcon from '@mui/icons-material/Article';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CloseIcon from '@mui/icons-material/Close';
 import { BAKU_REQUIREMENT, BASE_URL_JWT } from '../../../utils/ApiConstants.ts';
 import './BakuEntryDropdown.scss';
-import { Button, Menu, MenuItem, ListItemIcon, ListItemText, Dialog, DialogTitle, Typography, DialogContent, Alert, Box, TextField, DialogActions, Snackbar } from '@mui/material';
+import { Button, Menu,  MenuItem, ListItemIcon, ListItemText, Dialog,  DialogTitle,  Typography,  DialogContent, Alert, Box,  TextField, 
+DialogActions, Snackbar,IconButton } from '@mui/material';
+import ChatbotApp from '../whatsAppChatbot/ChatbotApp.tsx';
 
 interface BakuEntryDropdownProps {
   className?: string;
@@ -26,7 +30,8 @@ interface ApiResponse {
 const BakuEntryDropdown: React.FC<BakuEntryDropdownProps> = ({ className }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '',  email: '',  phone: '',  message: '' });
+  const [chatbotDialogOpen, setChatbotDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [emailStatus, setEmailStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -71,14 +76,14 @@ const BakuEntryDropdown: React.FC<BakuEntryDropdownProps> = ({ className }) => {
     setEmailStatus('loading');
     
     const emailData: EmailRequest = {
-      to: 'jyotisaini5614@gmail.com',
+      to: '000001jyoti.saini@gmail.com',
       subject: "Baku Entry Requirements Request",
       body: `Dear Team,
         I would like to request information about Baku entry requirements for my upcoming trip.
         Please provide me with the latest requirements and documentation needed.
         Thank you for your assistance.
         Best regards`,
-      from: 'noreply@flydivinetravels.com'
+      from: '000001jyoti.saini@gmail.com'
     };
 
     try {
@@ -107,7 +112,7 @@ Please provide me with the latest requirements and documentation needed.
 Thank you for your assistance.
 
 Best regards`;
-      const mailtoLink = `mailto:jyotisaini5614@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      const mailtoLink = `mailto:000001jyoti.saini@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       window.open(mailtoLink, '_blank');
     } finally {
       setTimeout(() => {
@@ -121,6 +126,12 @@ Best regards`;
   // Handle Form Option
   const handleFormOption = () => {
     setFormDialogOpen(true);
+    handleClose();
+  };
+
+  // Handle WhatsApp Chatbot Option
+  const handleChatbotOption = () => {
+    setChatbotDialogOpen(true);
     handleClose();
   };
 
@@ -175,20 +186,23 @@ Website Contact System`,
       [field]: event.target.value
     }));
   };
+
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
 
   return (
     <>
-      <Button className={className || 'entry-btn'} onClick={handleClick} endIcon={<ExpandMoreIcon />}aria-controls={open ? 'baku-menu' : undefined} aria-haspopup="true" aria-expanded={open ? 'true' : undefined} > 
-        Baku Entry Requirements
-      </Button>
+      <Button  className={className || 'entry-btn'}  onClick={handleClick} endIcon={<ExpandMoreIcon />} aria-controls={open ? 'baku-menu' : undefined}  aria-haspopup="true" aria-expanded={open ? 'true' : undefined} >  Baku Entry Requirements</Button>
       
-      <Menu id="baku-menu" anchorEl={anchorEl}  open={open} onClose={handleClose}  MenuListProps={{   'aria-labelledby': 'baku-button',   }}   PaperProps={{   style: {  minWidth: '200px',   }, }} >
+      <Menu id="baku-menu"  anchorEl={anchorEl}   open={open}  onClose={handleClose}   MenuListProps={{    'aria-labelledby': 'baku-button',    }}     PaperProps={{style: { minWidth: '200px',    },  }}   >
         <MenuItem onClick={handleEmailRequest} disabled={emailStatus === 'loading'}>
-          <ListItemIcon><EmailIcon fontSize="small" /> </ListItemIcon>
-          <ListItemText> {emailStatus === 'loading' ? 'Sending Email...' : 'Email Request'} </ListItemText>
+          <ListItemIcon>
+            <EmailIcon fontSize="small" /> 
+          </ListItemIcon>
+          <ListItemText> 
+            {emailStatus === 'loading' ? 'Sending Email...' : 'Email Request'} 
+          </ListItemText>
         </MenuItem>
         
         <MenuItem onClick={handleFormOption}>
@@ -197,41 +211,112 @@ Website Contact System`,
           </ListItemIcon>
           <ListItemText>Form Request</ListItemText>
         </MenuItem>
+
       </Menu>
     
-      {/* Form Dialog */}
-      <Dialog  open={formDialogOpen}  onClose={() => setFormDialogOpen(false)}  maxWidth="sm"  fullWidth >
+      <Dialog  
+        open={formDialogOpen}  
+        onClose={() => setFormDialogOpen(false)}  
+        maxWidth="sm"  
+        fullWidth 
+      >
         <DialogTitle>
-          <Typography variant="h6">  Baku Entry Requirements Request </Typography>
+          <Typography variant="h6">Baku Entry Requirements Request</Typography>
         </DialogTitle>
         <form onSubmit={handleFormSubmit}>
           <DialogContent>
             {submitStatus === 'success' && (
-              <Alert severity="success" sx={{ mb: 2 }}>  Your request has been submitted successfully! We'll get back to you soon. </Alert>   )}
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Your request has been submitted successfully! We'll get back to you soon.
+              </Alert>   
+            )}
             {submitStatus === 'error' && ( 
-              <Alert severity="error" sx={{ mb: 2 }}>  There was an error submitting your request. Please try again. </Alert> 
+              <Alert severity="error" sx={{ mb: 2 }}>
+                There was an error submitting your request. Please try again.
+              </Alert> 
             )}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField fullWidth label="Full Name" value={formData.name}  onChange={handleInputChange('name')}   required   disabled={submitStatus === 'loading'}   />
-              <TextField fullWidth label="Email Address"  type="email" value={formData.email}  onChange={handleInputChange('email')}   required disabled={submitStatus === 'loading'} />
-              <TextField fullWidth  label="Phone Number"   value={formData.phone}  onChange={handleInputChange('phone')}   required  disabled={submitStatus === 'loading'} />
-              <TextField fullWidth label="Additional Message"   multiline  rows={4}  value={formData.message}   onChange={handleInputChange('message')}   placeholder="Please specify any particular requirements or questions about Baku entry..."   disabled={submitStatus === 'loading'}/>
+              <TextField 
+                fullWidth 
+                label="Full Name" 
+                value={formData.name}  
+                onChange={handleInputChange('name')}   
+                required   
+                disabled={submitStatus === 'loading'}   
+              />
+              <TextField 
+                fullWidth 
+                label="Email Address"  
+                type="email" 
+                value={formData.email}  
+                onChange={handleInputChange('email')}   
+                required 
+                disabled={submitStatus === 'loading'} 
+              />
+              <TextField 
+                fullWidth  
+                label="Phone Number"   
+                value={formData.phone}  
+                onChange={handleInputChange('phone')}   
+                required  
+                disabled={submitStatus === 'loading'} 
+              />
+              <TextField 
+                fullWidth 
+                label="Additional Message"   
+                multiline  
+                rows={4}  
+                value={formData.message}   
+                onChange={handleInputChange('message')}   
+                placeholder="Please specify any particular requirements or questions about Baku entry..."   
+                disabled={submitStatus === 'loading'}
+              />
             </Box>
           </DialogContent>
         
           <DialogActions>
-            <Button  onClick={() => setFormDialogOpen(false)}  disabled={submitStatus === 'loading'} >  Cancel   </Button>
-            <Button type="submit" className='submit-btn'  sx={{bgcolor:'#0369a1', color:'white'}}   disabled={submitStatus === 'loading'}  > 
+            <Button  
+              onClick={() => setFormDialogOpen(false)}  
+              disabled={submitStatus === 'loading'} 
+            >
+              Cancel   
+            </Button>
+            <Button 
+              type="submit" 
+              className='submit-btn'  
+              sx={{bgcolor:'#0369a1', color:'white'}}   
+              disabled={submitStatus === 'loading'}  
+            > 
               {submitStatus === 'loading' ? 'Submitting...' : 'Submit Request'}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* WhatsApp Chatbot Dialog */}
+      <Dialog  
+        open={chatbotDialogOpen}  
+        onClose={() => setChatbotDialogOpen(false)}  
+        maxWidth="md"  
+        fullWidth
+        className="chatbot-dialog"
+        PaperProps={{
+          className: "chatbot-dialog-paper"
+        }}
+      >
+        
+        <DialogContent className="chatbot-dialog-content">
+          <Box className="chatbot-container"><ChatbotApp /></Box>
+        </DialogContent>
+      </Dialog>
+
       <Snackbar open={snackbarOpen}  autoHideDuration={4000}onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} >
-        <Alert onClose={handleSnackbarClose}  severity={snackbarSeverity}  sx={{ width: '100%' }} > {snackbarMessage} </Alert>
+        <Alert onClose={handleSnackbarClose}  severity={snackbarSeverity}   sx={{ width: '100%' }}  > {snackbarMessage}  </Alert>
       </Snackbar>
     </>
+    
   );
 };
 
 export default BakuEntryDropdown;
+

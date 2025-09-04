@@ -2,7 +2,9 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, LoginCredentials, RegisterData } from '../../types/types';
 import { BASE_URL_JWT } from '../../utils/ApiConstants.ts';
 import { isTokenExpired, getUserFromToken, getTokenExpiry } from '../../utils/tokenUtils.ts';
+import { initDB, saveToDB, getFromDB } from '../../utils/TripPlannerDB.ts';
 
+const AUTH_STORE = 'authData';
 
 const initialState: AuthState = {
   user: null,
@@ -18,6 +20,52 @@ const initialState: AuthState = {
   loginEmail: null,
 };
 
+const clearAuth = async () => {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction([AUTH_STORE], 'readwrite');
+    const objectStore = transaction.objectStore(AUTH_STORE);
+    const keysToRemove = ['authToken','accessToken', 'refreshToken','email','loginEmail','authData','userEmail','userName','companyName'];
+    keysToRemove.forEach(key => {
+      objectStore.delete(key);
+    });
+  } catch (error) {
+    console.error('Error clearing auth data from IndexedDB:', error);
+  }
+};
+
+const saveAuth = async (authData: {
+  token: string;
+  refreshToken: string;
+  user: any;
+  loginEmail: string | null;
+}) => {
+  try {
+    const { token, refreshToken, user, loginEmail } = authData;
+    
+    await saveToDB(AUTH_STORE, 'authToken', token);
+    await saveToDB(AUTH_STORE, 'accessToken', token);
+    await saveToDB(AUTH_STORE, 'refreshToken', refreshToken);
+    await saveToDB(AUTH_STORE, 'email', user.email);
+    if (loginEmail) {
+      await saveToDB(AUTH_STORE, 'loginEmail', loginEmail);
+    }
+    
+    const structuredAuthData = {
+      email: user.email,
+      userName: user.email.split('@')[0],
+      companyName: (user.companyName && user.companyName.trim()) || (user.company && user.company.trim()) ||  'Fly Divine'
+    };
+    
+    await saveToDB(AUTH_STORE, 'authData', structuredAuthData);
+    await saveToDB(AUTH_STORE, 'userEmail', user.email);
+    await saveToDB(AUTH_STORE, 'userName', structuredAuthData.userName);
+    await saveToDB(AUTH_STORE, 'companyName', structuredAuthData.companyName);
+    
+  } catch (error) {
+    console.error('Error saving auth data to IndexedDB:', error);
+  }
+};
 
 export const loginUser = createAsyncThunk(
   '/login',
@@ -186,11 +234,12 @@ export const logoutUser = createAsyncThunk(
       console.warn('Logout request failed:', error);
     }
     
+    await clearAuth();
+    
     return null;
   }
 );
 
-// Auth slice
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -214,11 +263,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.tokenExpiry = null;
         state.loginEmail = null;
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('email');
-        localStorage.removeItem('loginEmail');
+        clearAuth();
       }
     },
     
@@ -226,40 +271,7 @@ const authSlice = createSlice({
       if (state.isInitialized) {
         return;
       }
-      
-      try {
-        const token = localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-        const refreshToken = localStorage.getItem('refreshToken');
-        const loginEmail = localStorage.getItem('loginEmail');
-        
-        if (token && refreshToken && !isTokenExpired(token)) {
-          const user = getUserFromToken(token, loginEmail || undefined);
-          if (user) {
-            state.token = token;
-            state.refreshToken = refreshToken;
-            state.user = user;
-            state.isAuthenticated = true;
-            state.tokenExpiry = getTokenExpiry(token);
-            state.lastActivity = Date.now();
-            state.loginEmail = loginEmail;
-          }
-        } else {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('email');
-          localStorage.removeItem('loginEmail');
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('email');
-        localStorage.removeItem('loginEmail');
-      } finally {
-        state.isInitialized = true;
-      }
+      state.isInitialized = true;
     },
     
     forceLogout: (state) => {
@@ -270,56 +282,29 @@ const authSlice = createSlice({
       state.tokenExpiry = null;
       state.error = null;
       state.loginEmail = null;
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('email');
-      localStorage.removeItem('loginEmail');
+      clearAuth();
+    },
+    
+    setAuth: (state, action) => {
+      const { user, token, refreshToken, loginEmail, tokenExpiry } = action.payload;
+      state.user = user;
+      state.token = token;
+      state.refreshToken = refreshToken;
+      state.isAuthenticated = true;
+      state.tokenExpiry = tokenExpiry;
+      state.lastActivity = Date.now();
+      state.loginEmail = loginEmail;
+      state.isInitialized = true;
     }
   },
   
   extraReducers: (builder) => {
     builder
-      // Login
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      // .addCase(loginUser.fulfilled, (state, action) => {
-      //   const { token, refreshToken, loginEmail } = action.payload;
-      //   const user = getUserFromToken(token, loginEmail || undefined);
-        
-      //   console.log('Login fulfilled, user extracted:', user);
-        
-      //   if (user) {
-      //     state.user = user;
-      //     state.token = token;
-      //     state.refreshToken = refreshToken;
-      //     state.isAuthenticated = true;
-      //     state.tokenExpiry = getTokenExpiry(token);
-      //     state.lastActivity = Date.now();
-      //     state.isLoading = false;
-      //     state.error = null;
-      //     state.loginEmail = loginEmail;
-          
-      //     localStorage.setItem('authToken', token);
-      //     localStorage.setItem('accessToken', token);
-      //     localStorage.setItem('refreshToken', refreshToken);
-      //     localStorage.setItem('email', user.email);
-      //     if (loginEmail) {
-      //       localStorage.setItem('loginEmail', loginEmail);
-      //     }
-          
-      //     console.log('=== Final Auth State ===');
-      //     console.log('User email:', user.email);
-      //     console.log('Login email:', loginEmail);
-      //     console.log('=====================');
-      //   } else {
-      //     console.error('Failed to extract user from token');
-      //     state.isLoading = false;
-      //     state.error = 'Failed to process user data';
-      //   }
-      // })
+
       .addCase(loginUser.fulfilled, (state, action) => {
         const { token, refreshToken, loginEmail } = action.payload;
         const user = getUserFromToken(token, loginEmail || undefined);
@@ -336,33 +321,7 @@ const authSlice = createSlice({
           state.isLoading = false;
           state.error = null;
           state.loginEmail = loginEmail;
-          
-          // Store in localStorage (existing)
-          localStorage.setItem('authToken', token);
-          localStorage.setItem('accessToken', token);
-          localStorage.setItem('refreshToken', refreshToken);
-          localStorage.setItem('email', user.email);
-          if (loginEmail) {
-            localStorage.setItem('loginEmail', loginEmail);
-          }
-          
-          // Store in localStorage for navbar
-          const authData = {
-            email: user.email,
-            userName:user.email.split('@')[0], // fallback to email prefix if no name
-            companyName: (user.companyName && user.companyName.trim()) || (user.company && user.company.trim()) || 'Fly Divine' // fallback to default if empty or whitespace
-          };
-          
-          localStorage.setItem('authData', JSON.stringify(authData));
-          localStorage.setItem('userEmail', user.email);
-          localStorage.setItem('userName', authData.userName);
-          localStorage.setItem('companyName', authData.companyName);
-          
-          console.log('=== Final Auth State ===');
-          console.log('User email:', user.email);
-          console.log('Login email:', loginEmail);
-          console.log('Company name:', authData.companyName);
-          console.log('=====================');
+          saveAuth({ token, refreshToken, user, loginEmail });
         } else {
           console.error('Failed to extract user from token');
           state.isLoading = false;
@@ -376,7 +335,6 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
       })
       
-      // Register
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -390,7 +348,6 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
       
-      // Refresh token
       .addCase(refreshTokenAsync.fulfilled, (state, action) => {
         const { token, refreshToken } = action.payload;
         const user = getUserFromToken(token, state.loginEmail || undefined);
@@ -402,12 +359,12 @@ const authSlice = createSlice({
           state.tokenExpiry = getTokenExpiry(token);
           state.lastActivity = Date.now();
           
-          localStorage.setItem('authToken', token);
-          localStorage.setItem('accessToken', token);
-          if (refreshToken) {
-            localStorage.setItem('refreshToken', refreshToken);
-          }
-          localStorage.setItem('email', user.email);
+          saveAuth({ 
+            token, 
+            refreshToken: refreshToken || state.refreshToken, 
+            user, 
+            loginEmail: state.loginEmail 
+          });
         }
       })
       .addCase(refreshTokenAsync.rejected, (state) => {
@@ -417,14 +374,9 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.tokenExpiry = null;
         state.loginEmail = null;
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('email');
-        localStorage.removeItem('loginEmail');
+        clearAuth();
       })
       
-      // Logout
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.token = null;
@@ -434,21 +386,45 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
         state.loginEmail = null;
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('email');
-        localStorage.removeItem('loginEmail');
       });
   },
 });
+
+export const initializeAuthFromDB = createAsyncThunk(
+  'auth/initialize',
+  async (_, { dispatch, getState }) => {
+    try {
+      const token = await getFromDB(AUTH_STORE, 'authToken', null) || 
+                   await getFromDB(AUTH_STORE, 'accessToken', null);
+      const refreshToken = await getFromDB(AUTH_STORE, 'refreshToken', null);
+      const loginEmail = await getFromDB(AUTH_STORE, 'loginEmail', null);
+      
+      if (token && refreshToken && !isTokenExpired(token)) {
+        const user = getUserFromToken(token, loginEmail || undefined);
+        if (user) {
+          dispatch(authSlice.actions.setAuth({user, token, refreshToken, loginEmail,tokenExpiry: getTokenExpiry(token)}));
+          return { success: true };
+        }
+      }
+      
+      await clearAuth();
+      return { success: false };
+      
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      await clearAuth();
+      return { success: false };
+    }
+  }
+);
 
 export const { 
   updateActivity, 
   clearError, 
   checkSession, 
   initializeAuth, 
-  forceLogout 
+  forceLogout,
+  setAuth 
 } = authSlice.actions;
 
 export default authSlice.reducer;

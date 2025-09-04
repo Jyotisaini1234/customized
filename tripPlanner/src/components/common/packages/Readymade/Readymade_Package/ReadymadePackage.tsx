@@ -1,15 +1,36 @@
 import { Box, Container, Typography, Button, Card, CardContent, CardMedia, Chip, CircularProgress, FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PackageData } from "../../../../../types/types.ts";
 import './ReadymadePackage.scss';
 import { useGetAllPackagesQuery, useGetFilteredPackagesQuery } from "../../../../../api/TourAPI.tsx";
 import BakuEntryDropdown from "../../../BakuEntryDropdown/BakuEntryDropdown.tsx";
 
+declare global {
+  interface Window {
+    Tawk_API: any;
+    Tawk_LoadStart: Date;
+  }
+}
+
 const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({ isModifying = false }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({ destination: 'Azerbaijan', city: 'Baku', nights: '', theme: '' });
   const [isSearchTriggered, setIsSearchTriggered] = useState(false);
+
+  useEffect(() => {
+    window.Tawk_API = window.Tawk_API || {};
+    window.Tawk_LoadStart = new Date();
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = 'https://embed.tawk.to/68a18985b25b86192ad77f5b/1j2rg2cum';
+    script.charset = 'UTF-8';
+    script.setAttribute('crossorigin', '*');
+    
+    const firstScript = document.getElementsByTagName("script")[0];
+    firstScript.parentNode?.insertBefore(script, firstScript);
+  }, []);
 
   const { data: filteredData, isLoading: isFilteredLoading, error: filteredError } = useGetFilteredPackagesQuery({ 
       country: filters.destination,
@@ -44,6 +65,7 @@ const ReadymadePackages: React.FC<{ isModifying?: boolean }> = ({ isModifying = 
     } else {
       setFilters(prev => ({ ...prev, [filterName]: value }));
     }
+    console.log('package Details',packages)
   };
 
   const getCities = (destination: string) => {

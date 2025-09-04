@@ -225,7 +225,7 @@ export interface TripPlannerData {
   currentSearchParams?: SearchParams;
   hotels?: Hotel[];
   plannerItems?: PlannerItem[];
-
+  totalRooms:any[];
   costs?: {
     finalAmount?: number;
     packageDetails?: {
@@ -311,6 +311,7 @@ export interface Lead {
   nights: number;
   lastUpdated: string;
   currency: string;
+  totalRooms:string | number;
   hotelDetails?: any[];
   plannerItems?: any[];
   pendingAmount?: number;
@@ -337,7 +338,7 @@ export interface HotelDetails {
     name?: string;
     hotelName?: string;
     area?: string;
-    starRatings?: string | number; // ✅ add this if needed
+    starRatings?: string | number;
     description?: string;
   
   };
@@ -346,9 +347,9 @@ export interface HotelDetails {
     mealPlan?: string;
     nights?: number;
     totalRooms?: number;
-    checkOutDate?: string; // ✅ add this
-    checkInDate?: string;  // ✅ optionally add this
-    totalPrice?: number;   // ✅ add this
+    checkOutDate?: string;
+    checkInDate?: string;
+    totalPrice?: number;
   };
   room?: {
     roomCategory?: string;
@@ -574,6 +575,7 @@ export interface Hotel2{
   destination: string;
   nights: number;
   star?: number;
+  img:string;
   stayDates: string[];
   mealPlan: string;
   roomType: string;
@@ -774,7 +776,7 @@ export interface TourData {
         tourName?: string;
       };
     };
-    tour?: TourData['tourDetails']; // Same structure as tourDetails
+    tour?: TourData['tourDetails'];
     booking?: {
       totalPrice?: number;
       date?: string;
@@ -801,6 +803,7 @@ export interface PackageHotel {
     star: number;
     nights: number;
     price: number;
+    img?: string;
     currency: string;
     mealPlan: string;
     roomType: string;
@@ -971,6 +974,7 @@ export interface TripPlannerDBData {
       isUpdated: boolean;
       currency: string;
       type: string;
+      checkInDate:string
     };
     transfer?: {
       id: string;
@@ -1102,3 +1106,26 @@ export interface City {
   countryId: number;
 }
 
+export interface TripPlannerParams {
+  city?: string;
+  country?: string;
+  selectedCountry?: string;
+  selectedCity?: string;
+  applyToAllDays?: boolean;
+  nights?: number;
+  rooms?: Array<{
+    adults: number;
+    cwb: number;
+    cnb: number;
+    infants: number;
+  }>;
+  checkInDate?: string;
+  checkOutDate?: string;
+  originalCheckOutDate?: string;
+  fromReadymadePackage?: boolean | string;
+  specificDay?: boolean;
+  specificDayId?: string;
+  dayNumber?: string;
+  allDays?: any;
+  leadId?: string;
+}

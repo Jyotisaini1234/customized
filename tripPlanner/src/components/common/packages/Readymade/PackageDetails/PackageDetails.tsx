@@ -241,7 +241,24 @@ const transformPackageDataForPDF = (includeAllOptions: boolean = false) => {
       </Container>
     );
   }
-
+  const getSortedHotelOptions = () => {
+    if (!packageDetails?.hotelOption) return [];
+    
+    const hotelOptions = [...packageDetails.hotelOption];
+    
+    hotelOptions.sort((a, b) => {
+      const priceA = a.perPersonCost || 0;
+      const priceB = b.perPersonCost || 0;
+      
+      if (selectedSeason === 'low') {
+        return priceA - priceB;
+      } else {
+        return priceB - priceA;
+      }
+    });
+    
+    return hotelOptions;
+  };
   const { packageDetails } = packageData;
   const itineraryData = getItineraryData();
   const packageTitle = packageDetails.packageName || packageDetails.title || 'Package Details';
@@ -305,9 +322,11 @@ const transformPackageDataForPDF = (includeAllOptions: boolean = false) => {
                 </Box>
               )}
             </Box>
-
-            {packageDetails?.hotelOption?.map((option: any, optionIndex: number) => (
-              <Box key={optionIndex} className="hotel-option-set" sx={{ mb: 4 }}>
+          
+          {getSortedHotelOptions().map((option: any, optionIndex: number) => {
+            const originalIndex = packageDetails.hotelOption?.findIndex(orig => orig === option) || 0;
+            return (
+              <Box key={originalIndex} className="hotel-option-set" sx={{ mb: 4 }}>
                 <TableContainer component={Paper} className="hotel-table-container">
                   <Table className="hotel-table">
                     <TableHead className="table-header">
@@ -325,19 +344,36 @@ const transformPackageDataForPDF = (includeAllOptions: boolean = false) => {
                     </TableHead>
                     <TableBody>
                       {option.hotels?.map((hotel: any, hotelIndex: number) => (
-                        <TableRow key={hotelIndex} className={`table-row ${selectedHotel === optionIndex.toString() ? 'selected-row' : ''}`}>
+                        <TableRow key={hotelIndex} className={`table-row ${selectedHotel === originalIndex.toString() ? 'selected-row' : ''}`}>
                           {hotelIndex === 0 && (
-                          <TableCell className="table-cell" rowSpan={option.hotels.length}><Radio checked={selectedHotel === optionIndex.toString()}   onChange={() => setSelectedHotel(optionIndex.toString())} value={optionIndex.toString()} className="hotel-radio"  size="small"  /></TableCell>  )}
+                            <TableCell className="table-cell" rowSpan={option.hotels.length}>
+                              <Radio 
+                                checked={selectedHotel === originalIndex.toString()}   
+                                onChange={() => setSelectedHotel(originalIndex.toString())} 
+                                value={originalIndex.toString()} 
+                                className="hotel-radio"  
+                                size="small"  
+                              />
+                            </TableCell>
+                          )}
                           <TableCell className="table-cell">{hotel.name}</TableCell>
                           <TableCell className="table-cell">{hotel.destination}</TableCell>
-                          <TableCell className="table-cell"> <Rating value={hotel.star || 0} readOnly size="small" className="hotel-rating" /> </TableCell>
+                          <TableCell className="table-cell">
+                            <Rating value={hotel.star || 0} readOnly size="small" className="hotel-rating" />
+                          </TableCell>
                           <TableCell className="table-cell">{hotel.nights}</TableCell>
                           <TableCell className="table-cell">{hotel.roomType}</TableCell>
                           {hotelIndex === 0 && (
                             <>
-                              <TableCell className="table-cell" rowSpan={option.hotels.length}> {`USD ${option.perPersonCost}`} </TableCell>
-                              <TableCell className="table-cell" rowSpan={option.hotels.length}> {`USD ${option.cwbCost}`} </TableCell>
-                              <TableCell className="table-cell" rowSpan={option.hotels.length}> {`USD ${option.cnbCost}`} </TableCell>
+                              <TableCell className="table-cell" rowSpan={option.hotels.length}>
+                                {`USD ${option.perPersonCost}`}
+                              </TableCell>
+                              <TableCell className="table-cell" rowSpan={option.hotels.length}>
+                                {`USD ${option.cwbCost}`}
+                              </TableCell>
+                              <TableCell className="table-cell" rowSpan={option.hotels.length}>
+                                {`USD ${option.cnbCost}`}
+                              </TableCell>
                             </>
                           )}
                         </TableRow>
@@ -346,18 +382,17 @@ const transformPackageDataForPDF = (includeAllOptions: boolean = false) => {
                   </Table>
                 </TableContainer>
               </Box>
-            ))}
+            );
+          })}
           </Box>
         </TabPanel>
-
         <TabPanel value={selectedTab} index={1}>
           <Box className="includes-tab-content">
             <Typography variant="h6" className="section-title">Package Includes:</Typography>
             <ul className="includes-list">
               {packageDetails.inclusions ? 
                 packageDetails.inclusions.map((inclusion: string, index: number) => (
-                  <li key={index}>{inclusion}</li>
-                )) :
+                  <li key={index}>{inclusion}</li>)) :
                 <>
                   <li>{totalNights} nights accommodation in selected hotel</li>
                   <li>Daily breakfast</li>

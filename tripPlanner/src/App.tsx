@@ -8,6 +8,8 @@ import NotFound from './components/NotFound/NotFound.tsx';
 import React, { useEffect } from 'react';
 import { SearchProvider } from './constants/SearchContext.tsx';
 import { useAuth } from './constants/useAuth.ts';
+import ChatbotApp from './components/common/whatsAppChatbot/ChatbotApp.tsx';
+
 const App: React.FC  = () =>  {
   const { checkSession } = useAuth();
   const loader = useSelector((state: RootState) => state.loader);
@@ -24,7 +26,7 @@ const App: React.FC  = () =>  {
       {!error.isPageNotFound && (
         <main>
           <SearchProvider>
-          <Router />
+          <Router/>
           </SearchProvider>
         </main>
       )}

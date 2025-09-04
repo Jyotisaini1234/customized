@@ -18,4 +18,8 @@
 .proceed-button{
     background: $primary-color;
     color: white;
-    }}
+    &:hover{
+        background: $primary-color;
+        color: white;}
+    }
+}

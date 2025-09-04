@@ -1,28 +1,38 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { AUTHENTICATE, BASE_URL, BASE_URL_JWT, GET_ALL_BOOKINGS, GET_BOOKING_BY_ID, LOGIN, REGISTRATION } from '../utils/ApiConstants.ts';
-import { BookingData, Lead, TourBookingData } from '../types/types.ts';
+import { Lead, TourBookingData } from '../types/types.ts';
 import TokenService from '../pages/tokenService.ts';
+import { getFromDB, STORES, saveToDB } from '../utils/TripPlannerDB.ts';
 
-const getUserEmail = () => {
-  const email = localStorage.getItem('userEmail') ||
-                localStorage.getItem('username') ||
-                localStorage.getItem('email') || '';
-  
-  console.log('getUserEmail() returning:', email);
-  return email;
+const getUserEmail = async (): Promise<string> => {
+  try {
+    const email = await getFromDB(STORES.plannerData, 'userEmail', '') ||await getFromDB(STORES.plannerData, 'username', '') || await getFromDB(STORES.plannerData, 'email', '');
+    console.log('getUserEmail() returning:', email);
+    return email;
+  } catch (error) {
+    console.error('Error getting user email from IndexedDB:', error);
+    return '';
+  }
 };
 
-const getUserRole = () => {
-  return localStorage.getItem('userRole') || 'USER';
+const getUserRole = async (): Promise<string> => {
+  try {
+    return await getFromDB(STORES.plannerData, 'userRole', 'USER');
+  } catch (error) {
+    console.error('Error getting user role from IndexedDB:', error);
+    return 'USER';
+  }
 };
+
 export const tourApi = createApi({
+  
   reducerPath: 'tourApi',
   baseQuery: fetchBaseQuery({ 
     baseUrl: BASE_URL,
-    prepareHeaders: (headers) => {
+    prepareHeaders: async (headers) => {
       headers.set('Content-Type', 'application/json');
-      const userEmail = getUserEmail();
-      const userRole = getUserRole();
+      const userEmail = await getUserEmail();
+      const userRole = await getUserRole();
       console.log('API Headers - User-Email:', userEmail);
       console.log('API Headers - User-Role:', userRole);
       
@@ -37,7 +47,6 @@ export const tourApi = createApi({
       query: ({ city, country }) =>
         `sightTour/hotelbyCity?city=${city}&country=${country}`,
     }),
-
     submitLead: builder.mutation<any, any>({
       query: (leadData) => ({
         url: '/sightTour/lead',
@@ -159,13 +168,12 @@ export const tourApi = createApi({
     },
   }),
 
-
   getAllBookings: builder.query<TourBookingData[], void>({
     query: () => GET_ALL_BOOKINGS,
     providesTags: ['Bookings'],
-    transformResponse: (response: any) => {
+    transformResponse: async (response: any) => {
       console.log('Get all bookings response:', response);
-      const userEmail = getUserEmail();
+      const userEmail = await getUserEmail();
       console.log('Filtering bookings for email:', userEmail);
       if (Array.isArray(response)) {
         const filteredBookings = response.filter(booking => 
@@ -179,13 +187,24 @@ export const tourApi = createApi({
   }),
   
   getBookingById: builder.query<TourBookingData, string>({
-    query: (id) => ({
-      url: `${GET_BOOKING_BY_ID}${id}`,
-      method: 'GET',
-      headers: { 'User-Email': getUserEmail(),'User-Role': getUserRole(), },
-    }),
+    queryFn: async (id, api, extraOptions, baseQuery) => {
+      const userEmail = await getUserEmail();
+      const userRole = await getUserRole();
+      
+      return baseQuery({
+        url: `${GET_BOOKING_BY_ID}${id}`,
+        method: 'GET',
+        headers: { 
+          'User-Email': userEmail,
+          'User-Role': userRole,
+        },
+      });
+    },
     providesTags: (result, error, id) => [{ type: 'Bookings', id }],
-    transformResponse: (response: any) => { console.log('Get booking by ID response:', response); return response; },
+    transformResponse: (response: any) => { 
+      console.log('Get booking by ID response:', response); 
+      return response; 
+    },
   }),
 
   authenticateToken: builder.mutation<  { token: string; refreshToken: string; refreshed?: boolean }, { accessToken: string; refreshToken: string } >({
@@ -196,7 +215,7 @@ export const tourApi = createApi({
         }),
       }),
 
-      logoutUser: builder.mutation<{ message: string }, void>({
+  logoutUser: builder.mutation<{ message: string }, void>({
         query: () => ({ url: '/logout', method: 'POST', headers: TokenService.getAuthHeaders(), }),
         async onQueryStarted(arg, { dispatch, queryFulfilled }) {
           try {
@@ -208,38 +227,52 @@ export const tourApi = createApi({
           }
         },
       }),
-loginUser: builder.mutation<
-  { accessToken: string; token: string;  refreshToken: string; message?: string; username?: string; email?: string;},{ identifier: string; password: string }>({
-  query: (credentials) => ({
-    url: LOGIN,
-    method: 'POST',
-    body: credentials,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Email': credentials.identifier,
-      'User-Role': 'USER', },
+
+  loginUser: builder.mutation<
+    { accessToken: string; token: string;  refreshToken: string; message?: string; username?: string; email?: string;},
+    { identifier: string; password: string }
+  >({
+    query: (credentials) => ({
+      url: LOGIN,
+      method: 'POST',
+      body: credentials,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Email': credentials.identifier,
+        'User-Role': 'USER', 
+      },
+    }),
+    transformResponse: async (response: any, meta, arg) => {
+      if (response.token && response.refreshToken) {
+        const username = response.username || response.user || 'User';
+        const email = response.email || response.username || arg.identifier;
+        
+        // Store user data in IndexedDB instead of localStorage
+        try {
+          await Promise.all([
+            saveToDB(STORES.plannerData, 'userEmail', email),
+            saveToDB(STORES.plannerData, 'username', email),
+            saveToDB(STORES.plannerData, 'email', email),
+            saveToDB(STORES.plannerData, 'userRole', 'USER')
+          ]);
+          console.log('User data stored in IndexedDB');
+        } catch (error) {
+          console.error('Error storing user data in IndexedDB:', error);
+        }
+        
+        TokenService.setTokens(response.token, response.refreshToken, username);
+      }
+      return response;
+    },
+    transformErrorResponse: (response: any) => {
+      console.error('Login error:', response);
+      if (response.data?.message) {
+        return { message: response.data.message };
+      }
+      return { message: 'Login failed. Please check your credentials.' };
+    },
   }),
-  transformResponse: (response: any, meta, arg) => {
-    if (response.token && response.refreshToken) {
-      const username = response.username || response.user || 'User';
-      const email = response.email || response.username || arg.identifier;
-      localStorage.setItem('userEmail', email);
-      localStorage.setItem('username', email);
-      localStorage.setItem('email', email);
-      localStorage.setItem('userRole', 'USER');
-      TokenService.setTokens(response.token, response.refreshToken, username);
-    }
-    return response;
-  },
-  transformErrorResponse: (response: any) => {
-    console.error('Login error:', response);
-    if (response.data?.message) {
-      return { message: response.data.message };
-    }
-    return { message: 'Login failed. Please check your credentials.' };
-  },
-}),
 
   changePassword: builder.mutation<
       { message: string },
@@ -270,48 +303,145 @@ loginUser: builder.mutation<
         return { message: 'Password change failed. Please try again.' };
       },
     }),
+
 uploadLogo: builder.mutation<
-{
-  filename: any;
-  filePath: any; message: string; data?: string; success?: boolean 
-},
-{ file: File; email: string }>({
-queryFn: async ({ file, email }) => {
-  try {
+  { success: boolean; message: string; logoUrl?: string; filename?: string },
+  { file: File; email: string }
+>({
+  queryFn: async ({ file, email }) => {
+    // Validation
+    if (!file) return { error: { status: 400, data: { message: 'No file selected' } } };
+    if (file.size > 5 * 1024 * 1024) return { error: { status: 400, data: { message: 'File too large' } } };
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/gif'].includes(file.type)) {
+      return { error: { status: 400, data: { message: 'Invalid file type' } } };
+    }
+
+    try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('email', email);
-      const response = await fetch('https://b2b.flydivinetravels.com/sso/upload-logo', {
-        method: 'POST',
-        body: formData,});
-        if (!response.ok) {
-        const errorText = await response.text();
-        console.error('RTK Query upload error response:', errorText);
-        return {
-          error: {
-            status: response.status,
-            data: { 
-              message: `Upload failed: ${response.statusText || 'Unknown error'}`,
-              details: errorText
-            } }};}
 
-    const result = await response.json();
-    console.log('RTK Query upload success:', result);
-    
-    return { data: result };
-    
+      const response = await fetch(`${BASE_URL_JWT}/sso/upload-logo`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Upload failed:', response.status, errorData);
+        return { error: { status: response.status, data: { message: 'Upload failed' } } };
+      }
+
+      const result = await response.json();
+      return { 
+        data: {
+          success: true,
+          message: result.message || 'Upload successful',
+          logoUrl: result.logoUrl || '',
+          filename: result.filename || ''
+        }
+      };
     } catch (error) {
-      console.error('RTK Query upload network error:', error);
-      return {
-        error: {
-          status: 'FETCH_ERROR' as const,
-          data: { 
-            message: 'Network error during logo upload. Please try again.',
-            details: error instanceof Error ? error.message : 'Unknown error'
+      console.error('Upload network error:', error);
+      return { error: { status: 500, data: { message: 'Network error' } } };
     }
-        }};}},
+  },
+  invalidatesTags: ['UserCompany'],
 }),
-  
+
+getLogoAsDataUrl: builder.query<string, string>({
+  queryFn: async (filename) => {
+    // Skip if no filename provided
+    if (!filename || filename.trim() === '') {
+      return { error: { status: 400, data: 'No filename provided' } };
+    }
+
+    try {
+      // Clean the filename - remove any URL encoding or special characters that might cause issues
+      const cleanFilename = encodeURIComponent(filename.trim());
+      const logoUrl = `${BASE_URL_JWT}/sso/logos/${cleanFilename}`;
+      
+      console.log('Attempting to fetch logo from:', logoUrl);
+
+      const response = await fetch(logoUrl, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 
+          'Accept': 'image/*',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`Logo fetch failed: ${response.status} ${response.statusText} for URL: ${logoUrl}`);
+        
+        // Try alternative approaches if the direct fetch fails
+        if (response.status === 404) {
+          // Maybe the file has a different extension or encoding
+          const alternativeExtensions = ['png', 'jpg', 'jpeg', 'gif'];
+          const baseFilename = filename.replace(/\.[^/.]+$/, ""); // Remove extension
+          
+          for (const ext of alternativeExtensions) {
+            try {
+              const altUrl = `${BASE_URL_JWT}/sso/logos/${encodeURIComponent(baseFilename)}.${ext}`;
+              console.log('Trying alternative URL:', altUrl);
+              
+              const altResponse = await fetch(altUrl, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Accept': 'image/*' }
+              });
+              
+              if (altResponse.ok) {
+                const blob = await altResponse.blob();
+                const dataUrl = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result as string);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+                console.log('Successfully fetched logo from alternative URL:', altUrl);
+                return { data: dataUrl };
+              }
+            } catch (altError) {
+              console.log('Alternative fetch failed:', altError);
+              continue;
+            }
+          }
+        }
+        
+        return { error: { status: response.status, data: `Logo not found: ${response.statusText}` } };
+      }
+
+      const blob = await response.blob();
+      
+      // Validate that we actually got an image
+      if (!blob.type.startsWith('image/')) {
+        console.error('Response is not an image:', blob.type);
+        return { error: { status: 400, data: 'Invalid image format received' } };
+      }
+
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => {
+          console.error('FileReader error:', error);
+          reject(error);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      console.log('Successfully converted logo to data URL, size:', dataUrl.length);
+      return { data: dataUrl };
+      
+    } catch (error) {
+      console.error('Logo fetch network error:', error);
+      return { error: { status: 500, data: 'Network error while fetching logo' } };
+    }
+  },
+  keepUnusedDataFor: 3600, // Cache for 1 hour
+}),
+
   registerUser: builder.mutation<
   { message: string }, 
   { username: string; email: string; password: string; mobile: string; companyName: string }
@@ -370,64 +500,13 @@ getUserCompanyInfo: builder.query<{
   username: string;
   message: string;
 }, string>({
-  query: (email) => {
-    console.log('Fetching company info for email:', email);
-    return {
-      url: `${BASE_URL_JWT}/sso/user-company-info`,
-      method: 'POST',
-      body: { email },
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    };
-  },
+  query: (email) => ({
+    url: `${BASE_URL_JWT}/sso/user-company-info`,
+    method: 'POST',
+    body: { email },
+  }),
   providesTags: ['UserCompany'],
-  transformResponse: (response: any, meta, arg) => {
-    console.log('Get user company info response:', response);
-    console.log('Response headers:', meta?.response?.headers);
-    if (response && typeof response === 'object') {
-      return {
-        companyName: response.companyName || '',
-        logoPath: response.logoPath || '',
-        username: response.username || '',
-        message: response.message || 'Success',
-      };
-    }
-    
-    throw new Error('Invalid response format');
-  },
-  transformErrorResponse: (response: any, meta, arg) => {
-    console.error('Get user company info error:', response);
-    console.error('Error meta:', meta);
-    console.error('Request arg:', arg);
-    
-    // Handle different error types
-    if (response.status === 'PARSING_ERROR') {
-      console.error('Parsing error - likely received HTML instead of JSON');
-      return { 
-        message: 'Server returned invalid response. Please check API endpoint and authentication.' 
-      };
-    }
-    
-    if (response.status === 401) {
-      return { message: 'Authentication required. Please login again.' };
-    }
-    
-    if (response.status === 403) {
-      return { message: 'Access forbidden. Check your permissions.' };
-    }
-    
-    if (response.data?.message) {
-      return { message: response.data.message };
-    }
-    
-    return {
-      message: `Failed to retrieve user company information. Status: ${response.status}` 
-    };
-  },
 }),
-
 
 }),
 });
@@ -454,7 +533,6 @@ export const {
   useAuthenticateTokenMutation,
   useLogoutUserMutation,
   useGetUserCompanyInfoQuery,
+  useGetLogoAsDataUrlQuery,
+  // serveLogo
 } = tourApi;
-
-
-

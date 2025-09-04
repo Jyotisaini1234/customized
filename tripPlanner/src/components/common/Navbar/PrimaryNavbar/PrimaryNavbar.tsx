@@ -1,4 +1,5 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './PrimaryNavbar.scss';
 import { DASHBOARD_NAV_ITEMS, USER_NAV_ITEMS } from '../../../../constants/routeConstants.ts';
 import { Box, IconButton } from '@mui/material';
@@ -7,10 +8,20 @@ import { Menu as MenuIcon } from '@mui/icons-material';
 import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
 import { useGetUserCompanyInfoQuery } from '../../../../api/TourAPI.tsx';
 import CreateUser from '../CreateUser/CreateUser.tsx';
-import React, { useEffect, useState } from 'react';
+import { getFromDB, STORES, saveToDB, initDB } from '../../../../utils/TripPlannerDB.ts';
 
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
+}
+
+interface AuthData {
+  email?: string;
+  companyName?: string;
+  logoPath?: string;
+  authToken?: string;
+  refreshToken?: string;
+  username?: string;
+  timestamp?: string;
 }
 
 const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
@@ -18,220 +29,136 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>('Guest');
-  const [userName, setUserName] = useState<string>('User');
   const [companyName, setCompanyName] = useState<string>('');
   const [logoPath, setLogoPath] = useState<string>('');
-  const navigate = useNavigate();
-  const location = useLocation();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [createUserOpen, setCreateUserOpen] = useState(false);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const getCurrentUserEmail = (): string => {
-    const authData = localStorage.getItem('authData');
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData);
-        return parsed.email || '';
-      } catch (e) { console.error('Error parsing authData:', e);}
+  const { data: companyInfoData, error: companyInfoError, isLoading: isCompanyInfoLoading } = 
+    useGetUserCompanyInfoQuery(userEmail, { skip: !userEmail || userEmail === 'Guest', refetchOnMountOrArgChange: true });
+
+  const convertIndexedDBObjectToString = (data: any): string => {
+    if (!data) return '';
+    if (typeof data === 'string') return data;
+    
+    if (typeof data === 'object' && data !== null) {
+      const keys = Object.keys(data).filter(key => !isNaN(Number(key)));
+      if (keys.length > 0) {
+        const sortedKeys = keys.sort((a, b) => Number(a) - Number(b));
+        return sortedKeys.map(key => data[key]).join('');
+      }
+      if (data.value && typeof data.value === 'string') return data.value;
     }
-    return localStorage.getItem('userEmail') || localStorage.getItem('email') || '';
+    
+    return String(data);
   };
 
-  const { data: companyInfoData, error: companyInfoError,isLoading: isCompanyInfoLoading, refetch: refetchCompanyInfo } = useGetUserCompanyInfoQuery(getCurrentUserEmail(), { skip: !getCurrentUserEmail(), refetchOnMountOrArgChange: true });
+  const getUserDataFromStorage = async () => {
+    try {
+      let authData = await getFromDB(STORES.plannerData, 'authData', {}) as AuthData;
+      const email = convertIndexedDBObjectToString(authData.email || await getFromDB(STORES.plannerData, 'userEmail', ''));
+      const company = convertIndexedDBObjectToString(authData.companyName || '');
+      const logo = convertIndexedDBObjectToString(authData.logoPath || '');
+      const username = convertIndexedDBObjectToString(authData.username || '');
+      const jwtToken = authData.authToken || '';
+      const refreshToken = authData.refreshToken || '';
+      
+      return { email, company, logo, username, jwtToken, refreshToken };
+    } catch (error) {
+      console.error('Error getting user data:', error);
+      return { email: '', company: '', logo: '', username: '', jwtToken: '', refreshToken: '' };
+    }
+  };
 
-  const handleUrlParametersAndCleanUrl = () => {
+  const handleUrlParametersAndCleanUrl = async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const hasAuthParams = urlParams.has('authToken') || urlParams.has('refreshToken') || 
-                          urlParams.has('userEmail') || urlParams.has('companyName') || 
-                          urlParams.has('logoPath') || urlParams.has('authenticated');
+    const paramKeys = ['authToken', 'refreshToken', 'userEmail', 'companyName', 'logoPath', 'username'];
+    const hasAuthParams = paramKeys.some(key => urlParams.has(key));
     
     if (hasAuthParams) {
-      const authToken = urlParams.get('authToken');
-      const refreshToken = urlParams.get('refreshToken');
-      const userEmail = urlParams.get('userEmail');
-      const companyName = urlParams.get('companyName');
-      const logoPath = urlParams.get('logoPath');
+      const existingAuthData = await getFromDB(STORES.plannerData, 'authData', {}) as AuthData;
       
-      if (authToken) {
-        localStorage.setItem('authToken', authToken);
-      }
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('authRefreshToken', refreshToken); }
-      if (userEmail) {
-        localStorage.setItem('userEmail', decodeURIComponent(userEmail));
-        localStorage.setItem('email', decodeURIComponent(userEmail));
-      }
-      if (companyName) {
-        localStorage.setItem('companyName', decodeURIComponent(companyName));
-      }
-      if (logoPath) {
-        localStorage.setItem('logoPath', decodeURIComponent(logoPath));
-        console.log('Logo path stored from URL parameters:', decodeURIComponent(logoPath));
-      }
-
-      const existingAuthData = localStorage.getItem('authData');
-      let authDataObj = {};
-      if (existingAuthData) {
-        try {
-          authDataObj = JSON.parse(existingAuthData);
-        } catch (e) {
-          console.error('Error parsing existing authData:', e);
-        }
-      }
-
-      const updatedAuthData = {
-        ...authDataObj,
-        email: userEmail ? decodeURIComponent(userEmail) : authDataObj.email,
-        companyName: companyName ? decodeURIComponent(companyName) : authDataObj.companyName,
-        logoPath: logoPath ? decodeURIComponent(logoPath) : authDataObj.logoPath,
-        authToken: authToken ,
-        refreshToken: refreshToken ,
+      const updatedAuthData: AuthData = {
+        ...existingAuthData,
+        email: urlParams.get('userEmail') ? decodeURIComponent(urlParams.get('userEmail')!) : existingAuthData.email,
+        companyName: urlParams.get('companyName') ? decodeURIComponent(urlParams.get('companyName')!) : existingAuthData.companyName,
+        logoPath: urlParams.get('logoPath') ? decodeURIComponent(urlParams.get('logoPath')!) : existingAuthData.logoPath,
+        username: urlParams.get('username') ? decodeURIComponent(urlParams.get('username')!) : existingAuthData.username,
+        authToken: urlParams.get('authToken') || existingAuthData.authToken,
+        refreshToken: urlParams.get('refreshToken') || existingAuthData.refreshToken,
         timestamp: new Date().toISOString()
       };
-
-      localStorage.setItem('authData', JSON.stringify(updatedAuthData));
-      console.log('AuthData updated with URL parameters');
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-      console.log('URL cleaned, parameters removed:', cleanUrl);
+      
+      await saveToDB(STORES.plannerData, 'authData', updatedAuthData);
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
+  };
+
+  const updateUserInfo = async () => {
+    const { email, company, logo } = await getUserDataFromStorage();
+    
+    if (email && email !== 'Guest') setUserEmail(email);
+    if (company) setCompanyName(company);
+    if (logo && !companyInfoData) setLogoPath(logo);
   };
 
   useEffect(() => {
     const currentPath = location.pathname;
     const dashboardItem = DASHBOARD_NAV_ITEMS.find(item => currentPath.startsWith(item.path));
-    if (dashboardItem) { setActiveItem(dashboardItem.key); return;}
     const userItem = USER_NAV_ITEMS.find(item => item.path === currentPath);
-    if (userItem) {setActiveItem(userItem.key);}
+    
+    setActiveItem(dashboardItem?.key || userItem?.key || '');
   }, [location.pathname]);
 
   useEffect(() => {
-    handleUrlParametersAndCleanUrl();
-  }, []);
-
-  useEffect(() => {
-    if (companyInfoData && !companyInfoError) {
-      console.log('Navbar - Company info received from API:', companyInfoData);
-      if (companyInfoData.companyName && companyInfoData.companyName.trim()) {
-        const dbCompanyName = companyInfoData.companyName.trim();
-        console.log('Setting company name from DB to:', dbCompanyName);
-        setCompanyName(dbCompanyName);
-        localStorage.setItem('companyName', dbCompanyName); }
-      if (companyInfoData.logoPath) {
-        setLogoPath(companyInfoData.logoPath);
-        localStorage.setItem('logoPath', companyInfoData.logoPath);  }
-
-    } else if (companyInfoError) {
-      console.error('Navbar - Company info error, using fallback');
-      const storedCompanyName = localStorage.getItem('companyName');
-      if (storedCompanyName && storedCompanyName.trim()) {
-        console.log('Using stored company name:', storedCompanyName);
-        setCompanyName(storedCompanyName);
-      } else { setCompanyName('Fly Divine');}
-    }
-  }, [companyInfoData, companyInfoError]);
-
-  useEffect(() => {
-    const updateUserInfo = () => {
-      console.log('Navbar - Updating user info...');
-      const authData = localStorage.getItem('authData');
-      if (authData) {
-        try {
-          const parsedAuthData = JSON.parse(authData);
-          const email = parsedAuthData.email || localStorage.getItem('userEmail') || 'Guest';
-          setUserName('User');
-          const logo = parsedAuthData.logoPath || localStorage.getItem('logoPath');
-          setUserEmail(email);
-          if (!companyInfoData && logo) { setLogoPath(logo);}
-          return;
-        } catch (e) {console.error('Navbar - Error parsing authData:', e); }
-      }
-      const sessionEmail = localStorage.getItem('userEmail');
-      const sessionLogoPath = localStorage.getItem('logoPath');
-      if (sessionEmail) {
-        const email = sessionEmail || 'Guest';
-        setUserEmail(email);
-        setUserName('User');
-        if (!companyInfoData && sessionLogoPath) { setLogoPath(sessionLogoPath);} return;
-      }
-      const localEmail = localStorage.getItem('username') || localStorage.getItem('email') || 'Guest';
-      console.log('Navbar - Using fallback email:', localEmail);
-      setUserEmail(localEmail);
-      setUserName('User');
+    const initializeData = async () => {
+      await handleUrlParametersAndCleanUrl();
+      await updateUserInfo();
     };
-
-    updateUserInfo();
-
-    const handleAuthUpdate = (event?: CustomEvent) => {
-      console.log('Navbar - Auth update event received:', event?.detail);
-      setTimeout(() => {
-        updateUserInfo();
-        if (getCurrentUserEmail()) {
-          refetchCompanyInfo();
-        }
-      }, 100);
-    };
-
-    window.addEventListener('authUpdated', handleAuthUpdate as EventListener);
-    window.addEventListener('emailUpdated', handleAuthUpdate as EventListener);
     
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'authData' || e.key === 'userEmail' || e.key === 'userName' || 
-          e.key === 'companyName' || e.key === 'logoPath') {
-        console.log('Navbar - Storage changed:', e.key, e.newValue);
-        updateUserInfo();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
+    initializeData();
+    
+    const handleAuthUpdate = () => setTimeout(updateUserInfo, 100);
+    
+    ['authUpdated', 'emailUpdated'].forEach(event => {
+      window.addEventListener(event, handleAuthUpdate);
+    });
     
     return () => {
-      window.removeEventListener('authUpdated', handleAuthUpdate as EventListener);
-      window.removeEventListener('emailUpdated', handleAuthUpdate as EventListener);
-      window.removeEventListener('storage', handleStorageChange);
+      ['authUpdated', 'emailUpdated'].forEach(event => {
+        window.removeEventListener(event, handleAuthUpdate);
+      });
     };
-  }, [companyInfoData, refetchCompanyInfo]);
+  }, [companyInfoData, location.pathname]);
 
-  const getJWTTokens = () => {
-    return {
-      sessionAuthToken: localStorage.getItem('authToken'),
-      sessionRefreshToken: localStorage.getItem('authRefreshToken'),
-      localAuthToken: localStorage.getItem('authToken'),
-      localRefreshToken: localStorage.getItem('refreshToken'),
-      sessionAuthData: localStorage.getItem('authData'),
-      localAuthData: localStorage.getItem('authData'),
-      email: localStorage.getItem('userEmail') || localStorage.getItem('email'),
-      userName: localStorage.getItem('userName') || localStorage.getItem('username'),
-      companyName: localStorage.getItem('companyName'),
-      logoPath: localStorage.getItem('logoPath')
-    };
+  const getJWTTokens = async () => {
+    const { email, company, logo, jwtToken, refreshToken, username } = await getUserDataFromStorage();
+    return { authToken: jwtToken, refreshToken, email, companyName: company, logoPath: logo, username };
   };
 
-  const buildURLWithJWTTokensForExternal = (baseUrl: string): string => {
-    const tokens = getJWTTokens();
+  const buildURLWithJWTTokensForExternal = async (baseUrl: string): Promise<string> => {
+    const tokens = await getJWTTokens();
     const url = new URL(baseUrl);
-    const activeAuthToken = tokens.sessionAuthToken || tokens.localAuthToken;
-    const activeRefreshToken = tokens.sessionRefreshToken || tokens.localRefreshToken;
     
-    if (activeAuthToken) {
-      url.searchParams.append('authToken', activeAuthToken);
-      console.log('Adding authToken to external URL:', baseUrl);
-    }
-    if (activeRefreshToken) {
-      url.searchParams.append('refreshToken', activeRefreshToken);
-    }
-    if (tokens.email) {
-      url.searchParams.append('userEmail', tokens.email);
-    }
-    if (tokens.companyName) {
-      url.searchParams.append('companyName', encodeURIComponent(tokens.companyName));
-    }
-    if (tokens.logoPath) {
-      url.searchParams.append('logoPath', encodeURIComponent(tokens.logoPath));
-    }
-    url.searchParams.append('authenticated', activeAuthToken ? 'true' : 'false');
+    const params = {
+      authToken: tokens.authToken,
+      refreshToken: tokens.refreshToken,
+      userEmail: tokens.email,
+      companyName: tokens.companyName,
+      logoPath: tokens.logoPath,
+      username: tokens.username,
+      authenticated: tokens.authToken ? 'true' : 'false'
+    };
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        url.searchParams.append(key, key.includes('Name') || key.includes('Path') ? encodeURIComponent(value) : value);
+      }
+    });
     
-    console.log('Final external URL with JWT tokens:', url.toString());
     return url.toString();
   };
 
@@ -239,16 +166,15 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     return url.startsWith('http://') || url.startsWith('https://');
   };
 
-  const handleNavigation = (path: string, newTab: boolean = false) => {
+  const handleNavigation = async (path: string, newTab: boolean = false) => {
     if (isExternalURL(path)) {
-      const urlWithTokens = buildURLWithJWTTokensForExternal(path);
+      const urlWithTokens = await buildURLWithJWTTokensForExternal(path);
       if (newTab) {
         window.open(urlWithTokens, '_blank');
       } else {
         window.location.href = urlWithTokens;
       }
     } else {
-      console.log('Navigating to internal path (clean URL):', path);
       navigate(path);
     }
   };
@@ -284,23 +210,23 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
+  const handleLogout = async () => {
+    const stores = Object.values(STORES);
+    for (const store of stores) {
+      try {
+        const db = await initDB();
+        const transaction = db.transaction([store], 'readwrite');
+        const objectStore = transaction.objectStore(store);
+        objectStore.clear();
+      } catch (e) {
+        console.error(`Error clearing ${store}:`, e);
+      }
+    }
     window.location.href = `/home`;
-  };
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-    setOpenDropdown(null);
-  };
-
-  const handleCloseCreateUser = () => {
-    setCreateUserOpen(false);
   };
 
   const handleUserDropdownClick = (option: { label: string; path: string; action?: string }) => {
     setUserDropdownOpen(false);
-    
     if (option.action === 'modal') {
       setCreateUserOpen(true);
       return;
@@ -308,82 +234,138 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     handleNavigation(option.path, true);
   };
 
-  const handleDropdownItemClick = (e: React.MouseEvent, dropdownItem: { path: string; label: string }, parentKey: string) => {
+  const handleDropdownItemClick = (e: React.MouseEvent, dropdownItem: { path: string; label: string }) => {
     e.stopPropagation();
     setOpenDropdown(null);
     handleNavigation(dropdownItem.path);
   };
 
   const getLogoSrc = () => {
-    if (logoPath && logoPath.trim()) {
-      if (logoPath.startsWith('http')) {
-        return logoPath;
-      } else {
-        return `${AWS_INSTANCE}${logoPath}`;
-      }
+    if (logoPath?.trim()) {
+      return logoPath.startsWith('http') ? logoPath : `${AWS_INSTANCE}${logoPath}`;
     }
-    return "/fly-divine-1.png";
+    return "/fly-divine.png";
   };
-  
-  if (isCompanyInfoLoading) {
-    console.log('Navbar - Loading company info...');
-  }
-  if (companyInfoError) {
-    console.error('Navbar - Company info error:', companyInfoError);
-  }
 
   return (
     <>
       <Box className="nav-holder">
         <nav className="primary-navbar">
           <Box className="logo">
-            <img  src={getLogoSrc()} alt={`Logo`}  onError={(e) => { const target = e.target as HTMLImageElement;  target.src = "/fly-divine-1.png"; }}  />
-            {isCompanyInfoLoading && ( <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}> Loading... </span>)}
+            <img 
+              src={getLogoSrc()} 
+              alt="Logo" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/fly-divine.png";
+              }} 
+            />
+            {isCompanyInfoLoading && (
+              <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>
+                Loading...
+              </span>
+            )}
           </Box>
+          
           <Box className="nav-items">
-          <Box className="trip_details">
-          <span>Welcome: {userEmail}</span>
-          <Box component="span"> | {companyName || 'Fly Divine'}</Box>
-          {USER_NAV_ITEMS.map((item, index) => (
-              <React.Fragment key={item.key}>
-                {item.key === 'user' ? (
-                  <Box sx={{ position: 'relative', display: 'inline-block' }}  onMouseEnter={() => setUserDropdownOpen(true)}    onMouseLeave={() => setUserDropdownOpen(false)} >
-                    <Box component="span"  style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }} > | {item.label}
-                    </Box>
-                    {userDropdownOpen && (
-                      <Box   sx={{   position: 'absolute',   top: '100%',  left: '50%',  transform: 'translateX(-50%)', backgroundColor: '#0369a1', color: 'black',   borderRadius: '4px',   zIndex: 1000,  minWidth: '11rem',   padding: '5px 0', }} >
-                        {userDropdownOptions.map((option, idx) => (
-                          <Box  key={idx}   onClick={(e) => {  e.stopPropagation();  handleUserDropdownClick(option); }}
-                            style={{display: 'block',  padding: '8px 1rem',  color: 'white',textDecoration: 'none', fontSize: '14px',  borderBottom: idx < userDropdownOptions.length - 1 ? '1px solid #eee' : 'none', cursor: 'pointer',  }} 
-                            onMouseEnter={(e) => {    e.currentTarget.style.backgroundColor = '#0369a1'; }}   onMouseLeave={(e) => {  e.currentTarget.style.backgroundColor = 'transparent'; }} > 
-                            {option.label}
-                          </Box>
-                        ))}
+            <Box className="trip_details">
+              <span>Welcome: {userEmail}</span>
+              <Box component="span"> | {companyName || 'Fly Divine'}</Box>
+              {USER_NAV_ITEMS.map((item) => (
+                <React.Fragment key={item.key}>
+                  {item.key === 'user' ? (
+                    <Box 
+                      sx={{ position: 'relative', display: 'inline-block' }}
+                      onMouseEnter={() => setUserDropdownOpen(true)}
+                      onMouseLeave={() => setUserDropdownOpen(false)}
+                    >
+                      <Box 
+                        component="span" 
+                        style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}
+                      >
+                        | {item.label}
                       </Box>
-                    )}
-                  </Box>
-                ) : (
-                  <Box  component="span"  onClick={() => handleItemClick(item.key, item.path)}   style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}> | {item.label}
-                  </Box>
-                )}
-              </React.Fragment>
-            ))}
-          </Box>
+                      {userDropdownOpen && (
+                        <Box sx={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          backgroundColor: '#0369a1',
+                          color: 'black',
+                          borderRadius: '4px',
+                          zIndex: 1000,
+                          minWidth: '11rem',
+                          padding: '5px 0'
+                        }}>
+                          {userDropdownOptions.map((option: { label: string; path: string; action?: string }, idx: number) => (
+                            <Box 
+                              key={idx} 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUserDropdownClick(option);
+                              }}
+                              style={{
+                                display: 'block',
+                                padding: '8px 1rem',
+                                color: 'white',
+                                textDecoration: 'none',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                borderBottom: idx < userDropdownOptions.length - 1 ? '1px solid #eee' : 'none'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0369a1'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              {option.label}
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
+                  ) : (
+                    <Box 
+                      component="span"
+                      onClick={() => handleItemClick(item.key, item.path)}
+                      style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}
+                    >
+                      | {item.label}
+                    </Box>
+                  )}
+                </React.Fragment>
+              ))}
+            </Box>
           </Box>
         </nav>
 
         <Box className="secondary-navbar">
           <Box className={`item-container ${menuOpen ? 'open' : ''}`}>
             {DASHBOARD_NAV_ITEMS.map(item => (
-              <li key={item.key} className={`item-list ${activeItem === item.key ? 'active' : ''}`} onClick={() => handleItemClick(item.key)} >
-                <a className={activeItem === item.key ? 'active' : ''}   style={{ cursor: 'pointer',  color: 'white' }} >
-                  <span className="icon"> <img src={item.icon} alt={item.label} /> </span>
+              <li 
+                key={item.key} 
+                className={`item-list ${activeItem === item.key ? 'active' : ''}`}
+                onClick={() => handleItemClick(item.key)}
+              >
+                <a 
+                  className={activeItem === item.key ? 'active' : ''}
+                  style={{ cursor: 'pointer', color: 'white' }}
+                >
+                  <span className="icon">
+                    <img src={item.icon} alt={item.label} />
+                  </span>
                   {item.label}
                 </a>
                 {(item.key === 'baku-packages' || item.key === 'bookings') && (
                   <Box className={`dropdown-menu ${openDropdown === item.key ? 'show' : ''}`}>
-                    {dropdownMenus[item.key as keyof typeof dropdownMenus].map((dropdownItem, idx) => (
-                      <Box  key={idx}  onClick={(e) => handleDropdownItemClick(e, dropdownItem, item.key)}className="dropdown-item"  component="div">{dropdownItem.label}  </Box>
+                    {(dropdownMenus[item.key as keyof typeof dropdownMenus] || []).map((dropdownItem: { path: string; label: string }, idx: number) => (
+                      <Box 
+                        key={idx}
+                        onClick={(e) => handleDropdownItemClick(e, dropdownItem)}
+                        className="dropdown-item"
+                        component="div"
+                      >
+                        {dropdownItem.label}
+                      </Box>
                     ))}
                   </Box>
                 )}
@@ -391,12 +373,23 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
             ))}
           </Box>
 
-          <IconButton  className={`menu-toggle ${menuOpen ? 'open' : ''}`}  onClick={toggleMenu}  aria-label="Toggle navigation menu">
-            <MenuIcon sx={{  color: 'white',  marginLeft: '-1rem',  height: '2rem',  width: '4rem',  marginTop: '0.4rem' }}   />
+          <IconButton 
+            className={`menu-toggle ${menuOpen ? 'open' : ''}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <MenuIcon sx={{ 
+              color: 'white', 
+              marginLeft: '-1rem', 
+              height: '2rem', 
+              width: '4rem', 
+              marginTop: '0.4rem'
+            }} />
           </IconButton>
         </Box>
       </Box>
-      {createUserOpen && <CreateUser onClose={handleCloseCreateUser} />}
+      
+      {createUserOpen && <CreateUser onClose={() => setCreateUserOpen(false)} />}
     </>
   );
 };

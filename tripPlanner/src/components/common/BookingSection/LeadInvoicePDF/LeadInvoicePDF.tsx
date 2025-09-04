@@ -57,7 +57,7 @@ export const useLeadInvoiceDownload = () => {
     tempDiv.id = 'temp-invoice-content';
     tempDiv.style.position = 'absolute';
     tempDiv.style.left = '-9999px';
-    tempDiv.style.width = '794px'; // A4 width
+    tempDiv.style.width = '794px';
     tempDiv.style.backgroundColor = '#ffffff';
     tempDiv.style.padding = '20px';
     tempDiv.style.boxSizing = 'border-box';
@@ -313,15 +313,7 @@ export const useLeadInvoiceDownload = () => {
                         {item.tours?.description ? renderDescriptionLines(item.tours.description) : 'No description available'}
                       </Box>
                     </Box>
-                    
-                    {/* {item.tours?.activities && item.tours.activities.length > 0 && (
-                      <Box sx={{ mt: 1.5 }}>
-                        <Typography sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}> Activities </Typography>
-                        <Box component="ul" sx={{ m: 0, pl: 3 }}>
-                          {item.tours.activities.map((activity, actIndex) => (<Typography key={actIndex} component="li" sx={{ fontSize: '0.9rem', mb: 0.5 }}> {activity.name}  </Typography>  ))}
-                        </Box>
-                      </Box>
-                    )} */}
+
                     {((item.tours?.selectedActivities && Object.keys(item.tours.selectedActivities).length > 0) || 
   (item.tours?.activities && item.tours.activities.length > 0)) && (
   <Box sx={{ mt: 1.5 }}>

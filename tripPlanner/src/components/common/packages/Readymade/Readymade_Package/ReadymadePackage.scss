@@ -86,7 +86,7 @@
     padding: 0.5rem 1rem;
     text-transform: none;
     font-weight: 500;
-    &:hover { background-color: rgba(25, 118, 210, 0.04); }
+    // &:hover { background-color: rgba(25, 118, 210, 0.04); }
   }
 
   .loading-container {
@@ -137,6 +137,9 @@
     color: white;
     background: $primary-color;
     text-transform: none;
+     &:hover { background-color: $primary-color;
+      color: white;
+     }
   }
 
   // Card styles

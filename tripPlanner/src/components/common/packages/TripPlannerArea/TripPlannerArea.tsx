@@ -4,6 +4,7 @@ import {Box,Container,Typography,TextField,FormControl,Grid,Button,Select,MenuIt
 import './TripPlannerArea.scss';
 import { TRIP_PLANNER_PAGE } from '../../../../utils/ApiConstants.ts'
 import { citiesList as cityOptions, country as countryOptions } from "../../../../model/selectOptions.ts";
+import { getFromDB, STORES } from '../../../../utils/TripPlannerDB.ts';
 
 const TripPlannerArea: React.FC = () => {
 const location = useLocation();
@@ -16,6 +17,56 @@ const [selectedCity, setSelectedCity] = useState<string>(searchParams.city || ''
 const [selectedCountry, setSelectedCountry] = useState<string>(searchParams.country || '');
 const [searchedCity, setSearchedCity] = useState("");
 const [nights, setNights] = useState<number | string>(searchParams.nights || 1);
+
+const getJWTTokens = async () => {
+  const [sessionRefreshToken,  localAuthToken,localRefreshToken, localAuthData,userEmail,email, userName, username,companyName,logoPath] = await Promise.all([
+    getFromDB(STORES.plannerData, 'authRefreshToken', null),
+    getFromDB(STORES.plannerData, 'authToken', null),
+    getFromDB(STORES.plannerData, 'refreshToken', null),
+    getFromDB(STORES.plannerData, 'authData', null),
+    getFromDB(STORES.plannerData, 'userEmail', null),
+    getFromDB(STORES.plannerData, 'email', null),
+    getFromDB(STORES.plannerData, 'userName', null),
+    getFromDB(STORES.plannerData, 'username', null),
+    getFromDB(STORES.plannerData, 'companyName', null),
+    getFromDB(STORES.plannerData, 'logoPath', null)
+  ]);
+  return { sessionRefreshToken, localAuthToken, localRefreshToken,localAuthData,email: userEmail || email, userName: userName || username,companyName, logoPath };
+};
+
+const buildURLWithJWTTokens = async (baseUrl: string, params: URLSearchParams): Promise<string> => {
+  const tokens = await getJWTTokens();
+  const url = new URL(`${baseUrl}${params.toString()}`);
+  
+  const activeAuthToken =  tokens.localAuthToken;
+  const activeRefreshToken =  tokens.localRefreshToken;
+  
+  if (activeAuthToken) {
+    url.searchParams.append('authToken', activeAuthToken);
+    console.log('TripPlanner - Adding authToken to hotel page URL');
+  }
+  if (activeRefreshToken) {
+    url.searchParams.append('refreshToken', activeRefreshToken);
+  }
+  if (tokens.email) {
+    url.searchParams.append('userEmail', encodeURIComponent(tokens.email));
+  }
+  if (tokens.userName) {
+    url.searchParams.append('userName', encodeURIComponent(tokens.userName));
+  }
+  if (tokens.companyName) {
+    url.searchParams.append('companyName', encodeURIComponent(tokens.companyName));
+  }
+  if (tokens.logoPath) {
+    url.searchParams.append('logoPath', encodeURIComponent(tokens.logoPath));
+  }
+  
+  url.searchParams.append('authenticated', activeAuthToken ? 'true' : 'false');
+  
+  console.log('TripPlanner - Final hotel page URL with JWT tokens:', url.toString());
+  return url.toString();
+};
+
 const totalFromRooms = (field: 'adults' | 'cwb' | 'cnb' | 'infants') => {if (Array.isArray(searchParams.rooms)) {return searchParams.rooms.reduce((sum, room) => sum + (room[field] || 0), 0);}return 0;};
 const [adultsCount, setAdultsCount] = useState<number>(totalFromRooms('adults') || 2);
 const [cwbCount, setCwbCount] = useState<number>(totalFromRooms('cwb') || 0);
@@ -39,52 +90,51 @@ const getFilteredCities = () => {
 };
 const filteredCities = getFilteredCities();
 
-const handleClose = () => {
-let savedHotels = [];
-const storedHotels = sessionStorage.getItem('tripPlannerHotels');
-  if (storedHotels) {
-    try {savedHotels = JSON.parse(storedHotels);}
-    catch (e) {console.error('Error parsing saved hotels', e);}}
-      navigate(-1);
+const handleClose = async () => {
+  let savedHotels = [];
+  const storedHotels = await getFromDB(STORES.hotels, 'tripPlannerHotels', []);
+  if (storedHotels && storedHotels.length > 0) {
+    savedHotels = storedHotels;
+  }
+  navigate(-1);
 };
 
 useEffect(() => {
-  if (!country) {
-    const storedParams = sessionStorage.getItem('tripPlannerParams');
-    if (storedParams) {
-      try {
-        const params = JSON.parse(storedParams);
-        console.log('Retrieved params from sessionStorage:', params);
-        if (params.country) {
-          setCountry(params.country);
-        } else if (params.selectedCountry) {
-          setCountry(params.selectedCountry);
+  const loadStoredParams = async () => {
+    if (!country) {
+      const storedParams = await getFromDB(STORES.plannerData, 'tripPlannerParams', {});
+      if (storedParams && Object.keys(storedParams).length > 0) {
+        console.log('Retrieved params from IndexedDB:', storedParams);
+        if (storedParams.country) {
+          setCountry(storedParams.country);
+        } else if (storedParams.selectedCountry) {
+          setCountry(storedParams.selectedCountry);
         }
-        if (params.city && !city) { 
-          setCity(params.city); 
-        } else if (params.selectedCity && !city) {
-          setCity(params.selectedCity);
+        if (storedParams.city && !city) { 
+          setCity(storedParams.city); 
+        } else if (storedParams.selectedCity && !city) {
+          setCity(storedParams.selectedCity);
         }
-        
-        if (params.rooms && params.rooms.length > 0) {
-          const firstRoom = params.rooms[0]; // Get first room data
+        if (storedParams.rooms && storedParams.rooms.length > 0) {
+          const firstRoom = storedParams.rooms[0];
           setAdultsCount(firstRoom.adults || 2);
           setCwbCount(firstRoom.cwb || 0);
           setCnbCount(firstRoom.cnb || 0);
           setInfantsCount(firstRoom.infants || 0);
         }
-        if (params.selectedCountry) {
-          setSelectedCountry(params.selectedCountry);
-        }
-        if (params.selectedCity) {
-          setSelectedCity(params.selectedCity);
-        }
         
-      } catch (e) {
-        console.error('Error parsing stored trip planner params', e);
+        if (storedParams.selectedCountry) {
+          setSelectedCountry(storedParams.selectedCountry);
+        }
+        if (storedParams.selectedCity) {
+          setSelectedCity(storedParams.selectedCity);
+        }
       }
     }
-  }
+  };
+  loadStoredParams().catch(e => {
+    console.error('Error loading stored trip planner params', e);
+  });
 }, [country, city]);
 
 useEffect(() => {
@@ -92,9 +142,7 @@ useEffect(() => {
     const currentCountry = country || selectedCountry;
     const countryObj = countryOptions.find(c => c.label === currentCountry);
     if (countryObj) {
-      const cityBelongsToCountry = cityOptions.some(city => 
-        city.label === selectedCity && city.countryId === countryObj.id
-      );
+      const cityBelongsToCountry = cityOptions.some(city =>  city.label === selectedCity && city.countryId === countryObj.id );
       if (!cityBelongsToCountry) {
         setSelectedCity('');
         setCity('');
@@ -103,7 +151,7 @@ useEffect(() => {
   }
 }, [country, selectedCountry]);
 
-const handleSearch = () => {
+const handleSearch = async () => {
   const params = new URLSearchParams();
   const checkInDate = searchParams.checkInDate || new Date().toISOString();
   const currentCity = selectedCity || city;
@@ -118,8 +166,8 @@ const handleSearch = () => {
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
   if (searchParams.fromReadymadePackage === 'true' || searchParams.fromReadymadePackage === true) {
-        params.append('fromReadymadePackage', 'true');
-      }
+    params.append('fromReadymadePackage', 'true');
+  }
   if (searchParams.specificDay) {
     params.append('specificDay', 'true');
     if (searchParams.specificDayId) {
@@ -130,16 +178,14 @@ const handleSearch = () => {
     }
   }
   params.append('applyToAllDays', searchParams.specificDay ? 'false' : String(applyToAllDays));
-  
   if (searchParams.allDays) {
     params.append('allDays', JSON.stringify(searchParams.allDays));
   }
-const editLeadData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
-const leadId = editLeadData.leadId || searchParams.leadId || null;
-if (leadId) {
-  params.append('bookingRef', leadId);
-}
-
+  const editLeadData = await getFromDB(STORES.plannerData, 'editLeadData', {});
+  const leadId = editLeadData.leadId || searchParams.leadId || null;
+  if (leadId) {
+    params.append('bookingRef', leadId);
+  }
   const rooms = searchParams.rooms || [];
   const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
   const totalCWB = rooms.reduce((sum, room) => sum + room.cwb, 0);
@@ -149,10 +195,11 @@ if (leadId) {
   params.append('cwb', String(totalCWB));
   params.append('cnb', String(totalCNB));
   params.append('infants', String(totalInfants));
-  params.append('roomsData',  encodeURIComponent(JSON.stringify(rooms)));
-  window.location.href = `${TRIP_PLANNER_PAGE}${params.toString()}`;
+  params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
+  const finalUrl = await buildURLWithJWTTokens(TRIP_PLANNER_PAGE, params);
+  console.log('TripPlanner - Redirecting to hotel page with tokens:', finalUrl);
+  window.location.href = finalUrl;
 };
-
 
 const formatDate = (dateStr) => {
   try {return new Date(dateStr).toLocaleDateString();}

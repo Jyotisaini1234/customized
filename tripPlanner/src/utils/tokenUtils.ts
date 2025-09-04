@@ -38,7 +38,6 @@ export const getUserFromToken = (token: string, loginEmail?: string): User | nul
       username = email.split('@')[0];
     }
     
-    // Fix: Check for the correct property names from the JWT payload
     let companyName = '';
     if (decoded.companyName && decoded.companyName.trim()) {
       companyName = decoded.companyName.trim();
@@ -47,7 +46,7 @@ export const getUserFromToken = (token: string, loginEmail?: string): User | nul
     } else if (decoded.organizationName && decoded.organizationName.trim()) {
       companyName = decoded.organizationName.trim();
     } else {
-      companyName = 'Fly Divine'; // Default fallback
+      companyName = 'Fly Divine';
     }
     
     console.log('Extracted company name from token:', companyName);
@@ -58,7 +57,7 @@ export const getUserFromToken = (token: string, loginEmail?: string): User | nul
       email: email,
       role: decoded.role,
       company: companyName,
-      companyName: companyName, // Add this if your User type expects it
+      companyName: companyName,
     };
   } catch (error) {
     console.error('Error decoding JWT token:', error);

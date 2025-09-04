@@ -6,6 +6,7 @@ import { TripPlannerData } from '../../../../../types/types.ts';
 import { Box } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useGetLeadByIdQuery } from '../../../../../api/TourAPI.tsx';
+import { getFromDB, STORES } from '../../../../../utils/TripPlannerDB.ts';
 
 const TourPackagePDF: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,7 @@ const TourPackagePDF: React.FC = () => {
   const [companyLogo, setCompanyLogo] = useState<string>('');
 
   const { data: leadData, error: apiError, isLoading: apiLoading } = useGetLeadByIdQuery( bookingRef || '',  { skip: !bookingRef });
+  
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
     try {
@@ -39,6 +41,7 @@ const TourPackagePDF: React.FC = () => {
       return '';
     }
   };
+
   useEffect(() => {
     const logoPath = localStorage.getItem('logoPath');
     console.log('Logo path from localStorage:', logoPath);
@@ -48,21 +51,15 @@ const TourPackagePDF: React.FC = () => {
       console.log('Logo set to:', logoPath);
     }
   }, []);
-  useEffect(() => {
-    const logoPath = localStorage.getItem('logoPath');
-    if (logoPath) {
-      setCompanyLogo(logoPath);
-    }
-  }, []);
+
   useEffect(() => {
     const companyInfo = localStorage.getItem('companyInfo');
-    console.log('Company info from localStorage:', companyInfo); // Add this
-    
+    console.log('Company info from localStorage:', companyInfo);
     if (companyInfo) {
       try {
         const parsedInfo = JSON.parse(companyInfo);
-        console.log('Parsed company info:', parsedInfo); // Add this
-        console.log('Logo path:', parsedInfo.logoPath); // Add this
+        console.log('Parsed company info:', parsedInfo);
+        console.log('Logo path:', parsedInfo.logoPath);
         
         if (parsedInfo.logoPath) {
           setCompanyLogo(parsedInfo.logoPath);
@@ -74,7 +71,7 @@ const TourPackagePDF: React.FC = () => {
     }
   }, []);
   
-   useEffect(() => {
+  useEffect(() => {
     if (!bookingRef) {
       setError('No booking reference provided');
       setIsLoading(false);
@@ -90,20 +87,19 @@ const TourPackagePDF: React.FC = () => {
 
     if (leadData && !apiLoading) {
       console.log("PDF component received data from API:", leadData);
-      // Transform the lead data to match TripPlannerData format
       const transformedData: TripPlannerData = {
         bookingRef: leadData.referenceId || leadData.bookingNo || bookingRef,
         generateDate: new Date().toLocaleDateString('en-GB'),
-        country: leadData.country || leadData.destinations || leadData.destination || 'AZERBAIJAN', // Fallback to default
+        country: leadData.country || leadData.destinations || leadData.destination ,
         currentSearchParams: {
-          city: leadData.destinations || 'Baku',
+          city: leadData.destinations,
           checkInDate: leadData.travelDate,
           checkOutDate: leadData.hotelDetails?.[0]?.checkOutDate || leadData.travelDate,
           nights: parseInt(leadData.nights) || 1,
-          rooms: [{
-            adults: Math.floor(parseInt(leadData.totalPersons || '2') / 2) || 2,
+          rooms: leadData.totalRooms || [{
+            adults: Math.floor(parseInt(leadData.totalPersons) / 2) || 2,
             cwb: 0,
-            cnb: parseInt(leadData.totalPersons || '2') - Math.floor(parseInt(leadData.totalPersons || '2') / 2) || 0,
+            cnb: parseInt(leadData.totalPersons) - Math.floor(parseInt(leadData.totalPersons) / 2) || 0,
             infants: 0,
             id: 0,
             roomCategory: '',
@@ -123,7 +119,8 @@ const TourPackagePDF: React.FC = () => {
             checkOutDate: hotel.checkOutDate,
             nights: hotel.nights || parseInt(leadData.nights) || 1,
             roomType: hotel.roomType || 'Standard',
-            mealPlan: hotel.mealPlan || 'BB'
+            mealPlan: hotel.mealPlan || 'BB',
+            totalRooms: hotel.totalRooms || leadData.totalRooms?.length
           }
         })) || [],
         plannerItems: leadData.plannerItems?.map((item: any, index: number) => {
@@ -136,7 +133,6 @@ const TourPackagePDF: React.FC = () => {
               tourItem.tours?.details?.description
             ];
             
-            // Return the first non-empty description found
             for (const desc of possibleDescriptions) {
               if (desc && desc.trim().length > 0) {
                 return desc;
@@ -146,7 +142,6 @@ const TourPackagePDF: React.FC = () => {
             return 'No description available';
           };
         
-          // Extract duration from various possible locations
           const getDuration = (tourItem: any) => {
             const possibleDurations = [
               tourItem.tours?.duration,
@@ -170,14 +165,14 @@ const TourPackagePDF: React.FC = () => {
             dateObj: new Date(item.date),
             tours: item.tours ? {
               name: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
-              description: getDescription(item), // Use the helper function
+              description: getDescription(item),
               activities: item.tours.activities || [],
-              eventDuration: getDuration(item), // Use the helper function
+              eventDuration: getDuration(item),
               details: {
                 tour: {
                   tourName: item.tours.name || item.tours.details?.tour?.tourName || 'Tour Activity',
-                  description: getDescription(item), // Use the helper function
-                  eventDuration: getDuration(item) // Use the helper function
+                  description: getDescription(item),
+                  eventDuration: getDuration(item)
                 }
               }
             } : null,
@@ -191,7 +186,8 @@ const TourPackagePDF: React.FC = () => {
             totalPersons: parseInt(leadData.totalPersons) || 2
           }
         },
-        currency: leadData.hotelDetails?.[0]?.currency
+        currency: leadData.hotelDetails?.[0]?.currency,
+        totalRooms: leadData.totalRooms || []
       };
 
       setPackageData(transformedData);
@@ -213,48 +209,61 @@ const TourPackagePDF: React.FC = () => {
       console.error('Content element not found for PDF generation');
       return;
     }
+    
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
       compress: true
     });
+    
     pdf.setFont('helvetica');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const contentWidth = pageWidth - 20;
     const footerText = "This document provides a summary of your tour package. Please request an official voucher to confirm your reservation.";
+    
     const sections = [
       document.querySelector('.tour-package-header'),
       document.querySelector('.booking-reference'),
       document.querySelector('.client-details-section'),
-      document.querySelector('.package-details-section'),
-      document.querySelector('.itinerary-section .section-title')
+      document.querySelector('.package-details-section')
     ];
+    
+    const itinerarySectionTitle = document.querySelector('.itinerary-section .section-title');
     const dayContainers = document.querySelectorAll('.day-container');
     const costSummary = document.querySelector('.cost-summary');
+    
     const captureAndAddElement = async (element: Element, yPosition: number) => {
       return new Promise<number>((resolve) => {
         html2canvas(element as HTMLElement, {
-          scale: 1.5,
+          scale: 2, // Increased scale for better quality
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          imageTimeout: 2000, // Increase timeout
-          allowTaint: false
+          imageTimeout: 3000,
+          allowTaint: false,
+          removeContainer: true,
+          foreignObjectRendering: false
         }).then(canvas => {
-          const imgData = canvas.toDataURL('image/jpeg', 0.85); // Using JPEG with 85% quality for smaller size
+          const imgData = canvas.toDataURL('image/png', 0.9); // Using PNG for better text quality
           const imgWidth = contentWidth;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
           pdf.addImage(
             imgData, 
-            'JPEG', 
+            'PNG', 
             10, // x position
             yPosition, // y position
             imgWidth, 
             imgHeight
           );
-          resolve(yPosition + imgHeight + 2); // 2mm spacing (reduced from 3mm)
+          
+          // Reduced spacing between sections for better layout
+          resolve(yPosition + imgHeight + 1); // Only 1mm spacing
+        }).catch(error => {
+          console.error('Error capturing element:', error);
+          resolve(yPosition + 10); // Fallback spacing
         });
       });
     };
@@ -262,43 +271,78 @@ const TourPackagePDF: React.FC = () => {
     const processPDF = async () => {
       let yPosition = 10;
       let currentPage = 1;
+      
+      // Process main sections first
       for (const section of sections) {
         if (section) {
           yPosition = await captureAndAddElement(section, yPosition);
         }
       }
       
-      for (let i = 0; i < dayContainers.length; i++) {
-        const dayContainer = dayContainers[i];
-        const tempCanvas = await html2canvas(dayContainer as HTMLElement, {
-          scale: 1.5,
+      // Add itinerary title with minimal spacing
+      if (itinerarySectionTitle) {
+        // Check if we need a new page
+        const tempCanvas = await html2canvas(itinerarySectionTitle as HTMLElement, {
+          scale: 2,
           logging: false,
           backgroundColor: '#ffffff'
         });
         const imgWidth = contentWidth;
         const imgHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
-        if (yPosition + imgHeight > pageHeight - 20) {
+        
+        if (yPosition + imgHeight > pageHeight - 25) {
           pdf.addPage();
           currentPage++;
           yPosition = 10;
         }
-        yPosition = await captureAndAddElement(dayContainer, yPosition);
+        
+        yPosition = await captureAndAddElement(itinerarySectionTitle, yPosition);
       }
-      if (costSummary) {
-        const tempCanvas = await html2canvas(costSummary as HTMLElement, {
-          scale: 1.5,
-          logging: false
+      
+      // Process day containers with minimal spacing
+      for (let i = 0; i < dayContainers.length; i++) {
+        const dayContainer = dayContainers[i];
+        
+        const tempCanvas = await html2canvas(dayContainer as HTMLElement, {
+          scale: 2,
+          logging: false,
+          backgroundColor: '#ffffff'
         });
         const imgWidth = contentWidth;
         const imgHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
-        if (yPosition + imgHeight > pageHeight - 20) {
+        
+        // Check if we need a new page
+        if (yPosition + imgHeight > pageHeight - 25) {
           pdf.addPage();
           currentPage++;
           yPosition = 10;
         }
+        
+        yPosition = await captureAndAddElement(dayContainer, yPosition);
+      }
+      
+      // Add cost summary
+      if (costSummary) {
+        const tempCanvas = await html2canvas(costSummary as HTMLElement, {
+          scale: 2,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+        const imgWidth = contentWidth;
+        const imgHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
+        
+        if (yPosition + imgHeight > pageHeight - 25) {
+          pdf.addPage();
+          currentPage++;
+          yPosition = 10;
+        }
+        
         yPosition = await captureAndAddElement(costSummary, yPosition);
       }
+      
       const totalPages = currentPage;
+      
+      // Add footer to all pages
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setFontSize(8);
@@ -306,13 +350,16 @@ const TourPackagePDF: React.FC = () => {
         pdf.text(footerText, pageWidth / 2, pageHeight - 15, { align: 'center' });
         pdf.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       }
+      
       const fileName = `Tour_Package_${packageData?.bookingRef || 'Package'}.pdf`;
       pdf.save(fileName);
     };
+    
     processPDF().catch(error => {
       console.error('Error generating PDF:', error);
     });
   };
+
   if (isLoading) {
     return (
       <Box className="loading-container">
@@ -330,9 +377,35 @@ const TourPackagePDF: React.FC = () => {
   }
 
   const { bookingRef: refId, generateDate, currentSearchParams, hotels = [], plannerItems = [],
-    costs = { finalAmount: 0, packageDetails: { totalPersons: 0 } }, currency,country} = packageData;
+    costs = { finalAmount: 0, packageDetails: { totalPersons: 0 } }, currency, country, totalRooms = [] } = packageData;
   
   const calculateRoomInfo = () => {
+    if (totalRooms && totalRooms.length > 0) {
+      return totalRooms.reduce((info, room) => {
+        const adults = room.adults || 0;
+        const cwb = room.cwb || 0;    
+        const cnb = room.cnb || 0;    
+        const infants = room.infants || 0;
+        
+        return {
+          totalRooms: info.totalRooms + 1,
+          totalAdults: info.totalAdults + adults,
+          totalChildren: info.totalChildren + cwb + cnb,
+          totalCWB: info.totalCWB + cwb,
+          totalCNB: info.totalCNB + cnb,
+          totalInfants: info.totalInfants + infants
+        };
+      }, {
+        totalRooms: 0,
+        totalAdults: 0,
+        totalChildren: 0,
+        totalCWB: 0,
+        totalCNB: 0,
+        totalInfants: 0
+      });
+    }
+    
+    // Fallback to currentSearchParams.rooms
     if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
       return {
         totalRooms: 1,
@@ -346,8 +419,8 @@ const TourPackagePDF: React.FC = () => {
     
     return currentSearchParams.rooms.reduce((info, room) => {
       const adults = room.adults || 0;
-      const cwb = room.cwb || 0;    // Child with bed
-      const cnb = room.cnb || 0;    // Child no bed
+      const cwb = room.cwb || 0;    
+      const cnb = room.cnb || 0;    
       const infants = room.infants || 0;
       
       return {
@@ -373,8 +446,18 @@ const TourPackagePDF: React.FC = () => {
       return costs.packageDetails.totalPersons;
     }
     
+    if (totalRooms && totalRooms.length > 0) {
+      return totalRooms.reduce((total, room) => {
+        const adults = room.adults || 0;
+        const cwb = room.cwb || 0;
+        const cnb = room.cnb || 0;
+        const infants = room.infants || 0;
+        return total + adults + cwb + cnb + infants;
+      }, 0);
+    }
+    
     if (!currentSearchParams?.rooms || !Array.isArray(currentSearchParams.rooms)) {
-      return 2; // Default to 2 persons if no room data
+      return 2;
     }
     
     return currentSearchParams.rooms.reduce((total, room) => {
@@ -388,16 +471,33 @@ const TourPackagePDF: React.FC = () => {
   
   const roomInfo = calculateRoomInfo();
   const totalPersons = calculateTotalPersons();
+  
   const getHotelData = () => {
+    if (leadData && leadData.hotelDetails && leadData.hotelDetails.length > 0) {
+      return leadData.hotelDetails.map((hotel: any) => ({
+        name: hotel.hotelName || 'Unknown Hotel',
+        checkInDate: formatDate(hotel.checkInDate),
+        checkOutDate: formatDate(hotel.checkOutDate),
+        roomType: hotel.roomType || 'Standard',
+        mealPlan: hotel.mealPlan || 'BB',
+        nights: hotel.nights || 1,
+        starRating: hotel.starRating || 'N/A',
+        city: hotel.city || currentSearchParams?.city,
+        totalRooms: hotel.totalRooms
+      }));
+    }
+    
+    // Fallback to hotels array
     const hotelEntries = hotels.map(hotel => ({
       name: hotel.hotel?.hotelName || hotel.hotel?.name || 'Unknown Hotel',
       checkInDate: formatDate(hotel.booking?.checkInDate),
       checkOutDate: formatDate(hotel.booking?.checkOutDate || currentSearchParams?.checkOutDate),
-      roomType: hotel.booking?.roomType ||'Standard',
-      mealPlan: hotel.booking?.mealPlan ||'BB',
+      roomType: hotel.booking?.roomType || 'Standard',
+      mealPlan: hotel.booking?.mealPlan || 'BB',
       nights: hotel.booking?.nights || 1,
-      starRating: hotel.hotel?.starRating ||'N/A',
-      city: hotel.hotel?.city || currentSearchParams?.city
+      starRating: hotel.hotel?.starRating || 'N/A',
+      city: hotel.hotel?.city || currentSearchParams?.city,
+      totalRooms: hotel.booking?.totalRooms || roomInfo.totalRooms
     }));
     
     return hotelEntries.map(hotel => ({
@@ -408,34 +508,39 @@ const TourPackagePDF: React.FC = () => {
       roomType: hotel.roomType,
       mealPlan: hotel.mealPlan,
       starRating: hotel.starRating,
-      city: hotel.city
+      city: hotel.city,
+      totalRooms: hotel.totalRooms
     }));
   }
+  
   const hotelData = getHotelData();
 
-const formatDescription = (description) => {
-  if (!description) return "No description available";
-  let formattedDesc = description
-    .replace(/\*\*/g, '\n**')
-    .replace(/\*/g, '\n*')
-    .trim();
-  formattedDesc = formattedDesc
-    .split('\n')
-    .filter(line => line.trim() !== '')
-    .join('\n');
-  
-  return formattedDesc;
-};
+  const formatDescription = (description) => {
+    if (!description) return "No description available";
+    let formattedDesc = description
+      .replace(/\*\*/g, '\n**')
+      .replace(/\*/g, '\n*')
+      .trim();
+    formattedDesc = formattedDesc
+      .split('\n')
+      .filter(line => line.trim() !== '')
+      .join('\n');
+    
+    return formattedDesc;
+  };
 
-return (
+  return (
     <Box className="tour-package-container">
       <Box id="tour-package-content" className="tour-package-content">
         <Box className="tour-package-header">
           <h1 className="header-title">{(country || 'AZERBAIJAN').toUpperCase()} TOUR PACKAGE</h1>
           {companyLogo && (
-      <Box className="company-logo" style={{ textAlign: 'center', marginTop: '10px' }}>
-      <img src={`${companyLogo}`} alt="Company Logo"  style={{  maxHeight: '60px',  maxWidth: '200px', objectFit: 'contain'  }} /> </Box>)}
+            <Box className="company-logo" style={{ textAlign: 'center', marginTop: '10px' }}>
+              <img src={`${companyLogo}`} alt="Company Logo" style={{ maxHeight: '60px', maxWidth: '200px', objectFit: 'contain' }} />
+            </Box>
+          )}
         </Box>
+        
         <Box className="booking-reference">
           <Box className="booking-reference-content">
             <Box className="booking-ref">
@@ -444,6 +549,7 @@ return (
             <Box className="generated-date">Generated on: {generateDate}</Box>
           </Box>
         </Box>
+        
         <Box className="package-details-section">
           <h2 className="section-title">Package Details</h2>
           <Box className="hotels-table-container">
@@ -458,7 +564,7 @@ return (
                   <th>Room Type</th>
                   <th>Meal Plan</th>
                   <th>Rooms</th>
-                  <th>city</th>
+                  <th>City</th>
                   <th>Total Person</th>
                   <th>Rating</th>
                 </tr>
@@ -472,7 +578,7 @@ return (
                     <td>{hotel.nights}</td>
                     <td>{hotel.roomType}</td>
                     <td>{hotel.mealPlan}</td>
-                    <td>{roomInfo.totalRooms}</td>
+                    <td>{hotel.totalRooms}</td>
                     <td>{hotel.city}</td>
                     <td>{totalPersons}</td>
                     <td>{hotel.starRating}</td>
@@ -482,6 +588,7 @@ return (
             </table>
           </Box>
         </Box>
+        
         {/* Itinerary Section */}
         <Box className="itinerary-section">
           <h2 className="section-title">Daily Itinerary</h2>
@@ -503,7 +610,7 @@ return (
                     )}
                     <Box className="activity-detail">
                       <span className="detail-label">Description:</span> 
-                      {formatDescription(item.tours.details?.tour?.description || "No description available")
+                      {formatDescription(item.tours.details?.tour?.description || item.tours.description || "No description available")
                         .split('\n').map((line, index) => {
                           if (line.trim().startsWith('*')) {
                             const [bullet, ...rest] = line.split(/\*\s+(.*)/);
@@ -522,8 +629,12 @@ return (
                     {/* Selected Activities Section */}
                     {item.tours.activities && item.tours.activities.length > 0 && (
                       <Box className="selected-activities" sx={{fontWeight:'800'}}>
-                        <Box sx={{fontSize:"1rem"}}>Activities </Box>
-                        <ul className="activities-list">{item.tours.activities.map((activity, actIndex) => ( <li key={actIndex} className="activity-item"> {activity.name} </li> ))} </ul>
+                        <Box sx={{fontSize:"1rem"}}>Activities</Box>
+                        <ul className="activities-list">
+                          {item.tours.activities.map((activity, actIndex) => ( 
+                            <li key={actIndex} className="activity-item"> {activity.name} </li> 
+                          ))}
+                        </ul>
                       </Box>
                     )}
                   </Box>
@@ -538,6 +649,7 @@ return (
             );
           })}
         </Box>
+        
         {/* Cost Summary */}
         <Box className="cost-summary">
           <h2 className="cost-summary-title">COST SUMMARY</h2>
@@ -554,3 +666,4 @@ return (
 };
 
 export default TourPackagePDF;
+

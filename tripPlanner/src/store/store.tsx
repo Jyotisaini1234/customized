@@ -1,4 +1,3 @@
-// src/store/store.ts
 import { configureStore } from '@reduxjs/toolkit';
 import rootReducer from './rootReducer.ts';
 import { tourApi } from '../api/TourAPI.tsx';
@@ -12,13 +11,13 @@ const initStore = (preloadedState?: Partial<RootState>) =>
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: false,
-      }).concat(tourApi.middleware), // Add API middleware
+      }).concat(tourApi.middleware),
     preloadedState,
-    devTools: process.env.NODE_ENV !== 'production', // Enable devtools only in non-production
+    devTools: process.env.NODE_ENV !== 'production',
   });
 
 export type RootState = ReturnType<typeof rootReducer>;
-export type AppDispatch = ReturnType<typeof initStore>['dispatch']; // Correctly typed dispatch
+export type AppDispatch = ReturnType<typeof initStore>['dispatch'];
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 export default initStore;
