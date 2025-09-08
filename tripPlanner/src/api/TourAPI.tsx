@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { AUTHENTICATE, BASE_URL, BASE_URL_JWT, GET_ALL_BOOKINGS, GET_BOOKING_BY_ID, LOGIN, REGISTRATION } from '../utils/ApiConstants.ts';
 import { Lead, TourBookingData } from '../types/types.ts';
 import TokenService from '../pages/tokenService.ts';
-import { getFromDB, STORES, saveToDB } from '../utils/TripPlannerDB.ts';
+import { getFromDB, STORES, saveToDB, getAuthData, saveAuthData } from '../utils/TripPlannerDB.ts';
 
 const getUserEmail = async (): Promise<string> => {
   try {
@@ -194,11 +194,7 @@ export const tourApi = createApi({
       return baseQuery({
         url: `${GET_BOOKING_BY_ID}${id}`,
         method: 'GET',
-        headers: { 
-          'User-Email': userEmail,
-          'User-Role': userRole,
-        },
-      });
+        headers: { 'User-Email': userEmail,'User-Role': userRole, },});
     },
     providesTags: (result, error, id) => [{ type: 'Bookings', id }],
     transformResponse: (response: any) => { 
@@ -245,8 +241,8 @@ export const tourApi = createApi({
     }),
     transformResponse: async (response: any, meta, arg) => {
       if (response.token && response.refreshToken) {
-        const username = response.username || response.user || 'User';
-        const email = response.email || response.username || arg.identifier;
+        const username = response.username ;
+        const email = response.email;
         
         // Store user data in IndexedDB instead of localStorage
         try {
@@ -439,7 +435,7 @@ getLogoAsDataUrl: builder.query<string, string>({
       return { error: { status: 500, data: 'Network error while fetching logo' } };
     }
   },
-  keepUnusedDataFor: 3600, // Cache for 1 hour
+  keepUnusedDataFor: 3600,
 }),
 
   registerUser: builder.mutation<
@@ -507,8 +503,8 @@ getUserCompanyInfo: builder.query<{
   }),
   providesTags: ['UserCompany'],
 }),
+})
 
-}),
 });
 
 export const {

@@ -19,19 +19,18 @@ const [searchedCity, setSearchedCity] = useState("");
 const [nights, setNights] = useState<number | string>(searchParams.nights || 1);
 
 const getJWTTokens = async () => {
-  const [sessionRefreshToken,  localAuthToken,localRefreshToken, localAuthData,userEmail,email, userName, username,companyName,logoPath] = await Promise.all([
+  const [sessionRefreshToken,  localAuthToken,localRefreshToken, localAuthData,userEmail,email, username,companyName,logoPath] = await Promise.all([
     getFromDB(STORES.plannerData, 'authRefreshToken', null),
     getFromDB(STORES.plannerData, 'authToken', null),
     getFromDB(STORES.plannerData, 'refreshToken', null),
     getFromDB(STORES.plannerData, 'authData', null),
     getFromDB(STORES.plannerData, 'userEmail', null),
     getFromDB(STORES.plannerData, 'email', null),
-    getFromDB(STORES.plannerData, 'userName', null),
     getFromDB(STORES.plannerData, 'username', null),
     getFromDB(STORES.plannerData, 'companyName', null),
     getFromDB(STORES.plannerData, 'logoPath', null)
   ]);
-  return { sessionRefreshToken, localAuthToken, localRefreshToken,localAuthData,email: userEmail || email, userName: userName || username,companyName, logoPath };
+  return { sessionRefreshToken, localAuthToken, localRefreshToken,localAuthData,email: userEmail || email, username,companyName, logoPath };
 };
 
 const buildURLWithJWTTokens = async (baseUrl: string, params: URLSearchParams): Promise<string> => {
@@ -51,9 +50,6 @@ const buildURLWithJWTTokens = async (baseUrl: string, params: URLSearchParams): 
   if (tokens.email) {
     url.searchParams.append('userEmail', encodeURIComponent(tokens.email));
   }
-  if (tokens.userName) {
-    url.searchParams.append('userName', encodeURIComponent(tokens.userName));
-  }
   if (tokens.companyName) {
     url.searchParams.append('companyName', encodeURIComponent(tokens.companyName));
   }
@@ -67,7 +63,13 @@ const buildURLWithJWTTokens = async (baseUrl: string, params: URLSearchParams): 
   return url.toString();
 };
 
-const totalFromRooms = (field: 'adults' | 'cwb' | 'cnb' | 'infants') => {if (Array.isArray(searchParams.rooms)) {return searchParams.rooms.reduce((sum, room) => sum + (room[field] || 0), 0);}return 0;};
+const totalFromRooms = (field: 'adults' | 'cwb' | 'cnb' | 'infants') => {
+  const roomsData = searchParams.roomDetails || searchParams.rooms || searchParams.room || [];
+  if (Array.isArray(roomsData)) {
+    return roomsData.reduce((sum, room) => sum + (room[field] || 0), 0);
+  }
+  return 0;
+};
 const [adultsCount, setAdultsCount] = useState<number>(totalFromRooms('adults') || 2);
 const [cwbCount, setCwbCount] = useState<number>(totalFromRooms('cwb') || 0);
 const [cnbCount, setCnbCount] = useState<number>(totalFromRooms('cnb') || 0);
@@ -156,18 +158,23 @@ const handleSearch = async () => {
   const checkInDate = searchParams.checkInDate || new Date().toISOString();
   const currentCity = selectedCity || city;
   const nightsNumber = parseInt(nights as string, 10) || 1;
+  
   params.append('checkInDate', checkInDate);
+  
   const checkOutDateObj = new Date(new Date(checkInDate));
   checkOutDateObj.setDate(checkOutDateObj.getDate() + nightsNumber);
   const checkOutDate = checkOutDateObj.toISOString();
   params.append('checkOutDate', checkOutDate);
+  
   params.append('city', currentCity);
   params.append('country', country);
   params.append('nights', String(nightsNumber));
   params.append('fromTripPlanner', 'true');
+  
   if (searchParams.fromReadymadePackage === 'true' || searchParams.fromReadymadePackage === true) {
     params.append('fromReadymadePackage', 'true');
   }
+  
   if (searchParams.specificDay) {
     params.append('specificDay', 'true');
     if (searchParams.specificDayId) {
@@ -177,28 +184,67 @@ const handleSearch = async () => {
       params.append('dayNumber', searchParams.dayNumber);
     }
   }
+  
   params.append('applyToAllDays', searchParams.specificDay ? 'false' : String(applyToAllDays));
+  
   if (searchParams.allDays) {
     params.append('allDays', JSON.stringify(searchParams.allDays));
   }
+  
   const editLeadData = await getFromDB(STORES.plannerData, 'editLeadData', {});
   const leadId = editLeadData.leadId || searchParams.leadId || null;
   if (leadId) {
     params.append('bookingRef', leadId);
   }
-  const rooms = searchParams.rooms || [];
-  const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
-  const totalCWB = rooms.reduce((sum, room) => sum + room.cwb, 0);
-  const totalCNB = rooms.reduce((sum, room) => sum + room.cnb, 0);
-  const totalInfants = rooms.reduce((sum, room) => sum + room.infants, 0);
+  
+  const roomsData = searchParams.roomDetails || searchParams.rooms || searchParams.room || [];
+  console.log('Room data for hotel search:', roomsData);
+  let totalAdults = 0;
+  let totalCWB = 0;
+  let totalCNB = 0;
+  let totalInfants = 0;
+  
+  if (Array.isArray(roomsData) && roomsData.length > 0) {
+    totalAdults = roomsData.reduce((sum, room) => sum + (room.adults || 0), 0);
+    totalCWB = roomsData.reduce((sum, room) => sum + (room.cwb || 0), 0);
+    totalCNB = roomsData.reduce((sum, room) => sum + (room.cnb || 0), 0);
+    totalInfants = roomsData.reduce((sum, room) => sum + (room.infants || 0), 0);
+  } else {
+    totalAdults = adultsCount || 2;
+    totalCWB = cwbCount || 0;
+    totalCNB = cnbCount || 0;
+    totalInfants = infantsCount || 0;
+  }
+  
   params.append('adults', String(totalAdults));
   params.append('cwb', String(totalCWB));
   params.append('cnb', String(totalCNB));
   params.append('infants', String(totalInfants));
-  params.append('roomsData', encodeURIComponent(JSON.stringify(rooms)));
+  params.append('totalRooms', String(roomsData.length || 1));
+  params.append('roomsData', encodeURIComponent(JSON.stringify(roomsData)));
+  
+  console.log('Final search parameters:', {
+    adults: totalAdults,
+    cwb: totalCWB,
+    cnb: totalCNB,
+    infants: totalInfants,
+    totalRooms: roomsData.length || 1,
+    rooms: roomsData
+  });
+  
   const finalUrl = await buildURLWithJWTTokens(TRIP_PLANNER_PAGE, params);
   console.log('TripPlanner - Redirecting to hotel page with tokens:', finalUrl);
   window.location.href = finalUrl;
+};
+
+const getRoomDisplayText = () => {
+  const roomsData = searchParams.roomDetails || searchParams.rooms || searchParams.room || [];
+  const roomCount = Array.isArray(roomsData) ? roomsData.length : 1;
+  
+  if (roomCount > 1) {
+    return `Total Guests (${roomCount} Rooms)`;
+  }
+  return "Room 1";
 };
 
 const formatDate = (dateStr) => {
@@ -225,13 +271,6 @@ const getCheckOutDate = () => {
   }
 };
 
-const getRoomDisplayText = () => {
-  const roomCount = searchParams.rooms?.length || 1;
-  if (roomCount > 1) {
-    return `Total Guests (${roomCount} Rooms)`;
-  }
-  return "Room 1";
-};
 const getMaxNights = () => {
   if (searchParams.checkInDate && searchParams.originalCheckOutDate) {
     try {

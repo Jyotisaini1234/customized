@@ -8,7 +8,7 @@ import { Menu as MenuIcon } from '@mui/icons-material';
 import { AWS_INSTANCE } from '../../../../utils/ApiConstants.ts';
 import { useGetUserCompanyInfoQuery } from '../../../../api/TourAPI.tsx';
 import CreateUser from '../CreateUser/CreateUser.tsx';
-import { getFromDB, STORES, saveToDB, initDB } from '../../../../utils/TripPlannerDB.ts';
+import {  STORES,  initDB, getAuthData, saveAuthData } from '../../../../utils/TripPlannerDB.ts';
 
 interface PrimaryNavbarProps {
   setShowSearch: (show: boolean) => void;
@@ -37,9 +37,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { data: companyInfoData, error: companyInfoError, isLoading: isCompanyInfoLoading } = 
-    useGetUserCompanyInfoQuery(userEmail, { skip: !userEmail || userEmail === 'Guest', refetchOnMountOrArgChange: true });
-
+  const { data: companyInfoData, error: companyInfoError, isLoading: isCompanyInfoLoading } = useGetUserCompanyInfoQuery(userEmail, { skip: !userEmail || userEmail === 'Guest', refetchOnMountOrArgChange: true });
   const convertIndexedDBObjectToString = (data: any): string => {
     if (!data) return '';
     if (typeof data === 'string') return data;
@@ -56,53 +54,153 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
     return String(data);
   };
 
-  const getUserDataFromStorage = async () => {
-    try {
-      let authData = await getFromDB(STORES.plannerData, 'authData', {}) as AuthData;
-      const email = convertIndexedDBObjectToString(authData.email || await getFromDB(STORES.plannerData, 'userEmail', ''));
-      const company = convertIndexedDBObjectToString(authData.companyName || '');
-      const logo = convertIndexedDBObjectToString(authData.logoPath || '');
-      const username = convertIndexedDBObjectToString(authData.username || '');
-      const jwtToken = authData.authToken || '';
-      const refreshToken = authData.refreshToken || '';
-      
-      return { email, company, logo, username, jwtToken, refreshToken };
-    } catch (error) {
-      console.error('Error getting user data:', error);
-      return { email: '', company: '', logo: '', username: '', jwtToken: '', refreshToken: '' };
-    }
-  };
-
-  const handleUrlParametersAndCleanUrl = async () => {
+const handleUrlParametersAndCleanUrl = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const paramKeys = ['authToken', 'refreshToken', 'userEmail', 'companyName', 'logoPath', 'username'];
     const hasAuthParams = paramKeys.some(key => urlParams.has(key));
     
     if (hasAuthParams) {
-      const existingAuthData = await getFromDB(STORES.plannerData, 'authData', {}) as AuthData;
-      
+      console.log('URL Parameters found, processing...');
+      const existingAuthData = await getAuthData('authData', {}) as AuthData;
+      const urlEmail = urlParams.get('userEmail');
+      const urlCompanyName = urlParams.get('companyName');
+      const urlLogoPath = urlParams.get('logoPath');
+      const urlUsername = urlParams.get('username');
+      const urlAuthToken = urlParams.get('authToken');
+      const urlRefreshToken = urlParams.get('refreshToken');
       const updatedAuthData: AuthData = {
         ...existingAuthData,
-        email: urlParams.get('userEmail') ? decodeURIComponent(urlParams.get('userEmail')!) : existingAuthData.email,
-        companyName: urlParams.get('companyName') ? decodeURIComponent(urlParams.get('companyName')!) : existingAuthData.companyName,
-        logoPath: urlParams.get('logoPath') ? decodeURIComponent(urlParams.get('logoPath')!) : existingAuthData.logoPath,
-        username: urlParams.get('username') ? decodeURIComponent(urlParams.get('username')!) : existingAuthData.username,
-        authToken: urlParams.get('authToken') || existingAuthData.authToken,
-        refreshToken: urlParams.get('refreshToken') || existingAuthData.refreshToken,
+        email: urlEmail ? decodeURIComponent(urlEmail) : existingAuthData.email,
+        companyName: urlCompanyName ? decodeURIComponent(urlCompanyName) : existingAuthData.companyName,
+        logoPath: urlLogoPath ? decodeURIComponent(urlLogoPath) : existingAuthData.logoPath,
+        username: urlUsername ? decodeURIComponent(urlUsername) : existingAuthData.username,
+        authToken: urlAuthToken || existingAuthData.authToken,
+        refreshToken: urlRefreshToken || existingAuthData.refreshToken,
         timestamp: new Date().toISOString()
       };
       
-      await saveToDB(STORES.plannerData, 'authData', updatedAuthData);
+      console.log('Updated Auth Data to store:', updatedAuthData);
+      
+      // Store all the data
+      await saveAuthData('authData', updatedAuthData);
+      
+      // Also store individual fields for backward compatibility
+      if (updatedAuthData.email) {
+        await saveAuthData('userEmail', updatedAuthData.email);
+        await saveAuthData('email', updatedAuthData.email);
+      }
+      if (updatedAuthData.companyName) {
+        await saveAuthData('companyName', updatedAuthData.companyName);
+      }
+      if (updatedAuthData.logoPath) {
+        await saveAuthData('logoPath', updatedAuthData.logoPath);
+      }
+      if (updatedAuthData.username) {
+        await saveAuthData('username', updatedAuthData.username);
+      }
+      if (updatedAuthData.authToken) {
+        await saveAuthData('authToken', updatedAuthData.authToken);
+        await saveAuthData('jwtToken', updatedAuthData.authToken);
+      }
+      if (updatedAuthData.refreshToken) {
+        await saveAuthData('refreshToken', updatedAuthData.refreshToken);
+      }
+      
+      console.log('All data stored successfully');
+      
+      // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      console.log('URL cleaned');
     }
   };
-
+  
+  const getUserDataFromStorage = async () => {
+    try {
+      console.log('=== Getting User Data From Storage ===');
+      let authData = await getAuthData('authData', {}) as AuthData;
+      console.log('Retrieved authData:', authData);
+      let email = convertIndexedDBObjectToString(authData.email || await getAuthData('userEmail', '') || await getAuthData('email', ''));
+      let company = convertIndexedDBObjectToString(authData.companyName || await getAuthData('companyName', ''));
+      let logo = convertIndexedDBObjectToString(authData.logoPath || await getAuthData('logoPath', ''));
+      let username = convertIndexedDBObjectToString(authData.username || await getAuthData('username', ''));
+      let jwtToken = authData.authToken || await getAuthData('authToken', '') || await getAuthData('jwtToken', '');
+      let refreshToken = authData.refreshToken || await getAuthData('refreshToken', '');
+      
+      console.log('Extracted data:', {
+        email,
+        company,
+        logo,
+        username,
+        hasJWT: !!jwtToken,
+        hasRefresh: !!refreshToken
+      });
+      
+      // If we have JWT token but missing username, try to extract it
+      if (jwtToken && typeof jwtToken === 'string' && (!username || username.trim() === '')) {
+        try {
+          const parts = jwtToken.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]));
+            const extractedUsername = payload.sub || payload.username || payload.name || payload.preferred_username || payload.given_name || null;
+            if (extractedUsername && typeof extractedUsername === 'string') {
+              username = extractedUsername;
+              console.log('Username extracted from JWT:', username);
+              
+              // Store the extracted username
+              await saveAuthData('username', username);
+              
+              // Update consolidated auth data
+              const updatedAuthData = {
+                ...authData,
+                username: username,
+                timestamp: new Date().toISOString()
+              };
+              await saveAuthData('authData', updatedAuthData);
+            }
+          }
+        } catch (jwtError) {
+          console.error('Error extracting username from JWT:', jwtError);
+        }
+      }
+      
+      return { 
+        email: email.trim(), 
+        company: company.trim(), 
+        logo: logo.trim(), 
+        username: username.trim(), 
+        jwtToken, 
+        refreshToken 
+      };
+      
+    } catch (error) {
+      console.error('Error getting user data:', error);
+      return { email: '', company: '', logo: '', username: '', jwtToken: '', refreshToken: '' };
+    }
+  };
+  
   const updateUserInfo = async () => {
-    const { email, company, logo } = await getUserDataFromStorage();
+    console.log('=== Updating User Info ===');
+    const { email, company, logo, username } = await getUserDataFromStorage();
     
-    if (email && email !== 'Guest') setUserEmail(email);
-    if (company) setCompanyName(company);
-    if (logo && !companyInfoData) setLogoPath(logo);
+    console.log('Retrieved user info:', { email, company, logo, username });
+    
+    if (email && email !== 'Guest' && email !== '') {
+      setUserEmail(email);
+      console.log('Set userEmail to:', email);
+    } else if (username && username !== 'Guest' && username !== '') {
+      setUserEmail(username);
+      console.log('Set userEmail to username:', username);
+    }
+    
+    if (company && company !== '') {
+      setCompanyName(company);
+      console.log('Set companyName to:', company);
+    }
+    
+    if (logo && logo !== '' && !companyInfoData) {
+      setLogoPath(logo);
+      console.log('Set logoPath to:', logo);
+    }
   };
 
   useEffect(() => {
@@ -270,7 +368,7 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
           <Box className="nav-items">
             <Box className="trip_details">
               <span>Welcome: {userEmail}</span>
-              <Box component="span"> | {companyName || 'Fly Divine'}</Box>
+              <Box component="span"> | {companyName}</Box>
               {USER_NAV_ITEMS.map((item) => (
                 <React.Fragment key={item.key}>
                   {item.key === 'user' ? (
@@ -395,3 +493,4 @@ const PrimaryNavbar: React.FC<PrimaryNavbarProps> = ({ setShowSearch }) => {
 };
 
 export default PrimaryNavbar;
+

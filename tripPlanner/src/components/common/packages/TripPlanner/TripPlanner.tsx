@@ -782,7 +782,7 @@ const TripPlanner: React.FC<TripPlannerProps> = ({ nights, checkInDate, checkOut
   const handleClientFormSubmit = async ({name, options, hotels: incomingHotels,  plannerItems: incomingPlannerItems,  marginTotal, grandTotal, bookingRef,  travelDate, currency,  bookingStatus,  destination,...restClientData}) => {
     setClientFormOpen(false);
     setShowThankYou(true);
-    const loginEmail = localStorage.getItem('username') || localStorage.getItem('email');
+    const loginEmail =localStorage.getItem('email');
     const editData = JSON.parse(sessionStorage.getItem('editLeadData') || '{}');
     if (plannerItems?.length > 0) {
       sessionStorage.setItem('editLeadData', JSON.stringify({ ...editData, plannerItems }));

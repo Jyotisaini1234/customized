@@ -53,13 +53,11 @@ const saveAuth = async (authData: {
     
     const structuredAuthData = {
       email: user.email,
-      userName: user.email.split('@')[0],
-      companyName: (user.companyName && user.companyName.trim()) || (user.company && user.company.trim()) ||  'Fly Divine'
+      companyName: (user.companyName && user.companyName.trim()) || (user.company && user.company.trim())
     };
     
     await saveToDB(AUTH_STORE, 'authData', structuredAuthData);
     await saveToDB(AUTH_STORE, 'userEmail', user.email);
-    await saveToDB(AUTH_STORE, 'userName', structuredAuthData.userName);
     await saveToDB(AUTH_STORE, 'companyName', structuredAuthData.companyName);
     
   } catch (error) {

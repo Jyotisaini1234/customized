@@ -275,6 +275,7 @@ const calculateTotalWithPackageData = async (items: PlannerItem2[], packageData?
     });
     setGrandTotal(total);
     return total;
+    
 };
 
 useEffect(() => {
@@ -826,6 +827,7 @@ const handleHotelSelection2 = async (itemId: string) => {
     await saveToDB(STORES.plannerData, 'readymadePackageContext', {
         plannerItems, originalSearchParams: baseSearchParams, selectedItemId: itemId, dayPosition: dayNumber
     });
+    console.log('Current Search Params:', currentSearchParams);
     console.log(`Opening hotel selection for day ${itemId} at position ${dayNumber}`);
     navigate('/trip-planner-area', { state: hotelSearchParams });
 };

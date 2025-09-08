@@ -46,7 +46,7 @@ export const getUserFromToken = (token: string, loginEmail?: string): User | nul
     } else if (decoded.organizationName && decoded.organizationName.trim()) {
       companyName = decoded.organizationName.trim();
     } else {
-      companyName = 'Fly Divine';
+      companyName = '';
     }
     
     console.log('Extracted company name from token:', companyName);

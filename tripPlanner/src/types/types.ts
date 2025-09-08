@@ -17,7 +17,7 @@ export interface AuthState {
   lastActivity: number;
   sessionTimeout: number;
   isInitialized: boolean;
-  loginEmail: string | null; // Store the email used for login
+  loginEmail: string | null;
 }
 
 export interface LoginCredentials {

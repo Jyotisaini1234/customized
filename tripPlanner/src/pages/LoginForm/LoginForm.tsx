@@ -7,13 +7,12 @@ import { READYMADE_PACKAGE } from "../../utils/ApiConstants.ts";
 import ForgotPassword from "../ForgotPassword/ForgotPassword.tsx";
 import { useAuth } from "../../constants/useAuth.ts";
 import { useGetUserCompanyInfoQuery } from "../../api/TourAPI.tsx";
-import { saveToDB, STORES, getFromDB, initDB } from "../../utils/TripPlannerDB.ts";
+import { saveToDB, STORES, getFromDB, initDB, saveAuthData, getAuthData, clearAuthData } from "../../utils/TripPlannerDB.ts";
 
 interface AuthData {
   token?: string;
   refreshToken?: string;
   email?: string;
-  userName?: string;
   companyName?: string;
   logoPath?: string;
   loginTime?: string;
@@ -35,6 +34,7 @@ const LoginForm: React.FC = () => {
   const [companyInfoFetched, setCompanyInfoFetched] = useState<boolean>(false);
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
   const { isAuthenticated, isLoading, error: authError, user, token, refreshToken, login, clearError } = useAuth();
+  
   const getEmailForQuery = useCallback(() => {
     if (username.includes('@')) return username;
     if (user?.email) return user.email;
@@ -66,13 +66,13 @@ const LoginForm: React.FC = () => {
     const handleCompanyInfoData = async () => {
       if (companyInfoData && !companyInfoError && !companyInfoFetched) {
         if (companyInfoData.companyName) {
-          await saveToDB(STORES.plannerData, 'companyName', companyInfoData.companyName);
+          await saveAuthData('companyName', companyInfoData.companyName);
         }
         if (companyInfoData.logoPath) {
-          await saveToDB(STORES.plannerData, 'logoPath', companyInfoData.logoPath);
+          await saveAuthData('logoPath', companyInfoData.logoPath);
         }
         if (companyInfoData.username) {
-          await saveToDB(STORES.plannerData, 'userName', companyInfoData.username);
+          await saveAuthData('userName', companyInfoData.username);
         }
         setCompanyInfoFetched(true);
       }
@@ -103,6 +103,7 @@ const LoginForm: React.FC = () => {
         let userDisplayName = '';
         let companyName = '';
         let logoPath = '';
+        
         try {
           const tokenPayload = JSON.parse(atob(token.split('.')[1]));
           console.log('Token payload:', tokenPayload);
@@ -125,31 +126,43 @@ const LoginForm: React.FC = () => {
             userDisplayName = emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase();
           }
         }
+        
         if (companyInfoData && !companyInfoError) {
           console.log('Using company info from API:', companyInfoData);
           if (companyInfoData.companyName) companyName = companyInfoData.companyName;
           if (companyInfoData.logoPath) logoPath = companyInfoData.logoPath;
           if (companyInfoData.username) userDisplayName = companyInfoData.username;
         } else {
-          const storedCompanyName = await getFromDB(STORES.plannerData, 'companyName', '');
-          const storedLogoPath = await getFromDB(STORES.plannerData, 'logoPath', '');
-          const storedUserName = await getFromDB(STORES.plannerData, 'userName', '');
+          const storedCompanyName = await getAuthData('companyName', '');
+          const storedLogoPath = await getAuthData('logoPath', '');
+          const storedUserName = await getAuthData('userName', '');
           if (storedCompanyName) companyName = storedCompanyName;
           if (storedLogoPath) logoPath = storedLogoPath;
           if (storedUserName) userDisplayName = storedUserName;
         }
+        
         const redirectUrl = getRedirectUrl();
-        const authData: AuthData = {token, refreshToken,email: emailToSend,userName: userDisplayName,companyName: companyName, logoPath: logoPath,loginTime: new Date().toISOString(),redirectFrom: 'login'};
+        const authData: AuthData = {
+          token, 
+          refreshToken,
+          email: emailToSend,
+          companyName: companyName, 
+          logoPath: logoPath,
+          loginTime: new Date().toISOString(),
+          redirectFrom: 'login'
+        };
+        
         await clearIndexedDB();
-        await saveToDB(STORES.plannerData, 'authData', authData);
-        await saveToDB(STORES.plannerData, 'authToken', token);
-        await saveToDB(STORES.plannerData, 'refreshToken', refreshToken);
-        await saveToDB(STORES.plannerData, 'userEmail', emailToSend);
-        await saveToDB(STORES.plannerData, 'userName', userDisplayName);
-        await saveToDB(STORES.plannerData, 'companyName', companyName);
+        await saveAuthData('authData', authData);
+        await saveAuthData('authToken', token);
+        await saveAuthData('refreshToken', refreshToken);
+        await saveAuthData('userEmail', emailToSend);
+        await saveAuthData('userName', userDisplayName);
+        await saveAuthData('companyName', companyName);
         if (logoPath) {
-          await saveToDB(STORES.plannerData, 'logoPath', logoPath);
+          await saveAuthData('logoPath', logoPath);
         }
+        
         window.dispatchEvent(new CustomEvent('authUpdated', {detail: authData}));
         setSuccess('Login successful! Redirecting...');
         
@@ -248,28 +261,39 @@ const LoginForm: React.FC = () => {
     clearError();
     setCompanyInfoFetched(false);
     
-    if (redirectInProgress) {return;
-    }
-    
-    if (!username.trim()) {setLocalError("Please enter your email");
+    if (redirectInProgress) {
       return;
     }
     
-    if (!password.trim()) { setLocalError("Please enter your password"); return;
+    if (!username.trim()) {
+      setLocalError("Please enter your email");
+      return;
     }
     
-    if (password.length < 6) {setLocalError("Password must be at least 6 characters long");
+    if (!password.trim()) { 
+      setLocalError("Please enter your password"); 
+      return;
+    }
+    
+    if (password.length < 6) {
+      setLocalError("Password must be at least 6 characters long");
       return;
     }
 
     try {
-      const existingCompanyName = await getFromDB(STORES.plannerData, 'companyName', '');
-      const existingLogoPath = await getFromDB(STORES.plannerData, 'logoPath', '');
+      const existingCompanyName = await getAuthData('companyName', '');
+      const existingLogoPath = await getAuthData('logoPath', '');
       await clearIndexedDB();
-      if (existingCompanyName) {await saveToDB(STORES.plannerData, 'companyName', existingCompanyName); }
-      if (existingLogoPath) {await saveToDB(STORES.plannerData, 'logoPath', existingLogoPath);}
+      if (existingCompanyName) {
+        await saveAuthData('companyName', existingCompanyName); 
+      }
+      if (existingLogoPath) {
+        await saveAuthData('logoPath', existingLogoPath);
+      }
       setHasAttemptedLogin(true);
-      if (username.includes('@')) {setShouldFetchCompanyInfo(true);}
+      if (username.includes('@')) {
+        setShouldFetchCompanyInfo(true);
+      }
       
       const result = await login({ identifier: username.trim(), password: password.trim() });
       
@@ -291,22 +315,27 @@ const LoginForm: React.FC = () => {
 
   const handleRegisterClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!redirectInProgress) {navigate("/home/new-user", { state: { from: location.state?.from } });}
+    if (!redirectInProgress) {
+      navigate("/home/new-user", { state: { from: location.state?.from } });
+    }
   };
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!redirectInProgress) {setShowForgotPassword(true); }
+    if (!redirectInProgress) {
+      setShowForgotPassword(true); 
+    }
   };
   
   const handleInputChange = useCallback((field: 'username' | 'password', value: string) => {
-    if (field === 'username') {setUsername(value);}
-    else {setPassword(value);}
+    if (field === 'username') {setUsername(value);} 
+    else { setPassword(value); }
     if (localError || authError) {
       setLocalError('');
       clearError();
     }
   }, [localError, authError, clearError]);
+  
   const displayError = localError || authError;
   const isProcessing = isLoading || redirectInProgress || isLoadingCompanyInfo;
 
@@ -319,18 +348,19 @@ const LoginForm: React.FC = () => {
           
           <Box className="input-fields">
             <FormControl fullWidth size="small">
-              <TextField fullWidth placeholder="Enter your email or username"className="mui-input" value={username}onChange={(e) => handleInputChange('username', e.target.value)}disabled={isProcessing}required autoComplete="username" InputProps={{ classes: { root: "input-root" } }}/>
-              <TextField className="mui-input_2" fullWidth type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => handleInputChange('password', e.target.value)} disabled={isProcessing} required autoComplete="current-password" InputProps={{endAdornment: (<InputAdornment position="end"> <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" disabled={isProcessing}> {showPassword ? <VisibilityOff /> : <Visibility />}</IconButton> </InputAdornment> ),}}/>
+              <TextField fullWidth placeholder="Enter your email or username" className="mui-input"  value={username} onChange={(e) => handleInputChange('username', e.target.value)} disabled={isProcessing}required  autoComplete="username"  InputProps={{ classes: { root: "input-root" } }}/>
+              <TextField className="mui-input_2" fullWidth type={showPassword ? 'text' : 'password'}  placeholder="Enter your password"  value={password} onChange={(e) => handleInputChange('password', e.target.value)}  disabled={isProcessing}  required  autoComplete="current-password"  InputProps={{ endAdornment: (<InputAdornment position="end">  <IconButton  onClick={() => setShowPassword(!showPassword)}  edge="end" disabled={isProcessing}> {showPassword ? <VisibilityOff /> : <Visibility />} </IconButton> </InputAdornment>  ),}}/>
             </FormControl>
           </Box>
         
           <Box className="form-options">
-            <FormControlLabel control={<Radio checked={rememberMe}onChange={(e) => setRememberMe(e.target.checked)}className="remember-radio" size="small" disabled={isProcessing}/>} label={<Typography className="remember-text">Remember Me</Typography>} />
-            <Typography className="forgot-password" component="button" type="button"  onClick={handleForgotPassword} disabled={isProcessing} > Forgot password?</Typography>
+            <FormControlLabel control={<Radio checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="remember-radio"  size="small"  disabled={isProcessing} />} label={<Typography className="remember-text">Remember Me</Typography>} />
+            <Typography className="forgot-password"  component="button"  type="button"   onClick={handleForgotPassword} disabled={isProcessing}  >  Forgot password?</Typography>
           </Box>
+          
           <Box className="form-actions">
-          <Typography className="register-link" component="button" type="button"onClick={handleRegisterClick} disabled={isProcessing} >New user? Register Now</Typography>
-            <Button type="submit" size="large"className="login-button" disableElevation disabled={isProcessing || !username.trim() || !password.trim()}startIcon={isProcessing ? <CircularProgress size={20} color="inherit" /> : undefined}>{isLoadingCompanyInfo ? 'LOADING USER DATA...' : isLoading ? 'SIGNING IN...' : 'LOGIN'}</Button>
+            <Typography  className="register-link"  component="button"  type="button" onClick={handleRegisterClick}  disabled={isProcessing} >  New user? Register Now </Typography>
+            <Button type="submit"  size="large" className="login-button" disableElevation  disabled={isProcessing || !username.trim() || !password.trim()} startIcon={isProcessing ? <CircularProgress size={20} color="inherit" /> : undefined} > {isLoadingCompanyInfo ? 'LOADING USER DATA...' : isLoading ? 'SIGNING IN...' : 'LOGIN'}</Button>
           </Box>
         </form>
       </Box>
