@@ -1,0 +1,86 @@
+@import '../../../../styles/variables';
+.confirmed-booking-container {
+    min-height: 100vh;
+    .payment_confirm{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .page-title {
+        font-weight: 800;
+        color: #333;
+        font-size: 1.8rem;
+        padding: 1rem 0rem 1rem;
+      }
+      .payment-mode-button {
+        font-weight: 600;
+        background:$secondary-color;
+        color: $white;
+        height: 2rem;
+        width: 10rem;
+      }
+    }
+
+    .search-container {
+      padding: 1.5rem;
+      background-color: #fff;
+      border-radius: 0.2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      
+      .no-bookings-alert {
+        margin-bottom: 1.5rem;
+      }
+      
+      .search-form {
+        margin-bottom: 1.5rem;
+      }
+      
+      .search-button {
+        height: 2.5rem;
+        background: $secondary-color;
+      }
+      
+      .bookings-table-container {
+        margin-top: 1.2rem;
+        overflow-x: auto;
+        
+        .bookings-table {
+          .table-header {
+            border: 1px solid rgba(66, 65, 65, 0.288) ;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            white-space: nowrap;
+            font-size: 0.7rem;
+            padding: 0.3rem !important;
+          }
+          
+          .booking-row {
+            &:hover {
+              background-color: #f9f9f9;
+            }
+            
+            td {
+              white-space: nowrap;
+              font-size: 0.9rem;
+            }
+          }
+        }
+      }
+    }
+    .table-header_2 {
+      border: 1px solid rgba(66, 65, 65, 0.288) ;
+      font-weight: bold;
+      background-color: #f0f0f0;
+      white-space: nowrap;
+      padding: 0.3rem !important;
+      font-size: 0.7rem;
+      .MuiInputBase-root {
+        background-color: white;
+        width: 8rem;
+      }
+      .MuiInputLabel-root {
+        text-align: center;
+        left: 35%;
+        transform: translate(-50%,40%);
+      }
+    }
+  }

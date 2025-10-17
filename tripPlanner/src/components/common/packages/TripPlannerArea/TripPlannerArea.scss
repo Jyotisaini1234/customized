@@ -1,3 +1,4 @@
+@import '../../../../styles/variables';
 .trip-planner-area-container {
     padding: 2rem 0;
     
@@ -10,6 +11,7 @@
         
         .note-text {
           font-weight: 500;
+          color: $primary-color;
         }
         
         .close-button {
@@ -61,14 +63,14 @@
           margin-top: 1rem;
           
           .search-button {
-            background-color: #ff0000;
+            background-color: $primary-color;
             border-radius: 0.25rem;
             padding: 0.5rem 2rem;
             text-transform: none;
             box-shadow: none;
             
             &:hover {
-              background-color: #dc3545;
+              background-color: $primary-color;
             }
           }
         }
@@ -115,3 +117,4 @@
       }
     }
   }
+

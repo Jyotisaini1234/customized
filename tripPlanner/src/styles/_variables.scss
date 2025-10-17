@@ -1,17 +1,42 @@
 $white: #ffffff;
-$gray-light: #f5f5f5;
-$gray-dark: #333333;
-$primary-color: #1f2937;
-$secondary-color: #ff0000;
-$text-color: #333;
-$light-text: #fff;
-$background-color: #efefef ;
-$border-radius: 4px;
-$box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+$gray-light: #f0f9ff;
+$gray-dark: #0c4a6e;
+$primary-color: #0369a1;
+$secondary-color: #be185d;
+$text-color: #0f172a;
+$light-text: #ffffff;
+$background-color: #f8fafc;
+$border-radius: 14px;
+$box-shadow: 0 10px 35px rgba(3, 105, 161, 0.12);
 $transition: all 0.3s ease;
-$btn-backgroundColor:#cc0000;
-$best-seller:#ffaf5f;
-$hotel-headingbg:#88909773;
+$btn-backgroundColor: #0284c7;
+$best-seller: #f59e0b;
+$hotel-headingbg: rgba(3, 105, 161, 0.05);
+$underline:#42a5f5;
+$primary-light: #42a5f5;
+$success-color: #4caf50;
+$warning-color: #ff9800;
+$error-color: #f44336;
+$info-color: #2196f3;
+
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #0369a1 100%);
+$background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+$card-gradient: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+$card-shadow: 0 0.625rem 1.875 rgba(0, 0, 0, 0.1);
+$button-shadow: 0 0.25rem 0.9rem rgba(25, 118, 210, 0.3);
+$input-shadow: 0 0.125 9.625rem rgba(0, 0, 0, 0.05);
+
+$border-radius: 0.75rem;
+$button-radius: 0.5rem;
+$card-radius: 1rem;
+
+$spacing-xs: 0.5rem;
+$spacing-sm: 1rem;
+$spacing-md: 1.5rem;
+$spacing-lg: 2rem;
+$spacing-xl: 3rem;
+
+
 @mixin flex-center {
     display: flex;
     justify-content: center;

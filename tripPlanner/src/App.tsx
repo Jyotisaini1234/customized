@@ -5,7 +5,7 @@ import  Router  from './routes/Router.tsx';
 import { ErrorBoundary } from './components/error-boundary/ErrorBoundary.tsx';
 import AlertDialog from './components/common/AlertDialog.tsx';
 import NotFound from './components/NotFound/NotFound.tsx';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SearchProvider } from './constants/SearchContext.tsx';
 
 const App: React.FC  = () =>  {
@@ -21,7 +21,7 @@ const App: React.FC  = () =>  {
       {!error.isPageNotFound && (
         <main>
           <SearchProvider>
-          <Router />
+          <Router/>
           </SearchProvider>
         </main>
       )}

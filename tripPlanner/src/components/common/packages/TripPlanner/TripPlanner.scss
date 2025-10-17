@@ -1,33 +1,67 @@
 @import '../../../../styles/variables';
 
-
 .trip-planner-page {
     padding: 0rem;
     
-    .heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0rem;
+    @include responsive(laptop) {
+      padding: 0rem;
+    }
+    
+    @include responsive(tablet) {
+      padding: 0rem;
+    }
+    
+    @include responsive(mobile) {
+      padding: 0rem;
+    }
+    
+    @include responsive(min-mobile) {
+      padding: 0rem;
+    }
+    
+    @include responsive(min-1) {
+      padding: 0rem;
+    }
+    
+    .MuiContainer-root{
+      padding-left: 0rem;
+      padding-right: 0rem;
       
-      .modify-search {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #000;
-        text-transform: none;
-        font-weight: 500;
+      @include responsive(mobile) {
+        padding-left: 0rem;
+        padding-right: 0rem;
       }
     }
     
+    .heading {
+      @include flex-between;
+      margin-bottom: 0rem;
+      
+      @include responsive(tablet) {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0rem 0.2rem;
+      }
+      
+      @include responsive(mobile) {
+        flex-direction: row;
+        align-items: center;
+        margin: 0.5rem 0rem 0.2rem;
+      }
+      
+    }
+    .tablist-btn{
+      height: 2rem;
+
+    }
     .tab-item {
       cursor: pointer;
       
       &.active {
         .tab-paper {
           background-color: #a3a9ad;
-          color:$white
-        //   border-bottom: 3px solid #ff0000;
+          color: $white;
         }
       }
       
@@ -35,14 +69,38 @@
         padding: 0.2rem;
         border-radius: 0;
         margin-right: 0.2rem;
+        
+        @include responsive(mobile) {
+          padding: 0.1rem;
+          margin-right: 0.1rem;
+          font-size: 0.8rem;
+        }
       }
     }
     
     .planner-table-container {
       padding: 1.5rem;
+      
+      @include responsive(tablet) {
+        padding: 1rem;
+      }
+      
+      @include responsive(mobile) {
+        padding: 0.5rem;
+      }
+      
+      @include responsive(min-mobile) {
+        padding: 0.3rem;
+      }
+      
       .planner-table {
         width: 100%;
         border: 1px solid #ddd;
+        overflow-x: auto;
+        
+        @include responsive(mobile) {
+          font-size: 0.8rem;
+        }
         
         .table-header {
           display: flex;
@@ -50,15 +108,41 @@
           color: white;
           font-weight: bold;
           
+          @include responsive(mobile) {
+            font-size: 0.7rem;
+          }
+          
           .header-cell {
             flex: 1;
             padding: 0.5rem;
             text-align: center;
             border-right: 1px solid #ddd;
             
+            @include responsive(tablet) {
+              padding: 0.4rem;
+            }
+            
+            @include responsive(mobile) {
+              padding: 0.3rem;
+              font-size: 0.7rem;
+            }
+            
+            @include responsive(min-mobile) {
+              padding: 0.2rem;
+              font-size: 0.6rem;
+            }
+            
             &.date-cell {
               flex: 0.5;
-              min-width: 100px;
+              min-width: 6rem;
+              
+              @include responsive(mobile) {
+                min-width: 4rem;
+              }
+              
+              @include responsive(min-1) {
+                min-width: 3rem;
+              }
             }
             
             &:last-child {
@@ -84,9 +168,39 @@
             align-items: center;
             border-right: 1px solid #ddd;
             
+            @include responsive(tablet) {
+              padding: 0.4rem;
+            }
+            
+            @include responsive(mobile) {
+              padding: 0.3rem;
+            }
+            
+            @include responsive(min-mobile) {
+              padding: 0.2rem;
+            }
+            
             &.date-cell {
               flex: 0.5;
-              min-width: 100px;
+              min-width: 6rem;
+              
+              @include responsive(mobile) {
+                min-width: 4rem;
+              }
+              
+              @include responsive(min-1) {
+                min-width: 3rem;
+              }
+              .date-cell-1,.date-cell-2{
+              font-size: 1rem;
+              @include responsive(mobile) {
+                font-size: 0.7rem;
+              }
+              
+              @include responsive(min-1) {
+                font-size: 0.6rem;
+              }
+              }
             }
             
             &:last-child {
@@ -96,9 +210,30 @@
             .add-button {
               color: #4a90e2;
               
+              @include responsive(mobile) {
+                padding: 0.2rem;
+              }
+              
+              @include responsive(min-mobile) {
+                padding: 0.1rem;
+              }
+              
               &:hover {
                 color: #1565c0;
                 background-color: rgba(74, 144, 226, 0.1);
+              }
+              .add-btn{
+              height:1.5rem;
+              width: 2rem;
+              @include responsive(mobile) {
+                height: 1rem;
+              width: 1rem;
+              }
+              
+              @include responsive(min-mobile) {
+                height: 1rem;
+              width: 1rem;
+              }
               }
             }
           }
@@ -109,12 +244,26 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        margin-top: 1rem;
+        
+        @include responsive(mobile) {
+          gap: 0.3rem;
+        }
       
         .total-row {
           display: flex;
           justify-content: flex-end;
           align-items: center;
           gap: 1rem;
+          
+          @include responsive(tablet) {
+            gap: 0.8rem;
+          }
+          
+          @include responsive(mobile) {
+            gap: 0.5rem;
+            flex-wrap: wrap;
+          }
         }
       
         .label {
@@ -122,6 +271,21 @@
           text-align: right;
           font-weight: 550;
           font-size: 1rem;
+          
+          @include responsive(tablet) {
+            width: 10rem;
+            font-size: 0.9rem;
+          }
+          
+          @include responsive(mobile) {
+            width: 8rem;
+            font-size: 0.8rem;
+          }
+          
+          @include responsive(min-mobile) {
+            width: 6rem;
+            font-size: 0.7rem;
+          }
         }
       
         .value {
@@ -132,12 +296,37 @@
           font-size: 1rem;
           word-spacing: 0.5rem;
           align-items: center;
+          
+          @include responsive(tablet) {
+            min-width: 7rem;
+            font-size: 0.9rem;
+          }
+          
+          @include responsive(mobile) {
+            min-width: 6rem;
+            font-size: 0.8rem;
+          }
+          
+          @include responsive(min-mobile) {
+            min-width: 5rem;
+            font-size: 0.7rem;
+          }
         }
       
         .MuiTextField-root {
           input {
             padding: 0.5rem;
             text-align: left;
+            
+            @include responsive(mobile) {
+              padding: 0.3rem;
+              font-size: 0.8rem;
+            }
+            
+            @include responsive(min-mobile) {
+              padding: 0.2rem;
+              font-size: 0.7rem;
+            }
           }
         }
       }
@@ -149,16 +338,40 @@
         gap: 0.4rem;
         margin-top: 1.2rem;
         
+        @include responsive(tablet) {
+          gap: 0.3rem;
+          margin-top: 1rem;
+        }
+        
+        @include responsive(mobile) {
+          gap: 0.2rem;
+          margin-top: 0.8rem;
+          flex-direction: column;
+          align-items: flex-end;
+        }
+        
         .proceed-button {
-          background-color: #ff0000;
+          background-color: $primary-color;
+          color: white;
+          @include responsive(mobile) {
+            font-size: 0.7rem;
+            padding: 0.4rem 0.6rem;
+            margin-bottom: 0.3rem;
+          }
           
           &:hover {
-            background-color: #d32f2f;
+            background-color: $primary-color;
           }
         }
         
         .cancel-button {
           background-color: #6c757d;
+          color: white;
+          
+          @include responsive(mobile) {
+            font-size: 0.7rem;
+            padding: 0.4rem 0.6rem;
+          }
           
           &:hover {
             background-color: #5a6268;
@@ -166,14 +379,82 @@
         }
       }
     }
+    .MuiTab-root {
+     height: 2rem;
+     width: 10rem;
+     text-align: center;
+      @include responsive(mobile) {
+      height: 2rem;
+      font-size: 0.6rem;
+      width: 5rem;
+      text-align: center;
+      }
+      @include responsive(min-mobile) {
+        height: 2rem;
+        font-size: 0.6rem;
+        width: 5rem;
+        }
+    }
+    .MuiTabs-scroller{
+      text-align: center;
+      @include responsive(mobile) {
+        height: 2rem;
+        font-size: 0.6rem;
+        width: 5rem;
+        text-align: center;
+        }
+    }
+.tablist-container{
+  @include responsive(mobile) {
+    height: 2rem;
+    width: 12rem;
+    text-align: center;
 
-
+    }
+.tablist_btn{
+  height: 1rem;
+  width: 4rem;
+.planner-btn,.hotel-btn{
+font-size: 1rem;
+height: 2rem;
+@include responsive(mobile) {
+  font-size: 0.8rem;
+  padding: 0rem;
+  height: 2rem;
+  width: 6rem;
+}
+@include responsive(min-mobile) {
+  font-size: 0.62rem;
+  padding: 0rem;
+  height: 2rem;
+  width: 5rem;
+}
+}
+}}
 .selected-hotel{
  width: 100%;
  display: flex;
  justify-content: center;
  position: relative;
  align-items: center;
+ 
+ @include responsive(mobile) {
+   font-size: 0.8rem;
+ }
+ 
+ @include responsive(min-mobile) {
+   font-size: 0.7rem;
+ }
+ .hotel_name{
+  font-size: 0.9rem;
+  @include responsive(mobile) {
+    font-size: 0.7rem;
+  }
+  
+  @include responsive(min-mobile) {
+    font-size: 0.5rem;
+  }
+ }
 }
 .selected-tour{
   width: 100%;
@@ -181,20 +462,45 @@
   justify-content: center;
   position: relative;
   align-items: center;
-
+  
+  @include responsive(mobile) {
+    font-size: 0.8rem;
+  }
+  
+  @include responsive(min-mobile) {
+    font-size: 0.7rem;
+  }
+  .tour-container{
+    p{
+    @include responsive(mobile) {
+      font-size: 0.8rem;
+    }
+    
+    @include responsive(min-mobile) {
+      font-size: 0.5rem;
+    }}
+  }
 }
   }
   
 .search-info{
-    display: flex;
+    @include flex-between;
     padding: 0rem;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between; 
+    
+    @include responsive(tablet) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    @include responsive(mobile) {
+      flex-direction: column;
+      align-items: center;
+    }
+    
     .modify-search {
-        display: flex;
-        align-items: center;
-        gap: 5px;
+        @include flex-center;
+        gap: 0.5rem;
         background-color: transparent;
         color: black;
         border-radius: 4px;
@@ -202,6 +508,21 @@
         font-weight: 550;
         cursor: pointer;
         font-size: 0.9rem;
+        
+        @include responsive(tablet) {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.85rem;
+        }
+        
+        @include responsive(mobile) {
+          padding: 0.3rem 0.6rem;
+          font-size: 0.7rem;
+        }
+        
+        @include responsive(min-mobile) {
+          padding: 0.2rem 0.5rem;
+          font-size: 0.54rem;
+        }
       }
 }
 .heading h1{
@@ -210,25 +531,82 @@
     text-align: center;
     font-size: 1rem;
     justify-content: center;
-    font-weight: 550;}
+    font-weight: 550;
+    
+    @include responsive(laptop) {
+      font-size: 1rem;
+    }
+    
+    @include responsive(tablet) {
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    @include responsive(mobile) {
+      font-size: 0.72rem;
+      text-align: center;
+    }
+    
+    @include responsive(min-mobile) {
+      font-size: 0.7rem;
+    }
+    
+    @include responsive(min-1) {
+      font-size: 0.56rem;
+    }
+  }
 .modify-search-container{
-    padding: 0rem;}
+    padding: 0rem;
+    
+    @include responsive(mobile) {
+      padding: 0rem;
+      width: 100%;
+    }
+}
 
 .item-container{
       gap: 0.9rem;
       margin-left: 1.5rem;
+      
+      @include responsive(tablet) {
+        gap: 0.7rem;
+        margin-left: 1rem;
+      }
+      
+      @include responsive(mobile) {
+        gap: 0.5rem;
+        margin-left: 0.5rem;
+      }
+      
+      @include responsive(min-mobile) {
+        gap: 0.3rem;
+        margin-left: 0.3rem;
+      }
+      
       .booking-details {
         display: flex;
-        // flex-wrap: wrap;
         gap: 3rem;
     
-        @media (max-width: 48rem) {
+        @include responsive(laptop) {
+          gap: 2rem;
+        }
+        
+        @include responsive(tablet) {
           gap: 1.5rem;
           flex-direction: row;
         }
     
-        @media (max-width: 30rem) {
+        @include responsive(mobile) {
+          gap: 1rem;
           flex-direction: row;
+        }
+        
+        @include responsive(min-mobile) {
+          gap: 0.8rem;
+        }
+        
+        @include responsive(min-1) {
+          gap: 0.5rem;
         }
     
         .booking-column {
@@ -238,17 +616,29 @@
           flex-direction: column;
           gap: 0.9rem;
           margin-bottom: 1rem;
-          @media (max-width: 48rem) {
-            margin-left: 1rem;
+          
+          @include responsive(laptop) {
+            gap: 0.8rem;
           }
-          @media (max-width: 30rem) {
+          
+          @include responsive(tablet) {
             margin-left: 1rem;
+            gap: 0.7rem;
           }
-          @media (max-width: 26.5625rem) {
+          
+          @include responsive(mobile) {
             margin-left: 1rem;
-          } 
-          @media (max-width: 23.4375rem) {
+            gap: 0.6rem;
+          }
+          
+          @include responsive(min-mobile) {
             margin-left: 1rem;
+            gap: 0.5rem;
+          }
+          
+          @include responsive(min-1) {
+            margin-left: 1rem;
+            gap: 0.4rem;
           }
         }
     
@@ -260,8 +650,24 @@
           line-height: 1.5;
           font-family: Arial, Book Antiqua;
     
-          @media (max-width: 37.5rem) {
-            width: 100%;
+          @include responsive(tablet) {
+            width: 10rem;
+            font-size: 0.75rem;
+          }
+          
+          @include responsive(mobile) {
+            width: 8rem;
+            font-size: 0.7rem;
+          }
+          
+          @include responsive(min-mobile) {
+            width: 7rem;
+            font-size: 0.65rem;
+          }
+          
+          @include responsive(min-1) {
+            width: 6rem;
+            font-size: 0.6rem;
           }
         }
       }
@@ -269,4 +675,12 @@
 
 .hotel-details{
       margin-right: 0rem;
+      
+      @include responsive(tablet) {
+        margin-right: 0rem;
+      }
+      
+      @include responsive(mobile) {
+        margin-right: 0rem;
+      }
 }

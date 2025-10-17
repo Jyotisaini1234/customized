@@ -5,6 +5,12 @@ import { errorReducer } from './Error/ErrorSlice.ts';
 import { notFoundReducer } from './NotFound/NotFoundSlice.ts';
 import authReducer from './slices/authSlice.ts';
 import { tourApi } from '../api/TourAPI.tsx';
+import userReducer from './slices/userSlice.ts';
+import hotelReducer from './slices/hotelSlice.ts';
+import tripReducer from './slices/tripPlannerSlice.ts'
+import plannerReducer from './slices/plannerSlice.ts';
+
+
 
 const rootReducer = combineReducers({
   alert: alertReducer,
@@ -12,6 +18,10 @@ const rootReducer = combineReducers({
   error: errorReducer,
   notFound: notFoundReducer,
   auth: authReducer,
+  user: userReducer,
+  hotel: hotelReducer,
+  tripPlanner:tripReducer,
+  planner: plannerReducer,
   [tourApi.reducerPath]: tourApi.reducer,
 });
 

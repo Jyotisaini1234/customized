@@ -1,11 +1,20 @@
-
-export const BASE_URL = 'http://ec2-13-201-222-138.ap-south-1.compute.amazonaws.com:8081';
-export const HOTEL_FETCH = 'http://localhost:8081'; 
+const isLocalhost = window.location.hostname === 'localhost';
+export const AWS_INSTANCE = isLocalhost? 'http://localhost:3002' : 'https://b2b.flydivinetravels.com';
+export const BASE_URL_JWT = isLocalhost? 'http://ec2-3-111-24-92.ap-south-1.compute.amazonaws.com:8080' : 'http://ec2-3-111-24-92.ap-south-1.compute.amazonaws.com:8080';
+export const BASE_URL = isLocalhost? 'http://ec2-3-6-138-99.ap-south-1.compute.amazonaws.com:8081' : 'https://b2b.flydivinetravels.com';
 export const GENERATEUID=`${BASE_URL}/sightTour/generateUid`;
 export const SIGHTTOURBYCITY =`${BASE_URL}/sightTour/byCity`;
 export const ACTIVITIESBYSIGHTCODE =`${BASE_URL}/sightTour/activities/bySightCode`;
 export const HOTELDETAILS=`${BASE_URL}/sightTour/hotelbyCity`;
-export const LOCALHOST='http://localhost:3002';
-export const AWS_INSTANCE='http://ec2-13-203-143-204.ap-south-1.compute.amazonaws.com:3002';
-export const TRIP_PLANNER=`${AWS_INSTANCE}/home-page?`;
-export const TRIP_PLANNER_PAGE=`${AWS_INSTANCE}/hotel-summary?`;
+export const TRIP_PLANNER=`${AWS_INSTANCE}/hotel/home-page?`;
+export const TRIP_PLANNER_PAGE=`${AWS_INSTANCE}/hotel/hotel-summary?`;
+export let BAKU_REQUIREMENT=`${AWS_INSTANCE}/hotel/baku-requirement`;
+export const GET_ALL_BOOKINGS = `${BASE_URL}/sightTour/booking/all`;
+export const GET_BOOKING_BY_ID = `${BASE_URL}/sightTour/booking`;
+export const REGISTRATION = `${BASE_URL_JWT}/sso/signup`;
+export const LOGIN = `${BASE_URL_JWT}/login`;
+export const READYMADE_PACKAGE = `/readymade-package`;
+export const AUTHENTICATE = `${BASE_URL_JWT}/authenticate`;
+export const GENERATE_UID=`${BASE_URL}/sightTour/generateUid`;
+export const SIGHT_TOUR_BY_CITY =`${BASE_URL}/sightTour/byCity`;
+export const ACTIVITIES_BY_SIGHT_CODE =`${BASE_URL}/sightTour/activities/bySightCode`;

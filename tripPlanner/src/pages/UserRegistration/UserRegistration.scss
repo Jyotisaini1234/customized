@@ -1,0 +1,635 @@
+@import '../../styles/variables';
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1.875rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(1.875rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.user-registration-container {
+  min-height: 100vh;
+  background: $background-gradient;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 18.75rem;
+    background: $primary-gradient;
+    opacity: 0.1;
+    z-index: -1;
+  }
+
+
+  .main-container {
+    padding: $spacing-sm 0 !important;
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .header-section {
+    text-align: center;
+    margin-bottom: $spacing-sm;
+    animation: slideInRight 0.8s ease-out;
+
+    .header-avatar {
+      width: 5rem !important;
+      height: 5rem !important;
+      background: $primary-gradient !important;
+      margin: 0 auto $spacing-md auto !important;
+      box-shadow: 0 0.5rem 1.5625 rgba(25, 118, 210, 0.3);
+    }
+
+    .header-title {
+      font-weight: 700 !important;
+      color: #1a1a1a !important;
+      margin-bottom: $spacing-sm !important;
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-subtitle {
+      color: #666 !important;
+      font-size: 1.1rem !important;
+      max-width: 31.25rem;
+      margin: 0 auto;
+    }
+  }
+
+  .registration-card {
+    background: $card-gradient !important;
+    border-radius: $card-radius !important;
+    box-shadow: $card-shadow !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px);
+    animation: fadeInUp 1s ease-out;
+
+    .card-content {
+      padding: $spacing-xl !important;
+
+      @media (max-width: 37.5rem) {
+        padding: $spacing-lg !important;
+      }
+    }
+  }
+
+  .success-alert,
+  .error-alert {
+    margin-bottom: $spacing-lg !important;
+    border-radius: $border-radius !important;
+    animation: slideInRight 0.5s ease-out;
+  }
+
+  .form-section {
+    margin-bottom: $spacing-xl;
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      font-weight: 600 !important;
+      color: #333 !important;
+      margin-bottom: $spacing-sm !important;
+
+      .section-icon {
+        margin-right: $spacing-sm !important;
+        color: $primary-color !important;
+      }
+    }
+
+    .section-divider {
+      margin-bottom: $spacing-lg !important;
+      background: linear-gradient(90deg, $primary-color, transparent) !important;
+      height: 2px !important;
+    }
+  }
+
+  .form-input {
+    .MuiOutlinedInput-root {
+      border-radius: $border-radius !important;
+      background-color: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease !important;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: $input-shadow;
+      }
+
+      &.Mui-focused {
+        background-color: rgba(255, 255, 255, 1);
+        box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+      }
+
+      .MuiOutlinedInput-notchedOutline {
+        border-color: rgba(0, 0, 0, 0.12) !important;
+      }
+
+      &:hover .MuiOutlinedInput-notchedOutline {
+        border-color: $primary-color !important;
+      }
+
+      &.Mui-focused .MuiOutlinedInput-notchedOutline {
+        border-color: $primary-color !important;
+        border-width: 2px !important;
+      }
+    }
+
+    .MuiInputLabel-root {
+      font-weight: 500 !important;
+      
+      &.Mui-focused {
+        color: $primary-color !important;
+      }
+    }
+
+    .input-icon {
+      color: $primary-color !important;
+    }
+
+    .MuiFormHelperText-root {
+      font-weight: 500 !important;
+      margin-left: 0 !important;
+      margin-top: 8px !important;
+    }
+  }
+
+  .password-strength {
+    margin-top: $spacing-sm;
+
+    .strength-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .strength-text {
+      font-weight: 600 !important;
+      color: #666 !important;
+    }
+
+    .strength-bar {
+      height: 6px !important;
+      border-radius: 3px !important;
+      background-color: rgba(0, 0, 0, 0.1) !important;
+
+      .MuiLinearProgress-bar {
+        border-radius: 3px !important;
+        transition: all 0.3s ease !important;
+      }
+    }
+  }
+
+  .form-note {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    padding: $spacing-md;
+    border-radius: $border-radius;
+    border-left: 4px solid $warning-color;
+    margin-bottom: $spacing-lg;
+
+    .note-text {
+      color: #e65100 !important;
+      font-weight: 500 !important;
+
+      .required-mark {
+        color: $error-color;
+        font-weight: 700;
+        font-size: 1.1em;
+      }
+    }
+  }
+
+  .form-buttons {
+    display: flex;
+    gap: $spacing-md;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: $spacing-xl;
+
+    .submit-button {
+      background: $primary-gradient !important;
+      color: white !important;
+      font-weight: 600 !important;
+      text-transform: none !important;
+      padding: 12px 2rem !important;
+      border-radius: $button-radius !important;
+      box-shadow: $button-shadow !important;
+      min-width: 11.25 !important;
+      transition: all 0.3s ease !important;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4) !important;
+        animation: pulse 0.6s ease-in-out;
+      }
+
+      &:disabled {
+        background: linear-gradient(135deg, #ccc, #999) !important;
+        transform: none !important;
+        box-shadow: none !important;
+        animation: none !important;
+      }
+    }
+
+    .cancel-button {
+      border: 2px solid $primary-color !important;
+      color: $primary-color !important;
+      font-weight: 600 !important;
+      text-transform: none !important;
+      padding: 10px 2rem !important;
+      border-radius: $button-radius !important;
+      min-width: 11.25 !important;
+      background: rgba(255, 255, 255, 0.8) !important;
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease !important;
+
+      &:hover {
+        background: $primary-color !important;
+        color: white !important;
+        transform: translateY(-1px);
+        box-shadow: $button-shadow;
+      }
+
+      &:disabled {
+        border-color: #ccc !important;
+        color: #ccc !important;
+        background: rgba(255, 255, 255, 0.5) !important;
+      }
+    }
+  }
+
+  .loading-container {
+    margin-top: $spacing-md;
+
+    .loading-bar {
+      height: 4px !important;
+      border-radius: 2px !important;
+      background-color: rgba(25, 118, 210, 0.1) !important;
+
+      .MuiLinearProgress-bar {
+        background: $primary-gradient !important;
+        border-radius: 2px !important;
+      }
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .navbar {
+      .navbar-content {
+        .nav-buttons {
+          .nav-button,
+          .nav-button-primary {
+            font-size: 0.875rem !important;
+            padding: 6px 1rem !important;
+          }
+        }
+      }
+    }
+
+    .header-section {
+      .header-title {
+        font-size: 2rem !important;
+      }
+
+      .header-avatar {
+        width: 3.75 !important;
+        height: 3.75 !important;
+      }
+    }
+
+    .form-buttons {
+      flex-direction: column;
+      align-items: stretch;
+
+      .submit-button,
+      .cancel-button {
+        min-width: auto !important;
+        width: 100%;
+      }
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .main-container {
+      padding: $spacing-lg $spacing-sm !important;
+    }
+
+    .registration-card {
+      .card-content {
+        padding: $spacing-md !important;
+      }
+    }
+
+    .form-section {
+      margin-bottom: $spacing-lg;
+    }
+
+    .header-section {
+      margin-bottom: $spacing-lg;
+
+      .header-title {
+        font-size: 1.75rem !important;
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+
+    .navbar {
+      background: rgba(26, 26, 46, 0.95) !important;
+    }
+
+    .registration-card {
+      background: linear-gradient(145deg, #1e1e2e 0%, #2a2a3e 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .header-section {
+      .header-title {
+        color: #ffffff !important;
+      }
+
+      .header-subtitle {
+        color: #cccccc !important;
+      }
+    }
+
+    .form-section {
+      .section-title {
+        color: #ffffff !important;
+      }
+    }
+
+    .form-input {
+      .MuiOutlinedInput-root {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        &.Mui-focused {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      .MuiInputLabel-root {
+        color: #cccccc !important;
+      }
+    }
+
+    .form-note {
+      background: linear-gradient(135deg, #2d1b1b, #3d2b1b);
+}
+
+
+    }
+
+  }
+
+
+
+.logo-upload-section {
+  margin-top: $spacing-lg;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: $border-radius;
+  border: 2px dashed rgba(25, 118, 210, 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(25, 118, 210, 0.6);
+    background: linear-gradient(135deg, #f0f8ff, #e6f3ff);
+  }
+
+  .logo-upload-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: $spacing-md !important;
+
+    .section-icon {
+      margin-right: $spacing-sm !important;
+      color: $primary-color !important;
+    }
+  }
+
+  .logo-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-md;
+    margin-bottom: $spacing-sm;
+
+    .logo-upload-btn {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 2px solid $primary-color !important;
+      color: $primary-color !important;
+      font-weight: 600 !important;
+      text-transform: none !important;
+      border-radius: $border-radius !important;
+      transition: all 0.3s ease !important;
+
+      &:hover {
+        background: $primary-color !important;
+        color: white !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+      }
+
+      &:disabled {
+        background: rgba(255, 255, 255, 0.5) !important;
+        border-color: #ccc !important;
+        color: #ccc !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+    }
+
+    .logo-preview-container {
+      position: relative;
+      display: inline-block;
+      border-radius: $border-radius;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .logo-preview-image {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        display: block;
+        border-radius: $border-radius;
+        border: 3px solid rgba(25, 118, 210, 0.2);
+      }
+
+      .logo-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: flex;
+        gap: 4px;
+
+        .remove-logo-btn {
+          background: rgba(244, 67, 54, 0.9) !important;
+          color: white !important;
+          padding: 6px !important;
+          min-width: auto !important;
+          border-radius: 50% !important;
+          transition: all 0.3s ease !important;
+
+          &:hover {
+            background: rgba(244, 67, 54, 1) !important;
+            transform: scale(1.1);
+          }
+
+          .MuiSvgIcon-root {
+            font-size: 18px !important;
+          }
+        }
+      }
+    }
+  }
+
+  .logo-upload-hint {
+    color: #666 !important;
+    text-align: center;
+    font-style: italic;
+    font-weight: 500 !important;
+  }
+}
+
+.loading-container {
+  margin-top: $spacing-md;
+  text-align: center;
+
+  .loading-bar {
+    height: 4px !important;
+    border-radius: 2px !important;
+    background-color: rgba(25, 118, 210, 0.1) !important;
+    margin-bottom: $spacing-sm;
+
+    .MuiLinearProgress-bar {
+      background: $primary-gradient !important;
+      border-radius: 2px !important;
+    }
+  }
+
+  .loading-text {
+    color: $primary-color !important;
+    font-weight: 600 !important;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}
+
+// Dark mode support for logo upload
+@media (prefers-color-scheme: dark) {
+  .logo-upload-section {
+    background: linear-gradient(135deg, #2a2a3e, #1e1e2e);
+    border-color: rgba(25, 118, 210, 0.4);
+
+    &:hover {
+      border-color: rgba(25, 118, 210, 0.7);
+      background: linear-gradient(135deg, #3a3a4e, #2e2e3e);
+    }
+
+    .logo-upload-label {
+      color: #ffffff !important;
+    }
+
+    .logo-upload-container {
+      .logo-upload-btn {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: $primary-color !important;
+        color: $primary-color !important;
+
+        &:hover {
+          background: $primary-color !important;
+          color: white !important;
+        }
+      }
+    }
+
+    .logo-upload-hint {
+      color: #cccccc !important;
+    }
+  }
+}
+
+@media (max-width: 48rem) {
+  .logo-upload-section {
+    padding: $spacing-md;
+
+    .logo-upload-container {
+      .logo-upload-btn {
+        min-width: 150px !important;
+        padding: $spacing-sm $spacing-lg !important;
+      }
+
+      .logo-preview-container {
+        .logo-preview-image {
+          width: 100px;
+          height: 100px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 30rem) {
+  .logo-upload-section {
+    padding: $spacing-sm;
+
+    .logo-upload-container {
+      .logo-upload-btn {
+        min-width: 120px !important;
+        padding: $spacing-sm $spacing-md !important;
+        font-size: 0.875rem !important;
+      }
+
+      .logo-preview-container {
+        .logo-preview-image {
+          width: 80px;
+          height: 80px;
+        }
+      }
+    }
+  }
+}

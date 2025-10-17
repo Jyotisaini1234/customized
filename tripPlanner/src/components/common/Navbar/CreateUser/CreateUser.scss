@@ -1,0 +1,182 @@
+@import '../../../../styles/variables';
+
+.create-user-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1300;
+    padding: 20px;
+    
+    .create-user-container {
+      max-width: 600px !important;
+      width: 100%;
+      margin: 0;
+      
+      .create-user-paper {
+        padding: 0;
+        border-radius: 12px;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+        background: white;
+        max-height: 90vh;
+        overflow-y: auto;
+        
+        .create-user-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          border-bottom: 1px solid #e0e0e0;
+          background: #f8f9fa;
+          border-radius: 12px 12px 0 0;
+          
+          .create-user-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1976d2;
+            margin: 0;
+          }
+          
+          .close-button {
+            padding: 8px;
+            color: #666;
+            
+            &:hover {
+              background-color: rgba(0, 0, 0, 0.04);
+              color: #333;
+            }
+          }
+        }
+        
+        .create-user-form {
+          padding: 32px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+          
+          .form-field {
+            .MuiOutlinedInput-root {
+              border-radius: 8px;
+              
+              &:hover .MuiOutlinedInput-notchedOutline {
+                border-color: #1976d2;
+              }
+              
+              &.Mui-focused .MuiOutlinedInput-notchedOutline {
+                border-color: #1976d2;
+                border-width: 2px;
+              }
+            }
+            
+            .MuiInputLabel-root {
+              &.Mui-focused {
+                color: #1976d2;
+              }
+            }
+          }
+          
+          .form-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            margin-top: 16px;
+            
+            .cancel-button {
+              border-color: #ccc;
+              color: #666;
+              border-radius: 8px;
+              padding: 12px 24px;
+              text-transform: none;
+              font-weight: 500;
+              
+              &:hover {
+                border-color: #999;
+                background-color: rgba(0, 0, 0, 0.04);
+              }
+            }
+            
+            .submit-button {
+              background-color: #1976d2;
+              color: white;
+              border-radius: 8px;
+              padding: 12px 24px;
+              text-transform: none;
+              font-weight: 500;
+              box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+              
+              &:hover {
+                background-color: #1565c0;
+                box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Responsive design
+  @media (max-width: 600px) {
+    .create-user-overlay {
+      padding: 16px;
+      
+      .create-user-container {
+        .create-user-paper {
+          .create-user-header {
+            padding: 20px 24px;
+            
+            .create-user-title {
+              font-size: 24px;
+            }
+          }
+          
+          .create-user-form {
+            padding: 24px;
+            gap: 20px;
+            
+            .form-actions {
+              flex-direction: column;
+              
+              .cancel-button,
+              .submit-button {
+                width: 100%;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .create-user-overlay {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .create-user-paper {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }

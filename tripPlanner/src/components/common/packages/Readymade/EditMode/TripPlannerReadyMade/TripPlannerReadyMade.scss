@@ -1,0 +1,29 @@
+@import "../../../../../../styles/variables";
+.MuiTab-root.Mui-selected{
+    color: white;
+}
+.action-buttons_cont{
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+
+
+.cancel-button{
+    height: 2rem;
+    widows: 5rem;
+    background: grey;
+    color: white;
+    margin-right:2rem ;
+}
+.proceed-button{
+    background: $primary-color;
+    color: white;
+    &:hover{
+        background: $primary-color;
+        color: white;}
+    }
+}
+.thank-you-container{
+    padding: 3rem;
+    text-align: center;
+}

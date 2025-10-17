@@ -1,0 +1,350 @@
+@import '../../../styles/variables';
+
+.submit-btn{
+    background: $primary-color;
+    color: white;
+}
+.entry-btn {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 10px 20px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    box-shadow: 0 2px 8px rgba(3, 105, 161, 0.3) !important;
+    transition: all 0.3s ease !important;
+  
+    &:hover {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+      box-shadow: 0 4px 12px rgba(3, 105, 161, 0.4) !important;
+      transform: translateY(-1px);
+    }
+  
+    .MuiButton-endIcon {
+      margin-left: 8px !important;
+      transition: transform 0.3s ease !important;
+    }
+  
+    &[aria-expanded="true"] .MuiButton-endIcon {
+      transform: rotate(180deg);
+    }
+  }
+  
+  // Menu Items Styling
+  .MuiMenu-paper {
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    overflow: visible !important;
+    
+    .MuiMenuItem-root {
+      padding: 12px 16px !important;
+      border-radius: 8px !important;
+      margin: 4px 8px !important;
+      transition: all 0.2s ease !important;
+  
+      &:hover {
+        background-color: #f8fafc !important;
+        transform: translateX(4px);
+      }
+  
+      .MuiListItemIcon-root {
+        min-width: 36px !important;
+        
+        .MuiSvgIcon-root {
+          transition: all 0.2s ease !important;
+        }
+      }
+  
+      .MuiListItemText-root {
+        .MuiTypography-root {
+          font-weight: 500 !important;
+          color: #374151 !important;
+        }
+      }
+  
+      // WhatsApp specific styling
+      &.whatsapp-menu-item {
+        .whatsapp-icon {
+          color: #25d366 !important;
+        }
+  
+        &:hover {
+          background-color: rgba(37, 211, 102, 0.08) !important;
+          
+          .whatsapp-icon {
+            color: #128c7e !important;
+          }
+        }
+      }
+    }
+  }
+  
+  // Chatbot Dialog Styling
+  .chatbot-dialog {
+    .chatbot-dialog-paper {
+      border-radius: 16px !important;
+      overflow: hidden !important;
+      max-height: 90vh !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+    }
+  
+    .chatbot-dialog-title {
+      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%) !important;
+      color: white !important;
+      padding: 16px 24px !important;
+      border-bottom: none !important;
+  
+      .whatsapp-icon {
+        color: white !important;
+        font-size: 24px !important;
+      }
+  
+      .MuiTypography-h6 {
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+      }
+  
+      .close-button {
+        color: white !important;
+        transition: all 0.2s ease !important;
+  
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+          transform: scale(1.05);
+        }
+      }
+    }
+  
+    .chatbot-dialog-content {
+      padding: 0 !important;
+      background-color: #f8fafc !important;
+      
+      .chatbot-container {
+        height: 70vh;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        
+        // Override chatbot styles to fit within dialog
+        .h-screen {
+          height: 100% !important;
+        }
+  
+        // Header adjustments for embedded view
+        .bg-white.shadow-sm.border-b {
+          background: linear-gradient(135deg, #25d366 0%, #128c7e 100%) !important;
+          color: white !important;
+          border: none !important;
+  
+          h1, .text-lg {
+            color: white !important;
+          }
+  
+          .text-gray-500, .text-gray-900 {
+            color: rgba(255, 255, 255, 0.8) !important;
+          }
+  
+          .bg-blue-100 {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+          }
+  
+          .text-blue-600 {
+            color: white !important;
+          }
+  
+          .hover\\:bg-gray-100:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+          }
+  
+          .text-gray-500:hover {
+            color: white !important;
+          }
+        }
+  
+        // Message styling adjustments
+        .bg-blue-600 {
+          background-color: #25d366 !important;
+        }
+  
+        .hover\\:bg-blue-700:hover {
+          background-color: #128c7e !important;
+        }
+  
+        .focus\\:ring-blue-500:focus {
+          --tw-ring-color: #25d366 !important;
+        }
+  
+        // Quick actions styling
+        .bg-blue-100 {
+          background-color: rgba(37, 211, 102, 0.1) !important;
+        }
+  
+        .hover\\:bg-blue-200:hover {
+          background-color: rgba(37, 211, 102, 0.2) !important;
+        }
+  
+        .text-blue-800 {
+          color: #128c7e !important;
+        }
+  
+        .border-blue-300 {
+          border-color: rgba(37, 211, 102, 0.3) !important;
+        }
+      }
+    }
+  }
+  
+  // Form Dialog Enhancements
+  .MuiDialog-paper {
+    border-radius: 16px !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+  
+    .MuiDialogTitle-root {
+      padding: 20px 24px 16px !important;
+      border-bottom: 1px solid #e5e7eb !important;
+      
+      .MuiTypography-h6 {
+        font-weight: 600 !important;
+        color: #111827 !important;
+      }
+    }
+  
+    .MuiDialogContent-root {
+      padding: 24px !important;
+    }
+  
+    .MuiDialogActions-root {
+      padding: 16px 24px 24px !important;
+      gap: 12px !important;
+  
+      .submit-btn {
+        border-radius: 8px !important;
+        padding: 10px 24px !important;
+        font-weight: 500 !important;
+        text-transform: none !important;
+        box-shadow: 0 2px 8px rgba(3, 105, 161, 0.3) !important;
+        transition: all 0.2s ease !important;
+  
+        &:hover {
+          box-shadow: 0 4px 12px rgba(3, 105, 161, 0.4) !important;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+  
+  // TextField Enhancements
+  .MuiTextField-root {
+    .MuiOutlinedInput-root {
+      border-radius: 8px !important;
+      transition: all 0.2s ease !important;
+  
+      &:hover .MuiOutlinedInput-notchedOutline {
+        border-color: #9ca3af !important;
+      }
+  
+      &.Mui-focused .MuiOutlinedInput-notchedOutline {
+        border-color: #0369a1 !important;
+        border-width: 2px !important;
+      }
+    }
+  
+    .MuiInputLabel-root {
+      &.Mui-focused {
+        color: #0369a1 !important;
+      }
+    }
+  }
+  
+  // Alert Enhancements
+  .MuiAlert-root {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    
+    &.MuiAlert-standardSuccess {
+      background-color: #f0fdf4 !important;
+      border: 1px solid #bbf7d0 !important;
+      color: #166534 !important;
+    }
+  
+    &.MuiAlert-standardError {
+      background-color: #fef2f2 !important;
+      border: 1px solid #fecaca !important;
+      color: #dc2626 !important;
+    }
+  }
+  
+  // Snackbar positioning and styling
+  .MuiSnackbar-root {
+    .MuiAlert-root {
+      border-radius: 12px !important;
+      font-weight: 500 !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    }
+  }
+  
+  // Responsive Design
+  @media (max-width: 768px) {
+    .chatbot-dialog {
+      .chatbot-dialog-paper {
+        margin: 8px !important;
+        width: calc(100% - 16px) !important;
+        max-height: calc(100vh - 16px) !important;
+      }
+  
+      .chatbot-dialog-content {
+        .chatbot-container {
+          height: 60vh;
+          min-height: 400px;
+        }
+      }
+    }
+  
+    .entry-btn {
+      padding: 8px 16px !important;
+      font-size: 0.875rem !important;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .MuiDialog-paper {
+    animation: scaleIn 0.2s ease-out !important;
+  }
+  
+  .MuiMenu-paper {
+    animation: fadeInUp 0.15s ease-out !important;
+  }
+
+
+
+.whatsapp-menu-item {
+  .whatsapp-icon {
+    color: #25d366 !important;
+  }
+  
+  &:hover {
+    background-color: rgba(37, 211, 102, 0.04);
+  }
+}

@@ -1,0 +1,19 @@
+.MuiTable-root {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+  font-family: 'Arial', sans-serif;
+}
+.MuiTableCell-root {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.MuiTableHead-root {
+  background-color: #f2f2f2;
+}
+  .status{
+    border-radius: 8px;
+    padding: 4px 8px;
+    display: inline-block;
+  }
